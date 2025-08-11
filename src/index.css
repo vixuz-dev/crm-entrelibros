@@ -1,0 +1,163 @@
+/* Definición de fuentes Cabin usando @font-face */
+@font-face {
+  font-family: 'Cabin';
+  src: url('./assets/fonts/cabin/Cabin-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabin';
+  src: url('./assets/fonts/cabin/Cabin-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabin';
+  src: url('./assets/fonts/cabin/Cabin-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabin';
+  src: url('./assets/fonts/cabin/Cabin-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabin';
+  src: url('./assets/fonts/cabin/Cabin-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabin';
+  src: url('./assets/fonts/cabin/Cabin-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabin';
+  src: url('./assets/fonts/cabin/Cabin-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabin';
+  src: url('./assets/fonts/cabin/Cabin-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Definiciones con nombres específicos para uso directo */
+@font-face {
+  font-family: 'cabin-regular';
+  src: url('./assets/fonts/cabin/Cabin-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'cabin-italic';
+  src: url('./assets/fonts/cabin/Cabin-Italic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'cabin-medium';
+  src: url('./assets/fonts/cabin/Cabin-Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'cabin-medium-italic';
+  src: url('./assets/fonts/cabin/Cabin-MediumItalic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'cabin-semibold';
+  src: url('./assets/fonts/cabin/Cabin-SemiBold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'cabin-semibold-italic';
+  src: url('./assets/fonts/cabin/Cabin-SemiBoldItalic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'cabin-bold';
+  src: url('./assets/fonts/cabin/Cabin-Bold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'cabin-bold-italic';
+  src: url('./assets/fonts/cabin/Cabin-BoldItalic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* * {
+    font-family: "Cabin", sans-serif;
+  } */
+  
+  body {
+    font-family: "Cabin", sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Cabin", sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-amber-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-amber-700 transition-colors duration-300;
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent text-amber-600 border-2 border-amber-600 px-6 py-3 rounded-lg font-medium hover:bg-amber-600 hover:text-white transition-colors duration-300;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300;
+  }
+}
+
+
