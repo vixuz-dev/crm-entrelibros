@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   FiGrid,
@@ -14,90 +14,122 @@ import {
   FiBarChart2,
   FiSettings,
   FiHelpCircle,
-  FiX
+  FiX,
+  FiTag,
+  FiList,
+  FiChevronDown,
+  FiChevronRight
 } from 'react-icons/fi';
+import { useAuth } from '../../hooks/useAuth';
+import { clearSession } from '../../utils/sessionCookie';
+import { ROUTES } from '../../utils/routes';
 
 const Sidebar = ({ onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
+  const [expandedMenus, setExpandedMenus] = useState({});
 
   const mainMenuItems = [
     {
       id: 'panel',
       label: 'Panel',
       icon: FiGrid,
-      route: '/panel',
-      active: location.pathname === '/panel'
+      route: ROUTES.PANEL,
+      active: location.pathname === ROUTES.PANEL
     },
     {
       id: 'usuarios',
       label: 'Usuarios',
       icon: FiUser,
-      route: '/usuarios',
-      active: location.pathname.startsWith('/usuarios')
+      route: ROUTES.USERS,
+      active: location.pathname.startsWith(ROUTES.USERS)
     },
     {
       id: 'libros',
       label: 'Libros',
       icon: FiBook,
-      route: '/libros',
-      active: location.pathname.startsWith('/libros')
-    },
-    {
-      id: 'categorias',
-      label: 'Categorías',
-      icon: FiGridAlt,
-      route: '/categorias',
-      active: location.pathname.startsWith('/categorias')
+      route: ROUTES.BOOKS,
+      active: location.pathname.startsWith(ROUTES.BOOKS),
+      submenu: [
+        {
+          id: 'listado',
+          label: 'Listado',
+          icon: FiList,
+          route: ROUTES.BOOKS_LIST,
+          active: location.pathname === ROUTES.BOOKS_LIST
+        },
+        {
+          id: 'categorias',
+          label: 'Categorías',
+          icon: FiGridAlt,
+          route: ROUTES.BOOKS_CATEGORIES,
+          active: location.pathname === ROUTES.BOOKS_CATEGORIES
+        },
+        {
+          id: 'temas',
+          label: 'Temas',
+          icon: FiTag,
+          route: ROUTES.TOPICS,
+          active: location.pathname === ROUTES.TOPICS
+        },
+        {
+          id: 'autores',
+          label: 'Autores',
+          icon: FiUser,
+          route: ROUTES.BOOKS_AUTHORS,
+          active: location.pathname === ROUTES.BOOKS_AUTHORS
+        }
+      ]
     },
     {
       id: 'membresias',
       label: 'Membresías',
       icon: FiCreditCard,
-      route: '/membresias',
-      active: location.pathname.startsWith('/membresias')
+      route: ROUTES.MEMBERSHIPS,
+      active: location.pathname.startsWith(ROUTES.MEMBERSHIPS)
     },
     {
       id: 'pedidos',
       label: 'Pedidos',
       icon: FiShoppingCart,
-      route: '/pedidos',
-      active: location.pathname.startsWith('/pedidos')
+      route: ROUTES.ORDERS,
+      active: location.pathname.startsWith(ROUTES.ORDERS)
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: FiUsers,
-      route: '/clientes',
-      active: location.pathname.startsWith('/clientes')
+      route: ROUTES.CUSTOMERS,
+      active: location.pathname.startsWith(ROUTES.CUSTOMERS)
     },
     {
       id: 'inventario',
       label: 'Inventario',
       icon: FiPackage,
-      route: '/inventario',
-      active: location.pathname.startsWith('/inventario')
+      route: ROUTES.INVENTORY,
+      active: location.pathname.startsWith(ROUTES.INVENTORY)
     },
     {
       id: 'reportes',
       label: 'Reportes',
       icon: FiBarChart2,
-      route: '/reportes',
-      active: location.pathname.startsWith('/reportes')
+      route: ROUTES.REPORTS,
+      active: location.pathname.startsWith(ROUTES.REPORTS)
     },
     {
       id: 'configuracion',
       label: 'Configuración',
       icon: FiSettings,
-      route: '/configuracion',
-      active: location.pathname.startsWith('/configuracion')
+      route: ROUTES.SETTINGS,
+      active: location.pathname.startsWith(ROUTES.SETTINGS)
     },
     {
       id: 'ayuda',
       label: 'Ayuda',
       icon: FiHelpCircle,
-      route: '/ayuda',
-      active: location.pathname.startsWith('/ayuda')
+      route: ROUTES.HELP,
+      active: location.pathname.startsWith(ROUTES.HELP)
     }
   ];
 
@@ -106,7 +138,7 @@ const Sidebar = ({ onClose }) => {
       id: 'notifications',
       label: 'Notificaciones',
       icon: FiBell,
-      route: '/notificaciones',
+      route: ROUTES.NOTIFICATIONS,
       badge: 24,
       badgeColor: 'bg-green-500'
     },
@@ -114,17 +146,52 @@ const Sidebar = ({ onClose }) => {
       id: 'logout',
       label: 'Cerrar Sesión',
       icon: FiLogOut,
-      route: '/iniciar-sesion',
+      route: ROUTES.LOGIN,
       badge: null
     }
   ];
 
-  const handleNavigation = (route) => {
+  const handleNavigation = async (route) => {
+    // Manejar logout
+    if (route === ROUTES.LOGIN) {
+      try {
+        console.log('Cerrando sesión...');
+        
+        // Limpiar información del administrador y token
+        logout();
+        clearSession();
+        
+        console.log('Sesión cerrada exitosamente');
+        
+        // Redirigir al login
+        navigate(ROUTES.LOGIN);
+      } catch (error) {
+        console.error('Error during logout:', error);
+        
+        // Aún limpiar datos locales y redirigir al login
+        logout();
+        clearSession();
+        navigate(ROUTES.LOGIN);
+      }
+      return;
+    }
+    
     navigate(route);
     // Cerrar sidebar en móvil después de navegar
     if (onClose) {
       onClose();
     }
+  };
+
+  const toggleSubmenu = (menuId) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuId]: !prev[menuId]
+    }));
+  };
+
+  const isSubmenuExpanded = (menuId) => {
+    return expandedMenus[menuId] || false;
   };
 
   return (
@@ -156,19 +223,63 @@ const Sidebar = ({ onClose }) => {
         <div className="space-y-2">
           {mainMenuItems.map((item) => {
             const Icon = item.icon;
+            const hasSubmenu = item.submenu && item.submenu.length > 0;
+            const isExpanded = isSubmenuExpanded(item.id);
+            
             return (
-              <button
-                key={item.id}
-                onClick={() => handleNavigation(item.route)}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-colors duration-200 ${
-                  item.active
-                    ? 'bg-amber-50 text-amber-600 border border-amber-200'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="font-cabin-medium text-sm">{item.label}</span>
-              </button>
+              <div key={item.id}>
+                <button
+                  onClick={() => {
+                    if (hasSubmenu) {
+                      toggleSubmenu(item.id);
+                    } else {
+                      handleNavigation(item.route);
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors duration-200 ${
+                    item.active
+                      ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Icon className="w-5 h-5" />
+                    <span className="font-cabin-medium text-sm">{item.label}</span>
+                  </div>
+                  {hasSubmenu && (
+                    <div className="flex items-center">
+                      {isExpanded ? (
+                        <FiChevronDown className="w-4 h-4" />
+                      ) : (
+                        <FiChevronRight className="w-4 h-4" />
+                      )}
+                    </div>
+                  )}
+                </button>
+                
+                {/* Submenu */}
+                {hasSubmenu && isExpanded && (
+                  <div className="ml-6 mt-1 space-y-1">
+                    {item.submenu.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      return (
+                        <button
+                          key={subItem.id}
+                          onClick={() => handleNavigation(subItem.route)}
+                          className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors duration-200 ${
+                            subItem.active
+                              ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                          }`}
+                        >
+                          <SubIcon className="w-4 h-4" />
+                          <span className="font-cabin-medium text-sm">{subItem.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>

@@ -1,9 +1,27 @@
-import React, { useState } from 'react';
-import { FiUsers, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiUsers, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiRefreshCw, FiCheck } from 'react-icons/fi';
 import UserInformation from '../components/modals/UserInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
+import Pagination from '../components/ui/Pagination';
+import { useUsersInformation } from '../store/useUsersInformation';
+import { addUserAdmin } from '../api/users';
 
 const Usuarios = () => {
+  // Store de usuarios
+  const {
+    users,
+    currentPage,
+    totalPages,
+    totalUsers,
+    limit,
+    isLoading,
+    error,
+    loadUsers,
+    refreshUsers,
+    goToPage,
+    changeLimit
+  } = useUsersInformation();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,59 +29,10 @@ const Usuarios = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  // Datos simulados de usuarios del sistema
-  const users = [
-    {
-      id: 1,
-      name: 'Admin Principal',
-      email: 'admin@entrelibros.com',
-      role: 'Admin',
-      status: 'Activo',
-      joinDate: '2023-01-01',
-      lastLogin: '2024-01-20',
-      avatar: 'AP'
-    },
-    {
-      id: 2,
-      name: 'María González',
-      email: 'maria.gonzalez@entrelibros.com',
-      role: 'Admin',
-      status: 'Activo',
-      joinDate: '2023-06-15',
-      lastLogin: '2024-01-19',
-      avatar: 'MG'
-    },
-    {
-      id: 3,
-      name: 'Carlos Rodríguez',
-      email: 'carlos.rodriguez@entrelibros.com',
-      role: 'Admin',
-      status: 'Activo',
-      joinDate: '2023-08-20',
-      lastLogin: '2024-01-20',
-      avatar: 'CR'
-    },
-    {
-      id: 4,
-      name: 'Ana Martínez',
-      email: 'ana.martinez@entrelibros.com',
-      role: 'Admin',
-      status: 'Inactivo',
-      joinDate: '2023-03-10',
-      lastLogin: '2024-01-05',
-      avatar: 'AM'
-    },
-    {
-      id: 5,
-      name: 'Luis Pérez',
-      email: 'luis.perez@entrelibros.com',
-      role: 'Admin',
-      status: 'Activo',
-      joinDate: '2023-09-01',
-      lastLogin: '2024-01-18',
-      avatar: 'LP'
-    }
-  ];
+  // Cargar usuarios al montar el componente
+  useEffect(() => {
+    loadUsers(currentPage, limit);
+  }, []);
 
   const getStatusColor = (status) => {
     return status === 'Activo' 
@@ -71,14 +40,38 @@ const Usuarios = () => {
       : 'bg-red-100 text-red-800 border-red-200';
   };
 
+  const renderStatus = (status) => {
+    // Manejar tanto strings como números
+    const isActive = status === 'Activo' || status === 1 || status === true;
+    
+    if (isActive) {
+      return (
+        <div className="flex items-center gap-2">
+          <FiCheck className="w-4 h-4 text-green-600" />
+          <span className="text-green-600 font-cabin-medium">Activo</span>
+        </div>
+      );
+    } else {
+      return (
+        <span className="text-red-600 font-cabin-medium">Inactivo</span>
+      );
+    }
+  };
+
 
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleDateString('es-ES', { month: 'long' });
+    const year = date.getFullYear();
+    
+    // Capitalizar la primera letra del mes
+    const monthCapitalized = month.charAt(0).toUpperCase() + month.slice(1);
+    
+    return `${day} de ${monthCapitalized} del ${year}`;
   };
 
   const handleViewUser = (user) => {
@@ -99,20 +92,29 @@ const Usuarios = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveUser = (userData) => {
-    if (modalMode === 'create') {
-      // Simular creación de nuevo usuario
-      const newUser = {
-        id: users.length + 1,
-        ...userData,
-        joinDate: new Date().toISOString().split('T')[0],
-        lastLogin: new Date().toISOString().split('T')[0],
-        avatar: userData.name.split(' ').map(n => n[0]).join('')
-      };
-      console.log('Nuevo usuario creado:', newUser);
-    } else {
-      // Simular actualización de usuario
-      console.log('Usuario actualizado:', userData);
+  const handleSaveUser = async (userData) => {
+    try {
+      if (modalMode === 'create') {
+        // Crear nuevo usuario
+        const response = await addUserAdmin(userData);
+        
+        if (response.status === true) {
+          console.log('User created successfully:', response);
+          // Recargar la lista de usuarios
+          await refreshUsers();
+          // Cerrar modal
+          handleCloseModal();
+        } else {
+          alert(response.status_Message || 'Error al crear el usuario');
+        }
+      } else {
+        // Editar usuario existente
+        console.log('Editing user:', userData);
+        // TODO: Implementar edición de usuario
+      }
+    } catch (error) {
+      console.error('Error saving user:', error);
+      alert('Error al guardar el usuario. Por favor intenta de nuevo.');
     }
   };
 
@@ -233,84 +235,146 @@ const Usuarios = () => {
               <option value="activo">Activos</option>
               <option value="inactivo">Inactivos</option>
             </select>
+            
+            {/* Botón de refresh */}
+            <button
+              onClick={refreshUsers}
+              disabled={isLoading}
+              className="px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Actualizar usuarios"
+            >
+              <FiRefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Tabla de Usuarios */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Usuario del Sistema
-                </th>
-                <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Email
-                </th>
-                <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Estado
-                </th>
-                <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Fecha de Registro
-                </th>
-                <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="font-cabin-semibold text-gray-800">
-                      {user.name}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="font-cabin-regular text-gray-700">
-                      {user.email}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-cabin-medium border ${getStatusColor(user.status)}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="font-cabin-regular text-gray-700">
-                      {formatDate(user.joinDate)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => handleViewUser(user)}
-                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        <FiEye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleEditUser(user)}
-                        className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                      >
-                        <FiEdit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteUser(user)}
-                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Estado de carga y error */}
+      {isLoading && (
+        <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-cabin-regular">Cargando usuarios...</p>
         </div>
-      </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <p className="text-red-600 font-cabin-medium mb-2">Error al cargar usuarios</p>
+          <p className="text-red-500 font-cabin-regular text-sm">{error}</p>
+          <button
+            onClick={refreshUsers}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-cabin-medium"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
+      {/* Tabla de Usuarios */}
+      {!isLoading && !error && (
+        <>
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                                    <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
+                  Usuario
+                </th>
+                    <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
+                      Email
+                    </th>
+                    <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
+                      Estado
+                    </th>
+                                    <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
+                  Fecha de Creación
+                </th>
+                    <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length > 0 ? (
+                    users.map((user) => (
+                      <tr key={user.user_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="font-cabin-semibold text-gray-800">
+                            {user.name && user.paternal_lastname ? 
+                              `${user.name} ${user.paternal_lastname} ${user.maternal_lastname || ''}`.trim() :
+                              user.email
+                            }
+                          </div>
+                          {user.user_type_name && (
+                            <div className="text-sm text-gray-500 font-cabin-regular">
+                              {user.user_type_name}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="font-cabin-regular text-gray-700">
+                            {user.email}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          {renderStatus(user.status)}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="font-cabin-regular text-gray-700">
+                            {formatDate(user.created_at)}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={() => handleViewUser(user)}
+                              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <FiEye className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleEditUser(user)}
+                              className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                            >
+                              <FiEdit className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteUser(user)}
+                              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="py-8 px-6 text-center text-gray-500 font-cabin-regular">
+                        No hay usuarios dados de alta en el sistema
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={goToPage}
+              totalItems={totalUsers}
+              itemsPerPage={limit}
+              onItemsPerPageChange={changeLimit}
+            />
+          )}
+        </>
+      )}
 
       {/* Modal de Información del Usuario */}
       <UserInformation 

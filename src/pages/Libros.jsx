@@ -1,164 +1,132 @@
-import React, { useState } from 'react';
-import { FiBook, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { FiBook, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiRefreshCw } from 'react-icons/fi';
 import BooksCard from '../components/books/BooksCard';
 import BookInformation from '../components/modals/BookInformation';
+import Pagination from '../components/ui/Pagination';
+import { useProductsInformation } from '../store/useProductsInformation';
+import { getProductDetail } from '../api/products';
+import { ROUTES } from '../utils/routes';
+import placeholderImage from '../assets/images/placeholder.jpg';
 
 const Libros = () => {
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [modalMode, setModalMode] = useState('view');
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
-  // Datos simulados de libros con la nueva estructura
-  const books = [
-    {
-      id: 1,
-      product_name: "Diego y Beto y las galletas desaparecidas",
-      product_description: "Diego y Beto han ido de picnic, y Beto ha preparado una deliciosa sorpresa. Cuando Beto se queda dormido, Diego no puede resistir la tentación de echar un vistazo, ¡y descubre que Beto ha hecho sus galletas favoritas! Diego piensa que no le importará tomarse una, o dos, o incluso tres… Pero, ¿qué pasará cuando Beto despierte? Descubre cómo esta tierna historia sobre la amistad y el perdón hará reír a niños y adultos por igual.",
-      product_type: "Digital",
-      price: 499.99,
-      stock: 20,
-      amount_pages: 320,
-      discount: 10,
-      categories: [1],
-      authors: [1],
-      topics: [1]
-    },
-    {
-      id: 2,
-      product_name: "El Principito",
-      product_description: "Una historia poética y filosófica que aborda temas como el amor, la amistad, la soledad y el sentido de la vida. El protagonista, un pequeño príncipe que vive en un asteroide, viaja por diferentes planetas y aprende valiosas lecciones sobre la naturaleza humana.",
-      product_type: "Físico",
-      price: 299.99,
-      stock: 45,
-      amount_pages: 96,
-      discount: 0,
-      categories: [1],
-      authors: [2],
-      topics: [2],
-      cover_image: "https://i.pinimg.com/474x/75/fa/85/75fa852e19641a2046217b538fc144d1.jpg"
-    },
-    {
-      id: 3,
-      product_name: "Don Quijote de la Mancha",
-      product_description: "La obra maestra de la literatura española que narra las aventuras de Alonso Quijano, un hidalgo que enloquece por la lectura de libros de caballerías y decide convertirse en caballero andante.",
-      product_type: "Físico",
-      price: 450.00,
-      stock: 23,
-      amount_pages: 863,
-      discount: 15,
-      categories: [2],
-      authors: [3],
-      topics: [3]
-    },
-    {
-      id: 4,
-      product_name: "Cien Años de Soledad",
-      product_description: "La historia de la familia Buendía a lo largo de siete generaciones en el pueblo ficticio de Macondo. Una obra maestra del realismo mágico que explora temas como la soledad, el amor y el destino.",
-      product_type: "Digital",
-      price: 380.50,
-      stock: 12,
-      amount_pages: 471,
-      discount: 0,
-      categories: [3],
-      authors: [4],
-      topics: [4]
-    },
-    {
-      id: 5,
-      product_name: "Harry Potter y la Piedra Filosofal",
-      product_description: "La primera aventura del joven mago Harry Potter, quien descubre que es un mago y es invitado a asistir a la Escuela de Magia y Hechicería de Hogwarts.",
-      product_type: "Físico",
-      price: 520.00,
-      stock: 0,
-      amount_pages: 309,
-      discount: 0,
-      categories: [1],
-      authors: [5],
-      topics: [1]
-    },
-    {
-      id: 6,
-      product_name: "El Señor de los Anillos",
-      product_description: "Una épica historia de fantasía que sigue el viaje de Frodo Bolsón para destruir el Anillo Único y salvar a la Tierra Media de la oscuridad.",
-      product_type: "Físico",
-      price: 650.00,
-      stock: 8,
-      amount_pages: 1216,
-      discount: 20,
-      categories: [4],
-      authors: [6],
-      topics: [1]
-    },
-    {
-      id: 7,
-      product_name: "Matilda",
-      product_description: "La historia de Matilda, una niña extraordinariamente inteligente que descubre que tiene poderes telequinéticos y los usa para enfrentar a la cruel directora de su escuela.",
-      product_type: "Digital",
-      price: 350.00,
-      stock: 35,
-      amount_pages: 240,
-      discount: 0,
-      categories: [1],
-      authors: [7],
-      topics: [5]
-    },
-    {
-      id: 8,
-      product_name: "Charlie y la Fábrica de Chocolate",
-      product_description: "Charlie Bucket gana un tour por la misteriosa fábrica de chocolate de Willy Wonka, donde vive increíbles aventuras junto a otros niños.",
-      product_type: "Físico",
-      price: 420.00,
-      stock: 18,
-      amount_pages: 176,
-      discount: 10,
-      categories: [1],
-      authors: [7],
-      topics: [5]
+  // Store de productos
+  const {
+    products,
+    currentPage,
+    totalPages,
+    totalProducts,
+    limit,
+    isLoading,
+    error,
+    loadProducts,
+    refreshProducts,
+    goToPage,
+    changeLimit
+  } = useProductsInformation();
+
+  // Cargar productos al montar el componente
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  // Detectar si viene de una acción rápida para crear nuevo libro
+  useEffect(() => {
+    if (location.pathname === ROUTES.BOOKS_CREATE) {
+      setShowCreateModal(true);
     }
-  ];
+  }, [location.pathname]);
 
-
-
-  const handleViewBook = (book) => {
-    console.log('Ver libro:', book);
-    // Aquí se abriría un modal con detalles del libro
-  };
-
-  const handleEditBook = (book) => {
-    console.log('Editar libro:', book);
-    // Aquí se abriría un modal de edición
-  };
-
-  const handleDeleteBook = (book) => {
-    console.log('Eliminar libro:', book);
-    // Aquí se mostraría una confirmación de eliminación
-  };
-
-  // Objeto para nuevo libro
-  const newBook = {
-    id: null,
-    product_name: '',
-    product_description: '',
-    product_type: '',
-    price: 0,
-    stock: 0,
-    amount_pages: 0,
-    discount: 0,
-    categories: [],
-    authors: [],
-    topics: [],
-    cover_image: '',
-    additional_images: ['', '', '']
-  };
-
-  // Funciones para crear nuevo libro
-  const handleCreateBook = () => {
+  // Funciones para manejar productos
+  const handleCreateProduct = () => {
+    setModalMode('create');
+    setSelectedProduct(null);
     setShowCreateModal(true);
   };
 
-  const handleSaveNewBook = (bookData) => {
-    console.log('Nuevo libro creado:', bookData);
+  const handleViewProduct = async (product) => {
+    try {
+      setIsLoadingDetail(true);
+      setModalMode('view');
+      setSelectedProduct(product); // Mostrar datos básicos mientras carga
+      setShowCreateModal(true);
+      
+      // Obtener detalle completo del producto
+      const response = await getProductDetail(product.product_id);
+      if (response.status === true) {
+        setSelectedProduct(response.product);
+      }
+    } catch (error) {
+      console.error('Error loading product detail:', error);
+      // Mantener los datos básicos si falla la carga del detalle
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  };
+
+  const handleEditProduct = (product) => {
+    setModalMode('edit');
+    setSelectedProduct(product);
+    setShowCreateModal(true);
+  };
+
+  const handleSaveProduct = async (productData) => {
+    try {
+      if (modalMode === 'create') {
+        // TODO: Implementar creación de producto
+        console.log('Creating product:', productData);
+      } else {
+        // TODO: Implementar edición de producto
+        console.log('Editing product:', productData);
+      }
+      setShowCreateModal(false);
+      await refreshProducts();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Error al guardar el producto. Por favor intenta de nuevo.');
+    }
+  };
+
+  const handleCloseModal = () => {
     setShowCreateModal(false);
-    // Aquí se haría la llamada al API para crear el libro
+    setSelectedProduct(null);
+    setModalMode('view');
+  };
+
+  // Función para formatear fecha
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    };
+    return date.toLocaleDateString('es-ES', options);
+  };
+
+  // Función para renderizar estado
+  const renderStatus = (status) => {
+    if (status === 1) {
+      return (
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
+          Activo
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <div className="w-2 h-2 bg-red-400 rounded-full mr-1"></div>
+        Inactivo
+      </span>
+    );
   };
 
   return (
@@ -174,13 +142,23 @@ const Libros = () => {
           </p>
         </div>
         
-        <button 
-          onClick={handleCreateBook}
-          className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2"
-        >
-          <FiPlus className="w-5 h-5" />
-          <span>Nuevo Libro</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <button 
+            onClick={refreshProducts}
+            className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+            title="Actualizar"
+          >
+            <FiRefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+          
+          <button 
+            onClick={handleCreateProduct}
+            className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2"
+          >
+            <FiPlus className="w-5 h-5" />
+            <span>Nuevo Libro</span>
+          </button>
+        </div>
       </div>
 
       {/* Cards de métricas */}
@@ -193,7 +171,9 @@ const Libros = () => {
             </div>
             <div>
               <h3 className="font-cabin-semibold text-gray-800">Total Libros</h3>
-              <p className="text-2xl font-cabin-bold text-blue-600">1,234</p>
+              <p className="text-2xl font-cabin-bold text-blue-600">
+                {isLoading ? '...' : totalProducts}
+              </p>
               <p className="text-sm font-cabin-regular text-gray-500">En catálogo</p>
             </div>
           </div>
@@ -206,86 +186,218 @@ const Libros = () => {
               <FiBook className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Disponibles</h3>
-              <p className="text-2xl font-cabin-bold text-green-600">1,089</p>
-              <p className="text-sm font-cabin-regular text-gray-500">En stock</p>
+              <h3 className="font-cabin-semibold text-gray-800">Libros Activos</h3>
+              <p className="text-2xl font-cabin-bold text-green-600">
+                {isLoading ? '...' : products.filter(p => p.status === 1).length}
+              </p>
+              <p className="text-sm font-cabin-regular text-gray-500">Disponibles</p>
             </div>
           </div>
         </div>
         
-        {/* Card - Libros Agotados */}
+        {/* Card - Libros Físicos */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <FiBook className="w-6 h-6 text-red-600" />
+            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+              <FiBook className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Agotados</h3>
-              <p className="text-2xl font-cabin-bold text-red-600">145</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Sin stock</p>
+              <h3 className="font-cabin-semibold text-gray-800">Libros Físicos</h3>
+              <p className="text-2xl font-cabin-bold text-amber-600">
+                {isLoading ? '...' : products.filter(p => p.product_type === 'FISICO').length}
+              </p>
+              <p className="text-sm font-cabin-regular text-gray-500">En inventario</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filtros y Búsqueda */}
+      {/* Barra de búsqueda y filtros */}
       <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Búsqueda */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
           <div className="flex-1">
             <div className="relative">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Buscar libros..."
+                placeholder="Buscar libros por nombre, autor o categoría..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
               />
             </div>
           </div>
           
-          {/* Filtros */}
-          <div className="flex gap-3">
-            <select className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular">
-              <option value="all">Todas las categorías</option>
-              <option value="fantasia">Fantasía</option>
-              <option value="clasico">Clásico</option>
-              <option value="realismo-magico">Realismo Mágico</option>
-              <option value="fantasia-epica">Fantasía Épica</option>
-            </select>
-            
-            <select className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular">
-              <option value="all">Todos los estados</option>
-              <option value="disponible">Disponible</option>
-              <option value="stock-bajo">Stock Bajo</option>
-              <option value="agotado">Agotado</option>
-            </select>
+          <div className="flex items-center space-x-2">
+            <button className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+              <FiFilter className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Grid de Libros */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {books.map((book) => (
-          <BooksCard
-            key={book.id}
-            book={book}
-            onView={handleViewBook}
-            onEdit={handleEditBook}
-            onDelete={handleDeleteBook}
-          />
-        ))}
+      {/* Lista de libros */}
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600 font-cabin-medium">Cargando libros...</p>
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center">
+            <p className="text-red-600 font-cabin-medium">{error}</p>
+            <button 
+              onClick={refreshProducts}
+              className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="p-8 text-center">
+            <FiBook className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 font-cabin-medium">No hay libros disponibles</p>
+          </div>
+        ) : (
+          <>
+            {/* Tabla de libros */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
+                      Libro
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
+                      Precio
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
+                      Stock
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {products.map((product) => (
+                    <tr key={product.product_id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-12 w-12">
+                            <img
+                              src={product.main_image_url || placeholderImage}
+                              alt={product.product_name}
+                              className="h-12 w-12 rounded-lg object-cover shadow-sm"
+                              onError={(e) => {
+                                e.target.src = placeholderImage;
+                              }}
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-cabin-semibold text-gray-900">
+                              {product.product_name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {product.category_list?.map(cat => cat.category_name).join(', ') || 'Sin categoría'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          product.product_type === 'FISICO' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {product.product_type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          ${product.price_offer?.toFixed(2) || product.price?.toFixed(2)}
+                        </div>
+                        {product.discount > 0 && (
+                          <div className="text-sm text-red-600">
+                            -{product.discount}% descuento
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {renderStatus(product.status)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {product.stock || 0} unidades
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {product.stock > 10 ? 'Disponible' : product.stock > 0 ? 'Stock bajo' : 'Agotado'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleViewProduct(product)}
+                            className="text-amber-600 hover:text-amber-900 p-1"
+                            title="Ver detalles"
+                          >
+                            <FiEye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEditProduct(product)}
+                            className="text-blue-600 hover:text-blue-900 p-1"
+                            title="Editar"
+                          >
+                            <FiEdit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => console.log('Delete product:', product.product_id)}
+                            className="text-red-600 hover:text-red-900 p-1"
+                            title="Eliminar"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginación */}
+            <div className="px-6 py-4 border-t border-gray-200">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalProducts}
+                itemsPerPage={limit}
+                onPageChange={goToPage}
+                onItemsPerPageChange={changeLimit}
+                itemsPerPageOptions={[8, 16, 24, 32]}
+              />
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Modal para crear nuevo libro */}
-      <BookInformation 
-        book={newBook}
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onEdit={handleSaveNewBook}
-        isEditing={true}
-      />
+      {/* Modal de información del libro */}
+      {showCreateModal && (
+        <BookInformation
+          book={selectedProduct}
+          isOpen={showCreateModal}
+          onClose={handleCloseModal}
+          mode={modalMode}
+          onSave={handleSaveProduct}
+          isLoadingDetail={isLoadingDetail}
+        />
+      )}
     </div>
   );
 };

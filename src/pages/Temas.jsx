@@ -3,34 +3,34 @@ import { FiGrid, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiBook, Fi
 import CategoryInformation from '../components/modals/CategoryInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
-import { useCategoriesInformation } from '../store/useCategoriesInformation';
+import { useTopicsInformation } from '../store/useTopicsInformation';
 
-const Categorias = () => {
+const Temas = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedTopic, setSelectedTopic] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('view');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [topicToDelete, setTopicToDelete] = useState(null);
 
   const {
-    categories,
+    topics,
     currentPage,
     totalPages,
-    totalCategories,
+    totalTopics,
     limit,
     isLoading,
     error,
-    loadCategories,
-    refreshCategories,
+    loadTopics,
+    refreshTopics,
     goToPage,
     changeLimit,
-    getPaginatedCategories
-  } = useCategoriesInformation();
+    getPaginatedTopics
+  } = useTopicsInformation();
 
   useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
+    loadTopics();
+  }, [loadTopics]);
 
   const getStatusColor = (status) => {
     return status === true 
@@ -48,63 +48,62 @@ const Categorias = () => {
     return date.toLocaleDateString('es-ES', options);
   };
 
-  const handleViewCategory = (category) => {
-    setSelectedCategory(category);
+  const handleViewTopic = (topic) => {
+    setSelectedTopic(topic);
     setModalMode('view');
     setIsModalOpen(true);
   };
 
-  const handleCreateCategory = () => {
-    setSelectedCategory(null);
+  const handleCreateTopic = () => {
+    setSelectedTopic(null);
     setModalMode('create');
     setIsModalOpen(true);
   };
 
-  const handleEditCategory = (category) => {
-    setSelectedCategory(category);
+  const handleEditTopic = (topic) => {
+    setSelectedTopic(topic);
     setModalMode('edit');
     setIsModalOpen(true);
   };
 
-  const handleSaveCategory = (categoryData) => {
+  const handleSaveTopic = (topicData) => {
     if (modalMode === 'create') {
-      console.log('Nueva categoría creada:', categoryData);
+      console.log('Nuevo tema creado:', topicData);
     } else {
-      console.log('Categoría actualizada:', categoryData);
+      console.log('Tema actualizado:', topicData);
     }
     setIsModalOpen(false);
-    refreshCategories();
+    refreshTopics();
   };
 
-  const handleDeleteCategory = (category) => {
-    setCategoryToDelete(category);
+  const handleDeleteTopic = (topic) => {
+    setTopicToDelete(topic);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDeleteCategory = () => {
-    if (categoryToDelete) {
-      console.log('Categoría eliminada:', categoryToDelete);
+  const confirmDeleteTopic = () => {
+    if (topicToDelete) {
+      console.log('Tema eliminado:', topicToDelete);
     }
     setIsDeleteModalOpen(false);
-    setCategoryToDelete(null);
-    refreshCategories();
+    setTopicToDelete(null);
+    refreshTopics();
   };
 
-  const cancelDeleteCategory = () => {
+  const cancelDeleteTopic = () => {
     setIsDeleteModalOpen(false);
-    setCategoryToDelete(null);
+    setTopicToDelete(null);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedCategory(null);
+    setSelectedTopic(null);
     setModalMode('view');
   };
 
-  // Filtrar categorías basado en el término de búsqueda
-  const filteredCategories = getPaginatedCategories().filter(category =>
-    category.category_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.category_description.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filtrar temas basado en el término de búsqueda
+  const filteredTopics = getPaginatedTopics().filter(topic =>
+    topic.topic_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -113,16 +112,16 @@ const Categorias = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-cabin-bold text-gray-800 mb-2">
-            Gestión de Categorías
+            Gestión de Temas
           </h1>
           <p className="text-gray-600 font-cabin-regular">
-            Administra las categorías de libros del sistema
+            Administra los temas de libros del sistema
           </p>
         </div>
         
         <div className="flex items-center space-x-3">
           <button
-            onClick={refreshCategories}
+            onClick={refreshTopics}
             className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
             title="Actualizar"
           >
@@ -130,59 +129,59 @@ const Categorias = () => {
           </button>
 
           <button 
-            onClick={handleCreateCategory}
+            onClick={handleCreateTopic}
             className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2"
           >
             <FiPlus className="w-5 h-5" />
-            <span>Nueva Categoría</span>
+            <span>Nuevo Tema</span>
           </button>
         </div>
       </div>
 
       {/* Cards de métricas */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Card - Total de Categorías */}
+        {/* Card - Total de Temas */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <FiGrid className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Total de Categorías</h3>
+              <h3 className="font-cabin-semibold text-gray-800">Total de Temas</h3>
               <p className="text-2xl font-cabin-bold text-blue-600">
-                {isLoading ? '...' : totalCategories}
+                {isLoading ? '...' : totalTopics}
               </p>
               <p className="text-sm font-cabin-regular text-gray-500">En el sistema</p>
             </div>
           </div>
         </div>
         
-        {/* Card - Categorías Activas */}
+        {/* Card - Temas Activos */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <FiGrid className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Categorías Activas</h3>
+              <h3 className="font-cabin-semibold text-gray-800">Temas Activos</h3>
               <p className="text-2xl font-cabin-bold text-green-600">
-                {isLoading ? '...' : categories.filter(cat => cat.status === true).length}
+                {isLoading ? '...' : topics.filter(topic => topic.status === true).length}
               </p>
               <p className="text-sm font-cabin-regular text-gray-500">Disponibles</p>
             </div>
           </div>
         </div>
         
-        {/* Card - Categorías Inactivas */}
+        {/* Card - Temas Inactivos */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
               <FiGrid className="w-6 h-6 text-red-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Categorías Inactivas</h3>
+              <h3 className="font-cabin-semibold text-gray-800">Temas Inactivos</h3>
               <p className="text-2xl font-cabin-bold text-red-600">
-                {isLoading ? '...' : categories.filter(cat => cat.status === false).length}
+                {isLoading ? '...' : topics.filter(topic => topic.status === false).length}
               </p>
               <p className="text-sm font-cabin-regular text-gray-500">No disponibles</p>
             </div>
@@ -199,7 +198,7 @@ const Categorias = () => {
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Buscar categorías por nombre o descripción..."
+                placeholder="Buscar temas por nombre..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
@@ -211,35 +210,35 @@ const Categorias = () => {
           <div className="flex gap-3">
             <select className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular">
               <option value="all">Todos los estados</option>
-              <option value="activo">Activas</option>
-              <option value="inactivo">Inactivas</option>
+              <option value="activo">Activos</option>
+              <option value="inactivo">Inactivos</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Tabla de Categorías */}
+      {/* Tabla de Temas */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600 font-cabin-medium">Cargando categorías...</p>
+            <p className="mt-4 text-gray-600 font-cabin-medium">Cargando temas...</p>
           </div>
         ) : error ? (
           <div className="p-8 text-center">
             <p className="text-red-600 font-cabin-medium">{error}</p>
             <button
-              onClick={refreshCategories}
+              onClick={refreshTopics}
               className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
             >
               Reintentar
             </button>
           </div>
-        ) : filteredCategories.length === 0 ? (
+        ) : filteredTopics.length === 0 ? (
           <div className="p-8 text-center">
             <FiGrid className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 font-cabin-medium">
-              {searchTerm ? 'No se encontraron categorías con ese término' : 'No hay categorías disponibles'}
+              {searchTerm ? 'No se encontraron temas con ese término' : 'No hay temas disponibles'}
             </p>
           </div>
         ) : (
@@ -255,9 +254,6 @@ const Categorias = () => {
                       Nombre
                     </th>
                     <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                      Descripción
-                    </th>
-                    <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
                       Estado
                     </th>
                     <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
@@ -269,51 +265,46 @@ const Categorias = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCategories.map((category) => (
-                    <tr key={category.category_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  {filteredTopics.map((topic) => (
+                    <tr key={topic.topic_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6">
                         <span className="font-cabin-semibold text-gray-800">
-                          #{category.category_id}
+                          #{topic.topic_id}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         <div className="font-cabin-semibold text-gray-800">
-                          {category.category_name}
+                          {topic.topic_name}
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="font-cabin-regular text-gray-700">
-                          {category.category_description}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-cabin-medium border ${getStatusColor(category.status)}`}>
-                          {category.status ? 'Activo' : 'Inactivo'}
+                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-cabin-medium border ${getStatusColor(topic.status)}`}>
+                          {topic.status ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         <span className="font-cabin-regular text-gray-700">
-                          {formatDate(category.created_at)}
+                          {formatDate(topic.created_at)}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
                           <button 
-                            onClick={() => handleViewCategory(category)}
+                            onClick={() => handleViewTopic(topic)}
                             className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Ver detalles"
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => handleEditCategory(category)}
+                            onClick={() => handleEditTopic(topic)}
                             className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                             title="Editar"
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => handleDeleteCategory(category)}
+                            onClick={() => handleDeleteTopic(topic)}
                             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Eliminar"
                           >
@@ -332,7 +323,7 @@ const Categorias = () => {
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                totalItems={totalCategories}
+                totalItems={totalTopics}
                 itemsPerPage={limit}
                 onPageChange={goToPage}
                 onItemsPerPageChange={changeLimit}
@@ -343,22 +334,22 @@ const Categorias = () => {
         )}
       </div>
 
-      {/* Modal de Información de la Categoría */}
+      {/* Modal de Información del Tema */}
       <CategoryInformation 
-        category={selectedCategory}
+        category={selectedTopic}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         mode={modalMode}
-        onSave={handleSaveCategory}
+        onSave={handleSaveTopic}
       />
 
       {/* Modal de Confirmación de Eliminación */}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
-        title="Eliminar Categoría"
-        description={`¿Estás seguro de que quieres eliminar la categoría "${categoryToDelete?.category_name}"? Esta acción no se puede deshacer.`}
-        onCancel={cancelDeleteCategory}
-        onAccept={confirmDeleteCategory}
+        title="Eliminar Tema"
+        description={`¿Estás seguro de que quieres eliminar el tema "${topicToDelete?.topic_name}"? Esta acción no se puede deshacer.`}
+        onCancel={cancelDeleteTopic}
+        onAccept={confirmDeleteTopic}
         cancelText="Cancelar"
         acceptText="Eliminar"
         type="danger"
@@ -367,4 +358,4 @@ const Categorias = () => {
   );
 };
 
-export default Categorias; 
+export default Temas;

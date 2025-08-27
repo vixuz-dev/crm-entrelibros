@@ -1,7 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiShoppingCart, FiBook, FiUser, FiPackage, FiCreditCard } from 'react-icons/fi';
+import { ROUTES } from '../../utils/routes';
 
 const QuickActions = () => {
+  const navigate = useNavigate();
+  
   const actions = [
     {
       id: 'new-customer',
@@ -18,25 +22,41 @@ const QuickActions = () => {
       description: 'Añadir nuevo libro al catálogo'
     },
     {
+      id: 'new-order',
+      label: 'Nuevo Pedido',
+      icon: FiShoppingCart,
+      color: 'bg-orange-300 hover:bg-orange-400',
+      description: 'Crear nuevo pedido'
+    },
+    {
       id: 'manage-inventory',
       label: 'Inventario',
       icon: FiPackage,
       color: 'bg-amber-300 hover:bg-amber-400',
       description: 'Gestionar inventario y stock'
-    },
-    {
-      id: 'memberships',
-      label: 'Membresías',
-      icon: FiCreditCard,
-      color: 'bg-purple-300 hover:bg-purple-400',
-      description: 'Administrar membresías'
     }
   ];
 
   const handleAction = (actionId) => {
-    // Aquí se manejarían las acciones específicas
     console.log(`Acción ejecutada: ${actionId}`);
-    // En el futuro, aquí irían las navegaciones o modales
+    
+    // Navegar a las secciones correspondientes según la acción
+    switch (actionId) {
+      case 'new-customer':
+        navigate(ROUTES.CUSTOMERS_CREATE);
+        break;
+      case 'add-product':
+        navigate(ROUTES.BOOKS_CREATE);
+        break;
+      case 'new-order':
+        navigate(ROUTES.ORDERS_CREATE);
+        break;
+      case 'manage-inventory':
+        navigate(ROUTES.INVENTORY);
+        break;
+      default:
+        console.log('Acción no reconocida:', actionId);
+    }
   };
 
   return (

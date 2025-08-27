@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FiUsers, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
 import ClientInformation from '../components/modals/ClientInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
+import { ROUTES } from '../utils/routes';
 
 const Clientes = () => {
   // Datos simulados de clientes con todos los campos
@@ -93,11 +95,20 @@ const Clientes = () => {
     }
   ];
 
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('view');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Detectar si viene de una acción rápida para crear nuevo cliente
+  useEffect(() => {
+    if (location.pathname === ROUTES.CUSTOMERS_CREATE) {
+      setModalMode('create');
+      setIsModalOpen(true);
+    }
+  }, [location.pathname]);
   const [clientToDelete, setClientToDelete] = useState(null);
   const [clientsList, setClientsList] = useState(clients);
 

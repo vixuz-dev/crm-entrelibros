@@ -7,111 +7,80 @@ import Usuarios from './pages/Usuarios';
 import Clientes from './pages/Clientes';
 import Libros from './pages/Libros';
 import Categorias from './pages/Categorias';
+import Temas from './pages/Temas';
+import Autores from './pages/Autores';
 import Membresias from './pages/Membresias';
 import Pedidos from './pages/Pedidos';
 import DetallePedido from './pages/DetallePedido';
+import Login from './pages/Login';
 import { ROUTES } from './utils/routes';
+import { useAuth } from './hooks/useAuth';
 import "./index.css";
 
-// Componente Dashboard (página principal)
-const Dashboard = () => {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-cabin-bold text-gray-800 mb-2">
-          Bienvenido al CRM de EntreLibros
-        </h1>
-        <p className="text-gray-600 font-cabin-regular">
-          Sistema de administración para tu e-commerce de libros infantiles
-        </p>
-      </div>
-      
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="card">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <span className="text-amber-600 text-xl">📚</span>
-            </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Total Libros</h3>
-              <p className="text-2xl font-cabin-bold text-amber-600">1,234</p>
-              <p className="text-sm font-cabin-regular text-gray-500">En catálogo</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-blue-600 text-xl">👥</span>
-            </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Usuarios</h3>
-              <p className="text-2xl font-cabin-bold text-blue-600">567</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Registrados</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-green-600 text-xl">📊</span>
-            </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Categorías</h3>
-              <p className="text-2xl font-cabin-bold text-green-600">89</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Activas</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <span className="text-purple-600 text-xl">💎</span>
-            </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Membresías</h3>
-              <p className="text-2xl font-cabin-bold text-purple-600">234</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Activas</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+
 
 function App() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F9F5F1] via-white to-[#F5F0EB] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C79E7E] mx-auto mb-4"></div>
+          <p className="text-[#666666] font-cabin-regular">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Router>
-      <Layout>
-                        <Routes>
-                  {/* Rutas principales */}
-                  <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
-                  <Route path={ROUTES.PANEL} element={<Panel />} />
-                  
-                  {/* Rutas de gestión */}
-                  <Route path={ROUTES.USERS} element={<Usuarios />} />
-                  <Route path={ROUTES.BOOKS} element={<Libros />} />
-                                        <Route path={ROUTES.CATEGORIES} element={<Categorias />} />
-                      <Route path={ROUTES.MEMBERSHIPS} element={<Membresias />} />
-                                            <Route path={ROUTES.ORDERS} element={<Pedidos />} />
-                      <Route path="/pedidos/detalle/:id" element={<DetallePedido />} />
-                      <Route path={ROUTES.CUSTOMERS} element={<Clientes />} />
-                  <Route path={ROUTES.INVENTORY} element={<PlaceholderPage />} />
-                  <Route path={ROUTES.REPORTS} element={<PlaceholderPage />} />
-                  <Route path={ROUTES.SETTINGS} element={<PlaceholderPage />} />
-                  <Route path={ROUTES.NOTIFICATIONS} element={<PlaceholderPage />} />
-                  <Route path={ROUTES.HELP} element={<PlaceholderPage />} />
-                  
-                  {/* Redirección por defecto */}
-                  <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-                </Routes>
-       </Layout>
-     </Router>
-   );
- }
+      <Routes>
+        {/* Ruta pública - Login */}
+        <Route path={ROUTES.LOGIN} element={
+          isAuthenticated ? <Navigate to={ROUTES.PANEL} replace /> : <Login />
+        } />
+        
+        {/* Rutas protegidas */}
+        <Route path="*" element={
+          isAuthenticated ? (
+            <Layout>
+              <Routes>
+                {/* Rutas principales */}
+                <Route path={ROUTES.PANEL} element={<Panel />} />
+                
+                {/* Rutas de gestión */}
+                <Route path={ROUTES.USERS} element={<Usuarios />} />
+                <Route path={ROUTES.BOOKS} element={<Libros />} />
+                <Route path={ROUTES.BOOKS_CREATE} element={<Libros />} />
+                <Route path={ROUTES.BOOKS_LIST} element={<Libros />} />
+                <Route path={ROUTES.BOOKS_CATEGORIES} element={<Categorias />} />
+                <Route path={ROUTES.BOOKS_AUTHORS} element={<Autores />} />
+                <Route path={ROUTES.CATEGORIES} element={<Categorias />} />
+                <Route path={ROUTES.TOPICS} element={<Temas />} />
+                <Route path={ROUTES.MEMBERSHIPS} element={<Membresias />} />
+                <Route path={ROUTES.ORDERS} element={<Pedidos />} />
+                <Route path={ROUTES.ORDERS_CREATE} element={<Pedidos />} />
+                <Route path="/pedidos/detalle/:id" element={<DetallePedido />} />
+                <Route path={ROUTES.CUSTOMERS} element={<Clientes />} />
+                <Route path={ROUTES.CUSTOMERS_CREATE} element={<Clientes />} />
+                <Route path={ROUTES.INVENTORY} element={<PlaceholderPage />} />
+                <Route path={ROUTES.REPORTS} element={<PlaceholderPage />} />
+                <Route path={ROUTES.SETTINGS} element={<PlaceholderPage />} />
+                <Route path={ROUTES.NOTIFICATIONS} element={<PlaceholderPage />} />
+                <Route path={ROUTES.HELP} element={<PlaceholderPage />} />
+                
+                {/* Redirección por defecto */}
+                <Route path="*" element={<Navigate to={ROUTES.PANEL} replace />} />
+              </Routes>
+            </Layout>
+          ) : (
+            <Navigate to={ROUTES.LOGIN} replace />
+          )
+        } />
+      </Routes>
+    </Router>
+  );
+}
 
 export default App;

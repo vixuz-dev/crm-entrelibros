@@ -9,7 +9,6 @@ export const ROUTES = {
   RESET_PASSWORD: "/restablecer-contrasena",
   
   // Rutas principales del dashboard
-  DASHBOARD: "/",
   PANEL: "/panel",
   
   // Rutas de gestión de usuarios
@@ -24,6 +23,7 @@ export const ROUTES = {
   BOOKS_CREATE: "/libros/crear",
   BOOKS_EDIT: "/libros/editar/:id",
   BOOKS_VIEW: "/libros/ver/:id",
+  BOOKS_LIST: "/libros/listado",
   BOOKS_CATEGORIES: "/libros/categorias",
   BOOKS_AUTHORS: "/libros/autores",
   BOOKS_PUBLISHERS: "/libros/editoriales",
@@ -33,6 +33,12 @@ export const ROUTES = {
   CATEGORIES_CREATE: "/categorias/crear",
   CATEGORIES_EDIT: "/categorias/editar/:id",
   CATEGORIES_VIEW: "/categorias/ver/:id",
+  
+  // Rutas de temas
+  TOPICS: "/temas",
+  TOPICS_CREATE: "/temas/crear",
+  TOPICS_EDIT: "/temas/editar/:id",
+  TOPICS_VIEW: "/temas/ver/:id",
   
   // Rutas de membresías
   MEMBERSHIPS: "/membresias",
@@ -117,7 +123,11 @@ export const getPageTitle = (pathname) => {
     [ROUTES.PANEL]: "Panel",
     [ROUTES.USERS]: "Usuarios",
     [ROUTES.BOOKS]: "Libros",
+    [ROUTES.BOOKS_LIST]: "Listado de Libros",
+    [ROUTES.BOOKS_CATEGORIES]: "Categorías",
+    [ROUTES.BOOKS_AUTHORS]: "Autores",
     [ROUTES.CATEGORIES]: "Categorías",
+    [ROUTES.TOPICS]: "Temas",
     [ROUTES.MEMBERSHIPS]: "Membresías",
     [ROUTES.ORDERS]: "Pedidos",
     [ROUTES.CUSTOMERS]: "Clientes",

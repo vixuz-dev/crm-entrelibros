@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   FiPackage, 
   FiPlus, 
@@ -21,8 +22,10 @@ import OrderInformation from '../components/modals/OrderInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import OrderChart from '../components/charts/OrderChart';
 import CustomDropdown from '../components/ui/CustomDropdown';
+import { ROUTES } from '../utils/routes';
 
 const Pedidos = () => {
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +35,14 @@ const Pedidos = () => {
   const [selectedStatus, setSelectedStatus] = useState('todos');
   const [selectedDateRange, setSelectedDateRange] = useState('todos');
   const [selectedUrgency, setSelectedUrgency] = useState('todos');
+
+  // Detectar si viene de una acción rápida para crear nuevo pedido
+  useEffect(() => {
+    if (location.pathname === ROUTES.ORDERS_CREATE) {
+      setModalMode('create');
+      setIsModalOpen(true);
+    }
+  }, [location.pathname]);
 
   // Datos simulados de pedidos
   const orders = [
