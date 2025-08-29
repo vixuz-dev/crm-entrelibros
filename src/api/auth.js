@@ -1,5 +1,7 @@
 import axios from '../utils/axiosConfig';
 import { setSessionToken } from '../utils/sessionCookie';
+import { useCatalogStore } from '../store/useCatalogStore';
+import { showLoginSuccess, showLoginError, showLogoutSuccess } from '../utils/notifications';
 
 // Base URL for the API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -34,11 +36,23 @@ export const login = async (credentials) => {
     // Guardar solo el token en SessionCookie
     setSessionToken(token, null, null);
     
-    console.log('Login successful:', personal_information.email);
+    // Mostrar notificación de éxito
+    showLoginSuccess(personal_information.email);
+    
+    
+    
+    // Cargar todos los catálogos después del login exitoso
+    try {
+      const catalogStore = useCatalogStore.getState();
+      await catalogStore.loadAllCatalogs();
+
+    } catch (catalogError) {
+      console.warn('Error cargando catálogos después del login:', catalogError);
+      // No fallamos el login por errores en catálogos
+    }
     
     return response.data;
   } catch (error) {
-    console.error('Login error:', error);
     
     // Manejar errores específicos del backend
     if (error.response) {
@@ -62,6 +76,31 @@ export const login = async (credentials) => {
       // Otros errores
       throw new Error(error.message || 'Error inesperado');
     }
+  }
+};
+
+/**
+ * Logout service
+ * @returns {Promise} Promise that resolves when logout is complete
+ */
+export const logout = async () => {
+  try {
+    // Limpiar catálogos
+    const catalogStore = useCatalogStore.getState();
+    catalogStore.clearCatalogs();
+    
+    // Remover token de la sesión
+    setSessionToken(null, null, null);
+    
+    // Mostrar notificación de éxito
+    showLogoutSuccess();
+    
+    
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw new Error('Error durante el logout');
   }
 };
 

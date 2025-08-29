@@ -17,12 +17,12 @@ const BooksCard = ({ book, onView, onEdit, onDelete }) => {
   // Funciones para el modal de confirmación de eliminación
   const handleDeleteCancel = () => {
     setShowDeleteModal(false);
-    console.log('Eliminación cancelada para el libro:', book.product_name);
+    
   };
 
   const handleDeleteAccept = () => {
     setShowDeleteModal(false);
-    console.log('Libro eliminado:', book.product_name);
+    
     // Aquí se llamará a onDelete cuando esté implementado
     onDelete(book);
   };

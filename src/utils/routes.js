@@ -53,6 +53,7 @@ export const ROUTES = {
   ORDERS_EDIT: "/pedidos/editar/:id",
   ORDERS_VIEW: "/pedidos/ver/:id",
   ORDERS_HISTORY: "/pedidos/historial",
+  ORDERS_INFORMATION: "/pedidos/informacion",
   
   // Rutas de clientes
   CUSTOMERS: "/clientes",

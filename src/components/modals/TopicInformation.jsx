@@ -1,35 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { FiX, FiGrid, FiSave, FiEdit3 } from 'react-icons/fi';
 
-const CategoryInformation = ({ 
-  category, 
+const TopicInformation = ({ 
+  topic, 
   isOpen, 
   onClose, 
   mode = 'view', 
   onSave 
 }) => {
   const [formData, setFormData] = useState({
-    category_name: '',
-    category_description: ''
+    topic_name: ''
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form when modal opens/closes or category changes
+  // Reset form when modal opens/closes or topic changes
   useEffect(() => {
     if (isOpen) {
       if (mode === 'create') {
-        setFormData({ category_name: '', category_description: '' });
+        setFormData({ topic_name: '' });
         setErrors({});
-      } else if (category) {
+      } else if (topic) {
         setFormData({
-          category_name: category.category_name || '',
-          category_description: category.category_description || ''
+          topic_name: topic.topic_name || ''
         });
         setErrors({});
       }
     }
-  }, [isOpen, category, mode]);
+  }, [isOpen, topic, mode]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -50,20 +48,12 @@ const CategoryInformation = ({
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.category_name.trim()) {
-      newErrors.category_name = 'El nombre de la categoría es requerido';
-    } else if (formData.category_name.trim().length < 2) {
-      newErrors.category_name = 'El nombre de la categoría debe tener al menos 2 caracteres';
-    } else if (formData.category_name.trim().length > 100) {
-      newErrors.category_name = 'El nombre de la categoría no puede exceder 100 caracteres';
-    }
-
-    if (!formData.category_description.trim()) {
-      newErrors.category_description = 'La descripción de la categoría es requerida';
-    } else if (formData.category_description.trim().length < 10) {
-      newErrors.category_description = 'La descripción debe tener al menos 10 caracteres';
-    } else if (formData.category_description.trim().length > 500) {
-      newErrors.category_description = 'La descripción no puede exceder 500 caracteres';
+    if (!formData.topic_name.trim()) {
+      newErrors.topic_name = 'El nombre del tema es requerido';
+    } else if (formData.topic_name.trim().length < 2) {
+      newErrors.topic_name = 'El nombre del tema debe tener al menos 2 caracteres';
+    } else if (formData.topic_name.trim().length > 100) {
+      newErrors.topic_name = 'El nombre del tema no puede exceder 100 caracteres';
     }
 
     setErrors(newErrors);
@@ -82,7 +72,7 @@ const CategoryInformation = ({
       await onSave(formData);
       onClose();
     } catch (error) {
-      console.error('Error saving category:', error);
+      console.error('Error saving topic:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -111,14 +101,14 @@ const CategoryInformation = ({
             </div>
             <div>
               <h2 className="text-xl font-cabin-bold text-gray-800">
-                {isCreateMode && 'Nueva Categoría'}
-                {isEditMode && 'Editar Categoría'}
-                {isViewMode && 'Información de la Categoría'}
+                {isCreateMode && 'Nuevo Tema'}
+                {isEditMode && 'Editar Tema'}
+                {isViewMode && 'Información del Tema'}
               </h2>
               <p className="text-sm text-gray-600 font-cabin-regular">
-                {isCreateMode && 'Agregar una nueva categoría al sistema'}
-                {isEditMode && 'Modificar información de la categoría'}
-                {isViewMode && 'Detalles de la categoría'}
+                {isCreateMode && 'Agregar un nuevo tema al sistema'}
+                {isEditMode && 'Modificar información del tema'}
+                {isViewMode && 'Detalles del tema'}
               </p>
             </div>
           </div>
@@ -138,55 +128,46 @@ const CategoryInformation = ({
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                  Nombre de la Categoría
+                  Nombre del Tema
                 </label>
                 <p className="text-lg font-cabin-semibold text-gray-800">
-                  {category?.category_name || 'N/A'}
+                  {topic?.topic_name || 'N/A'}
                 </p>
               </div>
               
-              <div>
-                <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                  Descripción
-                </label>
-                <p className="text-lg font-cabin-semibold text-gray-800">
-                  {category?.category_description || 'N/A'}
-                </p>
-              </div>
-              
-              {category?.category_id && (
+              {topic?.topic_id && (
                 <div>
                   <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                    ID de la Categoría
+                    ID del Tema
                   </label>
                   <p className="text-lg font-cabin-semibold text-gray-800">
-                    #{category.category_id}
+                    #{topic.topic_id}
                   </p>
                 </div>
               )}
               
-              {category?.status !== undefined && (
+              {topic?.status !== undefined && (
                 <div>
                   <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
                     Estado
                   </label>
                   <span className={`inline-flex px-3 py-1 rounded-full text-sm font-cabin-medium border ${
-                    category.status === true 
+                    topic.status === true || topic.status === 1
                       ? 'bg-green-100 text-green-800 border-green-200' 
                       : 'bg-red-100 text-red-800 border-red-200'
                   }`}>
-                    {category.status === true ? 'Activo' : 'Inactivo'}
+                    {topic.status === true || topic.status === 1 ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
               )}
               
-              {category?.created_at && (
+              {topic?.created_at && (
                 <div>
                   <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
                     Fecha de Creación
                   </label>
                   <p className="text-lg font-cabin-semibold text-gray-800">
-                    {new Date(category.created_at).toLocaleDateString('es-ES', {
+                    {new Date(topic.created_at).toLocaleDateString('es-ES', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
@@ -199,51 +180,26 @@ const CategoryInformation = ({
             // Edit/Create Mode
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="category_name" className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                  Nombre de la Categoría *
+                <label htmlFor="topic_name" className="text-sm font-cabin-medium text-gray-600 mb-2 block">
+                  Nombre del Tema *
                 </label>
                 <input
                   type="text"
-                  id="category_name"
-                  name="category_name"
-                  value={formData.category_name}
+                  id="topic_name"
+                  name="topic_name"
+                  value={formData.topic_name}
                   onChange={handleInputChange}
-                  placeholder="Ingresa el nombre de la categoría"
+                  placeholder="Ingresa el nombre del tema"
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular transition-colors ${
-                    errors.category_name 
+                    errors.topic_name 
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                   disabled={isSubmitting}
                 />
-                {errors.category_name && (
+                {errors.topic_name && (
                   <p className="text-red-500 text-sm font-cabin-regular mt-1">
-                    {errors.category_name}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="category_description" className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                  Descripción *
-                </label>
-                <textarea
-                  id="category_description"
-                  name="category_description"
-                  value={formData.category_description}
-                  onChange={handleInputChange}
-                  placeholder="Ingresa la descripción de la categoría"
-                  rows={3}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular transition-colors resize-none ${
-                    errors.category_description 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                  disabled={isSubmitting}
-                />
-                {errors.category_description && (
-                  <p className="text-red-500 text-sm font-cabin-regular mt-1">
-                    {errors.category_description}
+                    {errors.topic_name}
                   </p>
                 )}
               </div>
@@ -271,7 +227,7 @@ const CategoryInformation = ({
                   ) : (
                     <>
                       {isCreateMode ? <FiSave className="w-4 h-4" /> : <FiEdit3 className="w-4 h-4" />}
-                      <span>{isCreateMode ? 'Crear Categoría' : 'Guardar Cambios'}</span>
+                      <span>{isCreateMode ? 'Crear Tema' : 'Guardar Cambios'}</span>
                     </>
                   )}
                 </button>
@@ -284,4 +240,4 @@ const CategoryInformation = ({
   );
 };
 
-export default CategoryInformation; 
+export default TopicInformation;

@@ -38,7 +38,7 @@ const QuickActions = () => {
   ];
 
   const handleAction = (actionId) => {
-    console.log(`Acción ejecutada: ${actionId}`);
+    
     
     // Navegar a las secciones correspondientes según la acción
     switch (actionId) {
@@ -55,7 +55,7 @@ const QuickActions = () => {
         navigate(ROUTES.INVENTORY);
         break;
       default:
-        console.log('Acción no reconocida:', actionId);
+  
     }
   };
 

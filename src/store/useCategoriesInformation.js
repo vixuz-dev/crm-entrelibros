@@ -8,6 +8,8 @@ export const useCategoriesInformation = create(
       currentPage: 1,
       totalPages: 0,
       totalCategories: 0,
+      totalAvailableCategories: 0,
+      totalDisabledCategories: 0,
       limit: 8,
       isLoading: false,
       error: null,
@@ -35,10 +37,12 @@ export const useCategoriesInformation = create(
               categories: categories,
               currentPage: 1,
               totalPages: totalPages,
-              totalCategories: totalCategories,
+              totalCategories: response.totalCategories || totalCategories,
+              totalAvailableCategories: response.totalAvailableCategories || 0,
+              totalDisabledCategories: response.totalDisabledCategories || 0,
               isLoading: false
             });
-            console.log('Categories loaded successfully:', response);
+    
           } else {
             set({
               error: response.status_Message || 'Error al cargar categorías',
@@ -83,6 +87,8 @@ export const useCategoriesInformation = create(
           currentPage: 1,
           totalPages: 0,
           totalCategories: 0,
+          totalAvailableCategories: 0,
+          totalDisabledCategories: 0,
           limit: 8,
           isLoading: false,
           error: null

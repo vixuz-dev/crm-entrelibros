@@ -77,11 +77,7 @@ const Login = () => {
       
       // Verificar el status de la respuesta
       if (response && response.status === true) {
-        // Login exitoso
-        console.log('Login exitoso:', response.personal_information.email);
-        console.log('Token recibido:', response.token);
-        console.log('Expiración:', response.expiration_date);
-        
+            
         // Guardar información del administrador en el store
         setAdminInfoFromLogin(response);
         
@@ -90,7 +86,6 @@ const Login = () => {
         
         // Redirigir al Panel
         navigate(ROUTES.PANEL);
-        console.log('Redirección exitosa al Panel');
       } else {
         // Login fallido - el backend devolvió status: false
         throw new Error(response?.status_Message || 'Credenciales incorrectas');

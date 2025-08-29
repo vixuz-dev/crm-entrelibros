@@ -16,7 +16,7 @@ export const useAuth = () => {
         // Primero verificar que exista el token en SessionCookie
         const token = getSessionToken();
         if (!token) {
-          console.log('No token found in SessionCookie');
+    
           setIsAuthenticated(false);
           setIsLoading(false);
           return;
@@ -24,7 +24,7 @@ export const useAuth = () => {
 
         // Si hay token, verificar que exista información del admin
         if (!adminInfo) {
-          console.log('Token exists but no admin info');
+  
           setIsAuthenticated(false);
           setIsLoading(false);
           return;
@@ -33,14 +33,6 @@ export const useAuth = () => {
         // Verificar que no haya expirado
         const currentTime = Math.floor(Date.now() / 1000);
         const isValid = currentTime < adminInfo.expiration;
-
-        console.log('Auth check:', { 
-          hasToken: !!token, 
-          hasAdminInfo: !!adminInfo, 
-          isValid, 
-          currentTime, 
-          expiration: adminInfo.expiration 
-        });
 
         setIsAuthenticated(isValid);
         setIsLoading(false);

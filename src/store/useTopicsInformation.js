@@ -8,6 +8,8 @@ export const useTopicsInformation = create(
       currentPage: 1,
       totalPages: 0,
       totalTopics: 0,
+      totalAvailableTopics: 0,
+      totalDisabledTopics: 0,
       limit: 8,
       isLoading: false,
       error: null,
@@ -35,10 +37,12 @@ export const useTopicsInformation = create(
               topics: topics,
               currentPage: 1,
               totalPages: totalPages,
-              totalTopics: totalTopics,
+              totalTopics: response.totalTopics || totalTopics,
+              totalAvailableTopics: response.totalAvailableTopics || 0,
+              totalDisabledTopics: response.totalDisabledTopics || 0,
               isLoading: false
             });
-            console.log('Topics loaded successfully:', response);
+    
           } else {
             set({
               error: response.status_Message || 'Error al cargar temas',
@@ -83,6 +87,8 @@ export const useTopicsInformation = create(
           currentPage: 1,
           totalPages: 0,
           totalTopics: 0,
+          totalAvailableTopics: 0,
+          totalDisabledTopics: 0,
           limit: 8,
           isLoading: false,
           error: null

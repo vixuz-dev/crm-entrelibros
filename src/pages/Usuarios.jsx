@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { FiUsers, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiRefreshCw, FiCheck } from 'react-icons/fi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FiUsers, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiRefreshCw, FiCheck, FiX } from 'react-icons/fi';
 import UserInformation from '../components/modals/UserInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
 import { useUsersInformation } from '../store/useUsersInformation';
-import { addUserAdmin } from '../api/users';
+import { createClient, updateClient, toggleClientStatus } from '../api/users';
+import { useDebounce } from '../hooks/useDebounce';
 
 const Usuarios = () => {
   // Store de usuarios
@@ -13,9 +14,12 @@ const Usuarios = () => {
     currentPage,
     totalPages,
     totalUsers,
+    totalAvailableUsers,
+    totalDisabledUsers,
     limit,
     isLoading,
     error,
+    isInitialized,
     loadUsers,
     refreshUsers,
     goToPage,
@@ -29,10 +33,25 @@ const Usuarios = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
+  // Debounce para la búsqueda
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  
+
+
   // Cargar usuarios al montar el componente
   useEffect(() => {
-    loadUsers(currentPage, limit);
-  }, []);
+    if (!isInitialized) {
+      loadUsers(currentPage, limit);
+    }
+  }, [isInitialized, currentPage, limit]);
+
+  // Efecto para búsqueda con debounce
+  useEffect(() => {
+    // Solo ejecutar búsqueda si el término ha cambiado y ya está inicializado
+    if (debouncedSearchTerm !== undefined && isInitialized) {
+      loadUsers(1, limit, debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm, limit, isInitialized]);
 
   const getStatusColor = (status) => {
     return status === 'Activo' 
@@ -92,25 +111,48 @@ const Usuarios = () => {
     setIsModalOpen(true);
   };
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    loadUsers(1, limit, '');
+  };
+
   const handleSaveUser = async (userData) => {
     try {
       if (modalMode === 'create') {
         // Crear nuevo usuario
-        const response = await addUserAdmin(userData);
+        const response = await createClient(userData);
         
         if (response.status === true) {
-          console.log('User created successfully:', response);
+  
           // Recargar la lista de usuarios
-          await refreshUsers();
+          await refreshUsers(searchTerm);
           // Cerrar modal
           handleCloseModal();
         } else {
           alert(response.status_Message || 'Error al crear el usuario');
         }
-      } else {
+      } else if (modalMode === 'edit' && selectedUser) {
         // Editar usuario existente
-        console.log('Editing user:', userData);
-        // TODO: Implementar edición de usuario
+        const updateData = {
+          user_id: selectedUser.user_id,
+          ...userData
+        };
+        
+        const response = await updateClient(updateData);
+        
+        if (response.status === true) {
+  
+          // Recargar la lista de usuarios
+          await refreshUsers(searchTerm);
+          // Cerrar modal
+          handleCloseModal();
+        } else {
+          alert(response.status_Message || 'Error al actualizar el usuario');
+        }
       }
     } catch (error) {
       console.error('Error saving user:', error);
@@ -126,7 +168,7 @@ const Usuarios = () => {
   const confirmDeleteUser = () => {
     if (userToDelete) {
       // Simular eliminación de usuario
-      console.log('Usuario eliminado:', userToDelete);
+      
       // Aquí normalmente harías una llamada a la API para eliminar el usuario
     }
     setIsDeleteModalOpen(false);
@@ -168,44 +210,44 @@ const Usuarios = () => {
 
       {/* Cards de métricas */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Card - Usuarios Nuevos */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Usuarios Nuevos del Sistema</h3>
-              <p className="text-2xl font-cabin-bold text-green-600">47</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Esta semana</p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Card - Usuarios del Mes */}
+        {/* Card - Total de Usuarios */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <FiUsers className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Usuarios del Sistema</h3>
-              <p className="text-2xl font-cabin-bold text-blue-600">156</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Enero 2024</p>
+              <h3 className="font-cabin-semibold text-gray-800">Total de Usuarios</h3>
+              <p className="text-2xl font-cabin-bold text-blue-600">{isLoading ? '...' : totalUsers}</p>
+              <p className="text-sm font-cabin-regular text-gray-500">En el sistema</p>
             </div>
           </div>
         </div>
         
-        {/* Card - Usuarios Activos */}
+        {/* Card - Usuarios Disponibles */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <FiUsers className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Usuarios Activos del Sistema</h3>
-              <p className="text-2xl font-cabin-bold text-purple-600">1,247</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Total activos</p>
+              <h3 className="font-cabin-semibold text-gray-800">Usuarios Disponibles</h3>
+              <p className="text-2xl font-cabin-bold text-green-600">{isLoading ? '...' : totalAvailableUsers}</p>
+              <p className="text-sm font-cabin-regular text-gray-500">Activos</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Card - Usuarios Desactivados */}
+        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <FiUsers className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-cabin-semibold text-gray-800">Usuarios Desactivados</h3>
+              <p className="text-2xl font-cabin-bold text-red-600">{isLoading ? '...' : totalDisabledUsers}</p>
+              <p className="text-sm font-cabin-regular text-gray-500">Inactivos</p>
             </div>
           </div>
         </div>
@@ -220,11 +262,20 @@ const Usuarios = () => {
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Buscar usuarios del sistema..."
+                placeholder="Buscar por nombre de usuario..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+                onChange={handleSearchChange}
+                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
               />
+              {searchTerm && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="Limpiar búsqueda"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              )}
             </div>
           </div>
           
@@ -238,7 +289,7 @@ const Usuarios = () => {
             
             {/* Botón de refresh */}
             <button
-              onClick={refreshUsers}
+              onClick={() => refreshUsers(debouncedSearchTerm)}
               disabled={isLoading}
               className="px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               title="Actualizar usuarios"
@@ -248,6 +299,15 @@ const Usuarios = () => {
             </button>
           </div>
         </div>
+        
+        {/* Estado de búsqueda - Separado para no afectar el layout */}
+        {searchTerm && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-sm text-gray-500 font-cabin-regular">
+              Buscando: "{searchTerm}" • {debouncedSearchTerm !== searchTerm ? 'Escribiendo...' : 'Buscando...'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Estado de carga y error */}
@@ -263,7 +323,7 @@ const Usuarios = () => {
           <p className="text-red-600 font-cabin-medium mb-2">Error al cargar usuarios</p>
           <p className="text-red-500 font-cabin-regular text-sm">{error}</p>
           <button
-            onClick={refreshUsers}
+            onClick={() => refreshUsers(debouncedSearchTerm)}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-cabin-medium"
           >
             Reintentar
@@ -352,8 +412,32 @@ const Usuarios = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="py-8 px-6 text-center text-gray-500 font-cabin-regular">
-                        No hay usuarios dados de alta en el sistema
+                      <td colSpan="5" className="py-8 px-6 text-center">
+                        <div className="flex flex-col items-center space-y-3">
+                          {searchTerm ? (
+                            <>
+                              <FiSearch className="w-12 h-12 text-gray-300" />
+                              <div className="text-gray-500 font-cabin-regular">
+                                <p className="font-cabin-medium mb-1">No se encontraron usuarios</p>
+                                <p className="text-sm">que coincidan con "{searchTerm}"</p>
+                                <p className="text-xs mt-2">Intenta con otro término de búsqueda</p>
+                              </div>
+                              <button 
+                                onClick={handleClearSearch}
+                                className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-cabin-medium"
+                              >
+                                Limpiar búsqueda
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <FiUsers className="w-12 h-12 text-gray-300" />
+                              <p className="text-gray-500 font-cabin-regular">
+                                No hay usuarios dados de alta en el sistema
+                              </p>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -367,10 +451,10 @@ const Usuarios = () => {
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              onPageChange={goToPage}
+              onPageChange={(page) => goToPage(page, debouncedSearchTerm)}
               totalItems={totalUsers}
               itemsPerPage={limit}
-              onItemsPerPageChange={changeLimit}
+              onItemsPerPageChange={(newLimit) => changeLimit(newLimit, debouncedSearchTerm)}
             />
           )}
         </>

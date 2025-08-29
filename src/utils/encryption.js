@@ -18,7 +18,7 @@ export const encryptPassword = (password) => {
     // Encriptar usando SHA-256 con salt de seguridad
     const encryptedPassword = CryptoJS.SHA256(password + SECRET_KEY).toString();
     
-    console.log('Password encrypted successfully with salt');
+
     return encryptedPassword;
   } catch (error) {
     console.error('Error encrypting password:', error);

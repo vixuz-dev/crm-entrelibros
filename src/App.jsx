@@ -11,7 +11,7 @@ import Temas from './pages/Temas';
 import Autores from './pages/Autores';
 import Membresias from './pages/Membresias';
 import Pedidos from './pages/Pedidos';
-import DetallePedido from './pages/DetallePedido';
+import InformacionPedido from './pages/InformacionPedido';
 import Login from './pages/Login';
 import { ROUTES } from './utils/routes';
 import { useAuth } from './hooks/useAuth';
@@ -61,7 +61,7 @@ function App() {
                 <Route path={ROUTES.MEMBERSHIPS} element={<Membresias />} />
                 <Route path={ROUTES.ORDERS} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_CREATE} element={<Pedidos />} />
-                <Route path="/pedidos/detalle/:id" element={<DetallePedido />} />
+                <Route path={ROUTES.ORDERS_INFORMATION} element={<InformacionPedido />} />
                 <Route path={ROUTES.CUSTOMERS} element={<Clientes />} />
                 <Route path={ROUTES.CUSTOMERS_CREATE} element={<Clientes />} />
                 <Route path={ROUTES.INVENTORY} element={<PlaceholderPage />} />

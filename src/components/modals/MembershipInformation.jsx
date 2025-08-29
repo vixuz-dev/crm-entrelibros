@@ -1,55 +1,91 @@
 import React, { useState, useEffect } from 'react';
 import { FiX, FiCreditCard, FiEdit, FiSave, FiPlus, FiBook, FiDollarSign, FiCalendar, FiCheck } from 'react-icons/fi';
 import CustomDropdown from '../ui/CustomDropdown';
+import { getProducts } from '../../api/products';
+import { addMembership } from '../../api/memberships';
+import { showSuccess, showError } from '../../utils/notifications';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onSave }) => {
   const [formData, setFormData] = useState({
-    title: '',
+    membership_name: '',
     description: '',
     benefits: [''],
     price: 0,
     selectedBooks: [],
-    recurrence: 'Mensual',
-    status: 'Activo'
+    status: true
   });
   const [bookSearchTerm, setBookSearchTerm] = useState('');
   const [isBookDropdownOpen, setIsBookDropdownOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [availableBooks, setAvailableBooks] = useState([]);
+  const [isLoadingBooks, setIsLoadingBooks] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Datos simulados de libros disponibles
-  const availableBooks = [
-    { id: 1, title: 'El Principito', author: 'Antoine de Saint-Exupéry', category: 'Ficción' },
-    { id: 2, title: 'Don Quijote', author: 'Miguel de Cervantes', category: 'Clásico' },
-    { id: 3, title: 'Cien años de soledad', author: 'Gabriel García Márquez', category: 'Realismo mágico' },
-    { id: 4, title: 'Harry Potter y la piedra filosofal', author: 'J.K. Rowling', category: 'Fantasía' },
-    { id: 5, title: 'El Señor de los Anillos', author: 'J.R.R. Tolkien', category: 'Fantasía' },
-    { id: 6, title: '1984', author: 'George Orwell', category: 'Ciencia ficción' },
-    { id: 7, title: 'Orgullo y prejuicio', author: 'Jane Austen', category: 'Romance' },
-    { id: 8, title: 'Los miserables', author: 'Victor Hugo', category: 'Drama' },
-    { id: 9, title: 'Crimen y castigo', author: 'Fiódor Dostoyevski', category: 'Drama' },
-    { id: 10, title: 'El hobbit', author: 'J.R.R. Tolkien', category: 'Fantasía' }
-  ];
+  // Debounce para la búsqueda de libros
+  const debouncedSearchTerm = useDebounce(bookSearchTerm, 500);
+
+  // Función para buscar productos
+  const searchProducts = async (searchTerm) => {
+    if (!searchTerm.trim()) {
+      setAvailableBooks([]);
+      return;
+    }
+
+    setIsLoadingBooks(true);
+    try {
+      const response = await getProducts(1, 20, searchTerm);
+      if (response.status === true && response.product_list) {
+        setAvailableBooks(response.product_list);
+      } else {
+        setAvailableBooks([]);
+      }
+    } catch (error) {
+      console.error('Error searching products:', error);
+      setAvailableBooks([]);
+    } finally {
+      setIsLoadingBooks(false);
+    }
+  };
+
+  // Efecto para buscar productos cuando cambia el término de búsqueda
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      searchProducts(debouncedSearchTerm);
+    } else {
+      setAvailableBooks([]);
+    }
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
     if (membership) {
+      // Mapear la estructura real de la API a la estructura esperada por el modal
+      const mappedBooks = membership.products ? membership.products.map(product => ({
+        product_id: product.product_id,
+        product_name: product.product_name,
+        product_type: product.product_type,
+        main_image_url: product.main_image_url,
+        // Agregar campos por defecto para compatibilidad
+        author_list: [],
+        price: 0
+      })) : [];
+
       setFormData({
-        title: membership.title || '',
+        membership_name: membership.membership_name || '',
         description: membership.description || '',
         benefits: membership.benefits || [''],
         price: membership.price || 0,
-        selectedBooks: membership.selectedBooks || [],
-        recurrence: membership.recurrence || 'Mensual',
-        status: membership.status || 'Activo'
+        selectedBooks: mappedBooks,
+        status: membership.status !== undefined ? membership.status : true
       });
     } else {
       setFormData({
-        title: '',
+        membership_name: '',
         description: '',
         benefits: [''],
         price: 0,
         selectedBooks: [],
-        recurrence: 'Mensual',
-        status: 'Activo'
+        status: true
       });
     }
     setIsEditing(mode === 'create' || mode === 'edit');
@@ -84,7 +120,7 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
   };
 
   const handleBookSelect = (book) => {
-    const isAlreadySelected = formData.selectedBooks.some(selectedBook => selectedBook.id === book.id);
+    const isAlreadySelected = formData.selectedBooks.some(selectedBook => selectedBook.product_id === book.product_id);
     if (!isAlreadySelected) {
       setFormData(prev => ({
         ...prev,
@@ -106,16 +142,12 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
   const handleBookRemove = (bookId) => {
     setFormData(prev => ({
       ...prev,
-      selectedBooks: prev.selectedBooks.filter(book => book.id !== bookId)
+      selectedBooks: prev.selectedBooks.filter(book => book.product_id !== bookId)
     }));
   };
 
   const filteredBooks = availableBooks.filter(book => 
-    book.title.toLowerCase().includes(bookSearchTerm.toLowerCase()) ||
-    book.author.toLowerCase().includes(bookSearchTerm.toLowerCase()) ||
-    book.category.toLowerCase().includes(bookSearchTerm.toLowerCase())
-  ).filter(book => 
-    !formData.selectedBooks.some(selectedBook => selectedBook.id === book.id)
+    !formData.selectedBooks.some(selectedBook => selectedBook.product_id === book.product_id)
   );
 
   const handleBenefitChange = (index, value) => {
@@ -144,16 +176,48 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
     }
   };
 
-  const handleSave = () => {
-    if (onSave) {
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      
       // Filtrar beneficios vacíos
       const cleanBenefits = formData.benefits.filter(benefit => benefit.trim() !== '');
-      onSave({
-        ...formData,
-        benefits: cleanBenefits
-      });
+      
+      // Preparar datos para la API
+      const membershipData = {
+        membership_name: formData.membership_name.trim(),
+        description: formData.description?.trim() || '',
+        benefits: cleanBenefits,
+        price: parseFloat(formData.price) || 0,
+        status: formData.status,
+        product_id_list: formData.selectedBooks.map(book => book.product_id)
+      };
+
+      if (mode === 'create') {
+        // Crear nueva membresía
+        const response = await addMembership(membershipData);
+        if (response.status === true) {
+          showSuccess('Membresía creada correctamente');
+          if (onSave) {
+            await onSave(membershipData);
+          }
+          onClose();
+        } else {
+          showError(response.status_Message || 'Error al crear la membresía');
+        }
+      } else {
+        // TODO: Implementar actualización cuando esté disponible
+        if (onSave) {
+          await onSave(membershipData);
+        }
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error saving membership:', error);
+      showError('Error al guardar la membresía: ' + error.message);
+    } finally {
+      setIsSaving(false);
     }
-    onClose();
   };
 
   const handleCancel = () => {
@@ -163,14 +227,24 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
       setIsEditing(false);
       // Restaurar datos originales
       if (membership) {
+        // Mapear la estructura real de la API a la estructura esperada por el modal
+        const mappedBooks = membership.products ? membership.products.map(product => ({
+          product_id: product.product_id,
+          product_name: product.product_name,
+          product_type: product.product_type,
+          main_image_url: product.main_image_url,
+          // Agregar campos por defecto para compatibilidad
+          author_list: [],
+          price: 0
+        })) : [];
+
         setFormData({
-          title: membership.title || '',
+          membership_name: membership.membership_name || '',
           description: membership.description || '',
           benefits: membership.benefits || [''],
           price: membership.price || 0,
-          selectedBooks: membership.selectedBooks || [],
-          recurrence: membership.recurrence || 'Mensual',
-          status: membership.status || 'Activo'
+          selectedBooks: mappedBooks,
+          status: membership.status !== undefined ? membership.status : true
         });
       }
     }
@@ -184,8 +258,8 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
 
   const getModalSubtitle = () => {
     if (mode === 'create') return 'Agregar una nueva membresía al sistema';
-    if (isEditing) return `Editando membresía "${membership?.title || 'membresía'}"`;
-    return `Detalles de la membresía "${membership?.title || 'membresía'}"`;
+    if (isEditing) return `Editando membresía "${membership?.membership_name || 'membresía'}"`;
+    return `Detalles de la membresía "${membership?.membership_name || 'membresía'}"`;
   };
 
   const formatPrice = (price) => {
@@ -250,19 +324,19 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
               </h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <label className="text-sm font-cabin-medium text-gray-600">Título</label>
+                  <label className="text-sm font-cabin-medium text-gray-600">Nombre de la Membresía</label>
                   {isEditing ? (
                     <input
                       type="text"
-                      value={formData.title}
-                      onChange={(e) => handleInputChange('title', e.target.value)}
+                      value={formData.membership_name}
+                      onChange={(e) => handleInputChange('membership_name', e.target.value)}
                       className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
-                      placeholder="Ingrese el título de la membresía"
+                      placeholder="Ingrese el nombre de la membresía"
                     />
                   ) : (
                     <p className="font-cabin-semibold text-gray-800 flex items-center">
                       <FiCreditCard className="w-4 h-4 mr-2 text-gray-500" />
-                      {formData.title}
+                      {formData.membership_name}
                     </p>
                   )}
                 </div>
@@ -275,8 +349,11 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
                         type="number"
                         step="0.01"
                         min="0"
-                        value={formData.price}
-                        onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+                        value={formData.price === 0 ? '' : formData.price}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          handleInputChange('price', value === '' ? 0 : parseFloat(value) || 0);
+                        }}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
                         placeholder="0.00"
                       />
@@ -314,20 +391,38 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
                     {formData.selectedBooks.length > 0 ? (
                       <div className="max-h-32 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2 bg-gray-50">
                         {formData.selectedBooks.map((book) => (
-                          <div key={book.id} className="flex items-center justify-between bg-white rounded-lg p-2 border border-gray-200 shadow-sm">
+                          <div key={book.product_id} className="flex items-center justify-between bg-white rounded-lg p-2 border border-gray-200 shadow-sm">
                             <div className="flex items-center space-x-2 flex-1 min-w-0">
-                              <FiBook className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                              {book.main_image_url ? (
+                                <div className="relative">
+                                  <img 
+                                    src={book.main_image_url} 
+                                    alt={book.product_name}
+                                    className="w-8 h-8 rounded object-cover flex-shrink-0"
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      e.target.nextSibling.style.display = 'flex';
+                                    }}
+                                  />
+                                  <FiBook className="w-4 h-4 text-amber-600 flex-shrink-0 absolute inset-0 m-auto hidden" />
+                                </div>
+                              ) : (
+                                <FiBook className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                              )}
                               <div className="min-w-0 flex-1">
-                                <div className="font-cabin-medium text-gray-800 text-sm truncate">{book.title}</div>
+                                <div className="font-cabin-medium text-gray-800 text-sm truncate">{book.product_name}</div>
                                 <div className="text-xs text-gray-600 font-cabin-regular truncate">
-                                  {book.author} • {book.category}
+                                  {book.product_type || 'Físico'} • {book.author_list && book.author_list.length > 0 
+                                    ? book.author_list.map(author => author.author_name).join(', ')
+                                    : 'Sin autor'
+                                  }
                                 </div>
                               </div>
                             </div>
                             {isEditing && (
                               <button
                                 type="button"
-                                onClick={() => handleBookRemove(book.id)}
+                                onClick={() => handleBookRemove(book.product_id)}
                                 className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors flex-shrink-0 ml-2"
                               >
                                 <FiX className="w-3 h-3" />
@@ -359,16 +454,24 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
                       {/* Dropdown de libros */}
                       {isBookDropdownOpen && (
                         <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          {filteredBooks.length > 0 ? (
+                          {isLoadingBooks ? (
+                            <div className="px-4 py-3 text-gray-500 text-sm flex items-center">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600 mr-2"></div>
+                              Buscando libros...
+                            </div>
+                          ) : filteredBooks.length > 0 ? (
                             filteredBooks.map((book) => (
                               <div
-                                key={book.id}
+                                key={book.product_id}
                                 onClick={() => handleBookSelect(book)}
                                 className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                               >
-                                <div className="font-cabin-medium text-gray-800">{book.title}</div>
+                                <div className="font-cabin-medium text-gray-800">{book.product_name}</div>
                                 <div className="text-sm text-gray-600 font-cabin-regular">
-                                  {book.author} • {book.category}
+                                  {book.author_list && book.author_list.length > 0 
+                                    ? book.author_list.map(author => author.author_name).join(', ')
+                                    : 'Sin autor'
+                                  } • ${book.price}
                                 </div>
                               </div>
                             ))
@@ -382,29 +485,7 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
                     </div>
                   )}
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <label className="text-sm font-cabin-medium text-gray-600">Recurrencia</label>
-                  {isEditing ? (
-                    <div className="mt-1">
-                      <CustomDropdown
-                        options={[
-                          { value: 'Semanal', label: 'Semanal' },
-                          { value: 'Mensual', label: 'Mensual' },
-                          { value: 'Anual', label: 'Anual' }
-                        ]}
-                        selectedValues={[formData.recurrence]}
-                        onChange={(values) => handleInputChange('recurrence', values[0])}
-                        placeholder="Seleccionar recurrencia"
-                        className="w-full relative z-50"
-                      />
-                    </div>
-                  ) : (
-                    <p className="font-cabin-semibold text-gray-800 flex items-center">
-                      <FiCalendar className="w-4 h-4 mr-2 text-gray-500" />
-                      {formData.recurrence}
-                    </p>
-                  )}
-                </div>
+
               </div>
             </div>
 
@@ -489,8 +570,8 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
                 {isEditing ? (
                   <CustomDropdown
                     options={[
-                      { value: 'Activo', label: 'Activo' },
-                      { value: 'Inactivo', label: 'Inactivo' }
+                      { value: true, label: 'Activo' },
+                      { value: false, label: 'Inactivo' }
                     ]}
                     selectedValues={[formData.status]}
                     onChange={(values) => handleInputChange('status', values[0])}
@@ -499,15 +580,63 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
                   />
                 ) : (
                   <span className={`inline-flex px-3 py-1 rounded-full text-xs font-cabin-medium border ${
-                    formData.status === 'Activo' 
+                    formData.status === true 
                       ? 'bg-green-100 text-green-800 border-green-200' 
                       : 'bg-red-100 text-red-800 border-red-200'
                   }`}>
-                    {formData.status}
+                    {formData.status ? 'Activo' : 'Inactivo'}
                   </span>
                 )}
               </div>
             </div>
+
+            {/* Información Adicional - Solo en modo visualización */}
+            {!isEditing && membership && (
+              <div>
+                <h3 className="text-lg font-cabin-semibold text-gray-800 mb-4 flex items-center">
+                  <FiCalendar className="w-5 h-5 mr-2 text-amber-600" />
+                  Información Adicional
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <label className="text-sm font-cabin-medium text-gray-600">Total de Productos</label>
+                    <p className="font-cabin-semibold text-gray-800 flex items-center">
+                      <FiBook className="w-4 h-4 mr-2 text-gray-500" />
+                      {membership.total_products || 0} productos
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <label className="text-sm font-cabin-medium text-gray-600">Fecha de Creación</label>
+                    <p className="font-cabin-semibold text-gray-800 flex items-center">
+                      <FiCalendar className="w-4 h-4 mr-2 text-gray-500" />
+                      {membership.created_at ? new Date(membership.created_at).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'No disponible'}
+                    </p>
+                  </div>
+                  {membership.stripe_product_id && (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <label className="text-sm font-cabin-medium text-gray-600">Stripe Product ID</label>
+                      <p className="font-cabin-regular text-gray-700 text-sm font-mono">
+                        {membership.stripe_product_id}
+                      </p>
+                    </div>
+                  )}
+                  {membership.stripe_price_id && (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <label className="text-sm font-cabin-medium text-gray-600">Stripe Price ID</label>
+                      <p className="font-cabin-regular text-gray-700 text-sm font-mono">
+                        {membership.stripe_price_id}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
@@ -521,10 +650,24 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
             {isEditing && (
               <button
                 onClick={handleSave}
-                className="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-cabin-medium transition-colors flex items-center space-x-2"
+                disabled={isSaving}
+                className={`px-6 py-2 rounded-lg font-cabin-medium transition-colors flex items-center space-x-2 ${
+                  isSaving
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-amber-600 hover:bg-amber-700 text-white'
+                }`}
               >
-                <FiSave className="w-4 h-4" />
-                <span>{mode === 'create' ? 'Crear' : 'Guardar'}</span>
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <span>Guardando...</span>
+                  </>
+                ) : (
+                  <>
+                    <FiSave className="w-4 h-4" />
+                    <span>{mode === 'create' ? 'Crear' : 'Guardar'}</span>
+                  </>
+                )}
               </button>
             )}
           </div>

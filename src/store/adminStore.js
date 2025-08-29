@@ -27,13 +27,13 @@ export const useAdminStore = create(
     };
 
     set({ adminInfo: adminData });
-    console.log('Admin info saved in Zustand store:', adminData);
+    
   },
 
   // Limpiar información del administrador
   clearAdminInfo: () => {
     set({ adminInfo: null });
-    console.log('Admin info cleared from Zustand store');
+    
   },
 
   // Verificar si el administrador está autenticado (solo verifica expiración)
@@ -68,7 +68,7 @@ export const useAdminStore = create(
     };
 
     set({ adminInfo: updatedInfo });
-    console.log('Admin info updated in Zustand store:', updatedInfo);
+    
   }
 }),
     {

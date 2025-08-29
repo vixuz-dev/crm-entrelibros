@@ -8,6 +8,8 @@ export const useAuthorsInformation = create(
       currentPage: 1,
       totalPages: 0,
       totalAuthors: 0,
+      totalAvailableAuthors: 0,
+      totalDisabledAuthors: 0,
       limit: 8,
       isLoading: false,
       error: null,
@@ -35,10 +37,12 @@ export const useAuthorsInformation = create(
               authors: authors,
               currentPage: 1,
               totalPages: totalPages,
-              totalAuthors: totalAuthors,
+              totalAuthors: response.totalAuthors || totalAuthors,
+              totalAvailableAuthors: response.totalAvailableAuthors || 0,
+              totalDisabledAuthors: response.totalDisabledAuthors || 0,
               isLoading: false
             });
-            console.log('Authors loaded successfully:', response);
+    
           } else {
             set({
               error: response.status_Message || 'Error al cargar autores',
@@ -83,6 +87,8 @@ export const useAuthorsInformation = create(
           currentPage: 1,
           totalPages: 0,
           totalAuthors: 0,
+          totalAvailableAuthors: 0,
+          totalDisabledAuthors: 0,
           limit: 8,
           isLoading: false,
           error: null

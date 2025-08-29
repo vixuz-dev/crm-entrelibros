@@ -16,6 +16,11 @@ import {
 } from "react-icons/fi";
 import CustomDropdown from "../ui/CustomDropdown";
 import placeholderImage from "../../assets/images/placeholder.jpg";
+import { useAuthors, useCategories, useTopics } from "../../hooks/useCatalogs";
+import { convertImageToWebpGetUrl, updateProduct, addProduct } from "../../api/products";
+import { showSuccess, showError } from "../../utils/notifications";
+import AuthorInformation from "./AuthorInformation";
+import { addAuthor } from "../../api/authors";
 
 const BookInformation = ({
   book,
@@ -28,77 +33,75 @@ const BookInformation = ({
   const [editData, setEditData] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showAuthorModal, setShowAuthorModal] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  const [isDataInitialized, setIsDataInitialized] = useState(false);
+  const [pendingImages, setPendingImages] = useState({
+    main: null,
+    additional: [null, null, null]
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Mapeo de categorías de libros infantiles
-  const categoryMap = {
-    1: "Fantasía",
-    2: "Aventura",
-    3: "Educativo",
-    4: "Ilustrado",
-    5: "Interactivo",
-    6: "Clásicos",
-    7: "Ciencia",
-    8: "Historia",
-    9: "Arte",
-    10: "Música",
-  };
+  // Obtener datos del catálogo
+  const { authors, isLoading: authorsLoading, error: authorsError, isInitialized: authorsInitialized, refreshAuthors } = useAuthors();
+  const { categories } = useCategories();
+  const { topics } = useTopics();
 
-  // Mapeo de temas de libros infantiles
-  const topicMap = {
-    1: "Amistad",
-    2: "Familia",
-    3: "Naturaleza",
-    4: "Animales",
-    5: "Colores",
-    6: "Números",
-    7: "Letras",
-    8: "Emociones",
-    9: "Valores",
-    10: "Creatividad",
-  };
-
-  // Mapeo de autores
-  const authorMap = {
-    1: "Chris Naylor-Ballesteros",
-    2: "Antoine de Saint-Exupéry",
-    3: "Miguel de Cervantes",
-    4: "Gabriel García Márquez",
-    5: "Dr. Seuss",
-    6: "Eric Carle",
-    7: "Maurice Sendak",
-    8: "Beatrix Potter",
-    9: "Lewis Carroll",
-    10: "J.K. Rowling",
-  };
-
-  // Convertir mapas a opciones para dropdowns
-  const authorOptions = Object.entries(authorMap).map(([id, name]) => ({
-    value: parseInt(id),
-    label: name,
+  // Convertir datos del catálogo a opciones para dropdowns
+  const authorOptions = authors.map((author) => ({
+    value: author.author_id,
+    label: author.author_name,
   }));
 
-  // Opciones para tipo de producto
+
+
+  const categoryOptions = categories.map((category) => ({
+    value: category.category_id,
+    label: category.category_name,
+  }));
+
+  const topicOptions = topics.map((topic) => ({
+    value: topic.topic_id,
+    label: topic.topic_name,
+  }));
+
+
+
+  // Opciones para tipo de producto (solo Fisico por ahora)
   const productTypeOptions = [
-    { value: "Físico", label: "Físico" },
-    { value: "Digital", label: "Digital" },
-    { value: "Audiobook", label: "Audiobook" },
+    { value: "Fisico", label: "Físico" },
   ];
-
-  // Opciones para categorías
-  const categoryOptions = Object.entries(categoryMap).map(([id, name]) => ({
-    value: parseInt(id),
-    label: name,
-  }));
-
-  // Opciones para temas
-  const topicOptions = Object.entries(topicMap).map(([id, name]) => ({
-    value: parseInt(id),
-    label: name,
-  }));
 
   // Inicializar datos de edición cuando se abre el modal
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isDataInitialized) {
+      // Si book es null, es una creación
+      if (!book) {
+
+        setEditData({
+          product_name: "",
+          product_description: "",
+          product_type: "Fisico",
+          price: 0,
+          price_offer: 0,
+          discount: 0,
+          stock: 0,
+          amount_pages: 0,
+          status: 1,
+          main_image_url: "",
+          category_list: [],
+          topic_list: [],
+          author_list: [],
+        });
+        setIsEditMode(true); // Siempre en modo edición para creación
+        setIsDataInitialized(true);
+        return;
+      }
+
+      // Si book existe, es una edición
+      
       setEditData({
         product_name: book?.product_name || "",
         product_description: book?.product_description || "",
@@ -106,6 +109,8 @@ const BookInformation = ({
         price: book?.price || 0,
         price_offer: book?.price_offer || 0,
         discount: book?.discount || 0,
+        stock: book?.stock || 0,
+        amount_pages: book?.amount_pages || 0,
         status: book?.status || 1,
         main_image_url: book?.main_image_url || "",
         category_list: book?.category_list || [],
@@ -113,8 +118,16 @@ const BookInformation = ({
         author_list: book?.author_list || [],
       });
       setIsEditMode(mode === "create" || mode === "edit");
+      setIsDataInitialized(true);
     }
-  }, [isOpen, book, mode]);
+  }, [isOpen, book, mode, isDataInitialized]); // Solo se ejecuta cuando no está inicializado
+
+  // Resetear estado de inicialización cuando se cierre el modal
+  useEffect(() => {
+    if (!isOpen) {
+      setIsDataInitialized(false);
+    }
+  }, [isOpen]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("es-MX", {
@@ -123,10 +136,7 @@ const BookInformation = ({
     }).format(price);
   };
 
-  const calculateDiscountedPrice = (originalPrice, discount) => {
-    if (!discount || discount === 0) return originalPrice;
-    return originalPrice - (originalPrice * discount) / 100;
-  };
+
 
   const getStockStatus = (stock) => {
     if (stock === 0)
@@ -152,27 +162,185 @@ const BookInformation = ({
     }));
   };
 
-  // Funciones para drag and drop - Imagen principal
-  const handleFileSelect = (file) => {
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        handleInputChange("main_image_url", event.target.result);
+  // Función para calcular el precio con descuento
+  const calculateDiscountedPrice = (originalPrice, discountPercent) => {
+    if (!originalPrice || !discountPercent || discountPercent <= 0) {
+      return originalPrice;
+    }
+    const discountAmount = originalPrice * (discountPercent / 100);
+    const discountedPrice = originalPrice - discountAmount;
+    return Math.round(discountedPrice * 100) / 100; // Redondear a 2 decimales
+  };
+
+  // Función para manejar cambios en precio y descuento con cálculo automático
+  const handlePriceOrDiscountChange = (field, value) => {
+    const newValue = value === '' ? 0 : (field === 'discount' ? parseInt(value) || 0 : parseFloat(value) || 0);
+    
+    setEditData((prev) => {
+      const updatedData = {
+        ...prev,
+        [field]: newValue,
       };
+
+      // Calcular automáticamente el precio de oferta
+      if (field === 'price' || field === 'discount') {
+        const price = field === 'price' ? newValue : prev.price;
+        const discount = field === 'discount' ? newValue : prev.discount;
+        
+        if (discount > 0 && price > 0) {
+          updatedData.price_offer = calculateDiscountedPrice(price, discount);
+        } else {
+          updatedData.price_offer = price; // Sin descuento, precio de oferta = precio original
+        }
+      }
+
+      return updatedData;
+    });
+  };
+
+  // Validación de archivos de imagen
+  const validateImageFile = (file) => {
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      showError('Formato de imagen no válido. Solo se permiten PNG, JPEG, JPG y WebP.');
+      return false;
+    }
+
+    if (file.size > maxSize) {
+      showError('La imagen es demasiado grande. El tamaño máximo es 5MB.');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Función para obtener la extensión del archivo
+  const getFileExtension = (file) => {
+    const fileName = file.name;
+    return fileName.split('.').pop().toLowerCase();
+  };
+
+  // Función para convertir imagen a base64
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
       reader.readAsDataURL(file);
+    });
+  };
+
+  // Función para subir imagen a S3
+  const uploadImageToS3 = async (file) => {
+    try {
+      const base64Image = await convertFileToBase64(file);
+      const fileExtension = getFileExtension(file);
+      
+      const response = await convertImageToWebpGetUrl(
+        base64Image,
+        fileExtension,
+        true
+      );
+
+      if (response.status === true) {
+        return response.image_url;
+      } else {
+        throw new Error(response.status_Message || 'Error al subir imagen');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
+  // Función para subir todas las imágenes pendientes
+  const uploadPendingImages = async () => {
+    const uploadedImages = {
+      main: null,
+      additional: []
+    };
+
+    try {
+      // Subir imagen principal si hay una pendiente
+      if (pendingImages.main) {
+
+        const mainImageUrl = await uploadImageToS3(pendingImages.main.file);
+        uploadedImages.main = mainImageUrl;
+      }
+
+      // Subir imágenes adicionales pendientes
+      for (let i = 0; i < pendingImages.additional.length; i++) {
+        if (pendingImages.additional[i]) {
+
+          const additionalImageUrl = await uploadImageToS3(pendingImages.additional[i].file);
+          uploadedImages.additional[i] = additionalImageUrl;
+        }
+      }
+
+      return uploadedImages;
+    } catch (error) {
+      console.error('Error uploading pending images:', error);
+      throw error;
+    }
+  };
+
+  // Funciones para drag and drop - Imagen principal
+  const handleFileSelect = async (file) => {
+    if (!validateImageFile(file)) return;
+
+    try {
+      const base64Image = await convertFileToBase64(file);
+      
+      // Guardar la imagen pendiente para subir después
+      setPendingImages(prev => ({
+        ...prev,
+        main: {
+          file,
+          base64: base64Image,
+          extension: getFileExtension(file)
+        }
+      }));
+      
+      // Mostrar preview en base64
+      handleInputChange("main_image_url", base64Image);
+      
+      showSuccess('Imagen principal seleccionada (se subirá al guardar)');
+    } catch (error) {
+      showError('Error al procesar la imagen: ' + error.message);
     }
   };
 
   // Funciones para drag and drop - Imágenes adicionales
-  const handleAdditionalFileSelect = (file, index) => {
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const updatedImages = [...(editData.additional_images || ["", "", ""])];
-        updatedImages[index] = event.target.result;
-        setEditData((prev) => ({ ...prev, additional_images: updatedImages }));
-      };
-      reader.readAsDataURL(file);
+  const handleAdditionalFileSelect = async (file, index) => {
+    if (!validateImageFile(file)) return;
+
+    try {
+      const base64Image = await convertFileToBase64(file);
+      
+      // Guardar la imagen pendiente para subir después
+      setPendingImages(prev => {
+        const updatedAdditional = [...prev.additional];
+        updatedAdditional[index] = {
+          file,
+          base64: base64Image,
+          extension: getFileExtension(file)
+        };
+        return {
+          ...prev,
+          additional: updatedAdditional
+        };
+      });
+      
+      // Mostrar preview en base64
+      const updatedImages = [...(editData.additional_images || ["", "", ""])];
+      updatedImages[index] = base64Image;
+      setEditData((prev) => ({ ...prev, additional_images: updatedImages }));
+      
+      showSuccess(`Imagen adicional ${index + 1} seleccionada (se subirá al guardar)`);
+    } catch (error) {
+      showError(`Error al procesar la imagen adicional ${index + 1}: ` + error.message);
     }
   };
 
@@ -201,13 +369,117 @@ const BookInformation = ({
 
   const handleSave = async () => {
     try {
-      if (onSave) {
-        await onSave(editData);
+      setIsSaving(true);
+
+      // Validar que haya una imagen principal
+      if (!editData.main_image_url) {
+        showError('Debe seleccionar una imagen principal para el producto');
+        return;
       }
-      onClose();
+
+      // Validar campos requeridos
+      if (!editData.product_name?.trim()) {
+        showError('El nombre del producto es requerido');
+        return;
+      }
+
+      if (!editData.author_list || editData.author_list.length === 0) {
+        showError('Debe seleccionar al menos un autor');
+        return;
+      }
+
+      if (!editData.category_list || editData.category_list.length === 0) {
+        showError('Debe seleccionar al menos una categoría');
+        return;
+      }
+
+      if (!editData.topic_list || editData.topic_list.length === 0) {
+        showError('Debe seleccionar al menos un tema');
+        return;
+      }
+
+      // Subir imágenes pendientes primero
+      let finalMainImageUrl = editData.main_image_url;
+      let finalAdditionalImages = [...(editData.additional_images || [])];
+
+      if (pendingImages.main || pendingImages.additional.some(img => img)) {
+    
+        const uploadedImages = await uploadPendingImages();
+        
+        // Actualizar URLs con las imágenes subidas
+        if (uploadedImages.main) {
+          finalMainImageUrl = uploadedImages.main;
+        }
+        
+        // Actualizar imágenes adicionales
+        for (let i = 0; i < uploadedImages.additional.length; i++) {
+          if (uploadedImages.additional[i]) {
+            finalAdditionalImages[i] = uploadedImages.additional[i];
+          }
+        }
+      }
+
+      // Preparar datos para la actualización
+      const productUpdateData = {
+        product_id: book ? book.product_id : null,
+        product_name: editData.product_name.trim(),
+        product_description: editData.product_description?.trim() || "Sin descripcion",
+        price: parseFloat(editData.price) || 0,
+        price_offer: parseFloat(editData.price_offer) || 0,
+        stock: parseInt(editData.stock) || 0,
+        amount_pages: parseInt(editData.amount_pages) || 0,
+        status: editData.status,
+        author_id_list: editData.author_list.map(author => author.author_id || author),
+        category_id_list: editData.category_list.map(category => category.category_id || category),
+        topic_id_list: editData.topic_list.map(topic => topic.topic_id || topic),
+        main_image_url: finalMainImageUrl,
+        secondary_image_url_list: finalAdditionalImages.filter(url => url && url.trim() !== '')
+      };
+
+      // Determinar si es creación o edición
+      let response;
+      if (book && book.product_id) {
+        // Es una edición
+        response = await updateProduct(productUpdateData);
+      } else {
+        // Es una creación
+
+        
+        // Remover product_id para creación (no debe enviarse)
+        const { product_id, ...productCreateData } = productUpdateData;
+        
+        // Agregar product_type para creación
+        productCreateData.product_type = editData.product_type || "Fisico";
+        
+        response = await addProduct(productCreateData);
+      }
+
+      if (response.status === true) {
+        const successMessage = book && book.product_id ? 'Producto actualizado correctamente' : 'Producto creado correctamente';
+        showSuccess(successMessage);
+        
+        // Limpiar imágenes pendientes
+        setPendingImages({
+          main: null,
+          additional: [null, null, null]
+        });
+        
+        // Si hay una función onSave personalizada, llamarla
+        if (onSave) {
+          await onSave(editData);
+        }
+        
+        onClose();
+      } else {
+        const errorMessage = book && book.product_id ? 'Error al actualizar el producto' : 'Error al crear el producto';
+        showError(response.status_Message || errorMessage);
+      }
     } catch (error) {
       console.error("Error saving book:", error);
-      alert("Error al guardar el libro. Por favor intenta de nuevo.");
+      const errorMessage = book && book.product_id ? 'Error al guardar el libro' : 'Error al crear el libro';
+      showError(errorMessage + ': ' + error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -216,7 +488,7 @@ const BookInformation = ({
       onClose();
     } else {
       setIsEditMode(false);
-      // Restaurar datos originales
+      // Restaurar datos originales solo si no hay cambios pendientes
       if (book) {
         setEditData({
           product_name: book.product_name || "",
@@ -232,6 +504,58 @@ const BookInformation = ({
           author_list: book.author_list || [],
         });
       }
+    }
+  };
+
+  // Función para preservar los datos actuales antes de abrir el modal de autor
+  const handleOpenAuthorModal = () => {
+    // Preservar el estado actual antes de abrir el modal de autor
+
+    setShowAuthorModal(true);
+  };
+
+  // Función para manejar la creación de un nuevo autor
+  const handleCreateAuthor = async (authorData) => {
+    try {
+  
+      const response = await addAuthor(authorData);
+      
+      if (response.status === true) {
+        showSuccess('Autor creado exitosamente');
+
+        
+        // Recargar solo el catálogo de autores
+
+        await refreshAuthors();
+        
+        // Crear el objeto del nuevo autor
+        const newAuthor = {
+          author_id: response.author_id,
+          author_name: authorData.author_name,
+        };
+        
+
+        
+        // Autoseleccionar el nuevo autor agregándolo a la lista
+        setEditData(prev => {
+          const updatedAuthorList = [...(prev.author_list || []), newAuthor];
+  
+          return {
+            ...prev,
+            author_list: updatedAuthorList
+          };
+        });
+        
+        // Forzar actualización del dropdown
+        setForceUpdate(prev => prev + 1);
+        
+        setShowAuthorModal(false);
+      } else {
+        showError(response.status_Message || 'Error al crear el autor');
+      }
+    } catch (error) {
+      console.error('Error creating author:', error);
+      showError('Error al crear el autor: ' + error.message);
     }
   };
 
@@ -309,6 +633,7 @@ const BookInformation = ({
                   <div className="w-full max-w-xs mb-4">
                     {/* Imágenes secundarias */}
                     {!isEditMode &&
+                      book &&
                       book.secondary_url_image_list &&
                       book.secondary_url_image_list.length > 0 && (
                         <div className="mb-4">
@@ -341,13 +666,13 @@ const BookInformation = ({
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                       >
-                        {editData.main_image_url || book.main_image_url ? (
+                        {editData.main_image_url || (book && book.main_image_url) ? (
                           <>
                             <img
                               src={
-                                editData.main_image_url || book.main_image_url
+                                editData.main_image_url || (book && book.main_image_url)
                               }
-                              alt={`Portada de ${book.product_name}`}
+                              alt={`Portada de ${book ? book.product_name : 'Nuevo libro'}`}
                               className={`w-full h-auto rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity ${
                                 isDragging
                                   ? "border-2 border-dashed border-amber-500"
@@ -394,21 +719,34 @@ const BookInformation = ({
                             }`}
                           >
                             <div className="text-center p-6">
-                              <FiUpload
-                                className={`w-12 h-12 mx-auto mb-3 transition-colors ${
-                                  isDragging
-                                    ? "text-amber-600"
-                                    : "text-gray-400 group-hover:text-amber-500"
-                                }`}
-                              />
-                              <p className="text-sm font-cabin-medium text-gray-600 mb-1">
-                                {isDragging
-                                  ? "Suelta la imagen aquí"
-                                  : "Subir imagen principal"}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Arrastra una imagen o haz clic para seleccionar
-                              </p>
+                              {pendingImages.main ? (
+                                <div className="flex flex-col items-center">
+                                  <div className="w-8 h-8 border-2 border-amber-600 rounded-full mb-3 flex items-center justify-center">
+                                    <span className="text-xs text-amber-600 font-bold">P</span>
+                                  </div>
+                                  <span className="text-sm text-amber-600 font-cabin-medium">
+                                    Pendiente de subir
+                                  </span>
+                                </div>
+                              ) : (
+                                <>
+                                  <FiUpload
+                                    className={`w-12 h-12 mx-auto mb-3 transition-colors ${
+                                      isDragging
+                                      ? "text-amber-600"
+                                      : "text-gray-400 group-hover:text-amber-500"
+                                    }`}
+                                  />
+                                  <p className="text-sm font-cabin-medium text-gray-600 mb-1">
+                                    {isDragging
+                                      ? "Suelta la imagen aquí"
+                                      : "Subir imagen principal"}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    Arrastra una imagen o haz clic para seleccionar
+                                  </p>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}
@@ -426,8 +764,8 @@ const BookInformation = ({
                       </div>
                     ) : (
                       <img
-                        src={book.main_image_url || placeholderImage}
-                        alt={`Portada de ${book.product_name}`}
+                        src={book && book.main_image_url ? book.main_image_url : placeholderImage}
+                        alt={`Portada de ${book ? book.product_name : 'Nuevo libro'}`}
                         className="w-full h-auto rounded-lg object-cover shadow-lg"
                         onError={(e) => {
                           e.target.src = placeholderImage;
@@ -455,7 +793,13 @@ const BookInformation = ({
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-gray-400 group-hover:text-amber-500 transition-colors">
-                                <FiUpload className="w-4 h-4 sm:w-5 sm:h-5" />
+                                {pendingImages.additional[index] ? (
+                                  <div className="w-4 h-4 border-2 border-amber-600 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-amber-600 font-bold">P</span>
+                                  </div>
+                                ) : (
+                                  <FiUpload className="w-4 h-4 sm:w-5 sm:h-5" />
+                                )}
                               </div>
                             )}
 
@@ -489,6 +833,7 @@ const BookInformation = ({
 
                   {/* Mostrar imágenes adicionales en modo lectura */}
                   {!isEditMode &&
+                    book &&
                     book.additional_images &&
                     book.additional_images.some((img) => img) && (
                       <div className="w-full max-w-xs mt-4">
@@ -556,18 +901,16 @@ const BookInformation = ({
                     ) : (
                       <div>
                         <h2 className="text-2xl font-cabin-bold text-gray-800">
-                          {book.product_name}
+                          {book ? book.product_name : 'Nuevo Libro'}
                         </h2>
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                          {/* <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-cabin-medium border ${stockStatus.color}`}>
-                          <FiPackage className="w-4 h-4 mr-1" />
-                          {stockStatus.text}
-                        </span> */}
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-cabin-medium bg-blue-100 text-blue-800">
-                            <FiFileText className="w-4 h-4 mr-1" />
-                            {book.product_type}
-                          </span>
-                        </div>
+                        {book && (
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-cabin-medium bg-blue-100 text-blue-800">
+                              <FiFileText className="w-4 h-4 mr-1" />
+                              {book.product_type}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -576,9 +919,19 @@ const BookInformation = ({
                   <div>
                     {isEditMode ? (
                       <div>
-                        <span className="font-cabin-medium text-gray-600 block text-sm mb-1">
-                          Autores:
-                        </span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-cabin-medium text-gray-600 block text-sm">
+                            Autores:
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleOpenAuthorModal}
+                            className="flex items-center text-xs text-amber-600 hover:text-amber-700 font-cabin-medium transition-colors"
+                          >
+                            <FiUser className="w-3 h-3 mr-1" />
+                            Agregar Autor
+                          </button>
+                        </div>
                         <CustomDropdown
                           options={authorOptions}
                           selectedValues={
@@ -589,10 +942,13 @@ const BookInformation = ({
                           onChange={(values) =>
                             setEditData((prev) => ({
                               ...prev,
-                              author_list: values.map((id) => ({
-                                author_id: id,
-                                author_name: authorMap[id] || `Autor ${id}`,
-                              })),
+                              author_list: values.map((id) => {
+                                const author = authors.find(a => a.author_id === id);
+                                return {
+                                  author_id: id,
+                                  author_name: author ? author.author_name : `Autor ${id}`,
+                                };
+                              }),
                             }))
                           }
                           placeholder="Seleccionar autores..."
@@ -607,7 +963,7 @@ const BookInformation = ({
                           Autores:
                         </span>
                         <p className="text-gray-800 text-sm font-cabin-medium">
-                          {book.author_list && book.author_list.length > 0
+                          {book && book.author_list && book.author_list.length > 0
                             ? book.author_list
                                 .map((author) => author.author_name)
                                 .join(", ")
@@ -640,8 +996,9 @@ const BookInformation = ({
                     ) : (
                       <div>
                         <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                          {book.product_description ||
-                            "Sin descripción disponible"}
+                          {book && book.product_description
+                            ? book.product_description
+                            : "Sin descripción disponible"}
                         </p>
                       </div>
                     )}
@@ -650,7 +1007,7 @@ const BookInformation = ({
                   {/* Grid de información detallada */}
                   {isEditMode ? (
                     <div className="space-y-4 text-sm">
-                      {/* Fila 1: Precio - Precio Oferta - Descuento */}
+                      {/* Fila 1: Precio Original - Descuento - Precio Oferta (calculado) */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                           <span className="font-cabin-medium text-gray-600 block mb-1">
@@ -661,33 +1018,8 @@ const BookInformation = ({
                             <input
                               type="number"
                               step="0.01"
-                              value={editData.price}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "price",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <span className="font-cabin-medium text-gray-600 block mb-1">
-                            Precio Oferta:
-                          </span>
-                          <div className="flex items-center space-x-1">
-                            <span className="text-gray-600">$</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={editData.price_offer}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "price_offer",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
+                              value={editData.price === 0 ? '' : editData.price}
+                              onChange={(e) => handlePriceOrDiscountChange("price", e.target.value)}
                               className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
                             />
                           </div>
@@ -700,20 +1032,44 @@ const BookInformation = ({
                             type="number"
                             min="0"
                             max="100"
-                            value={editData.discount}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "discount",
-                                parseInt(e.target.value) || 0
-                              )
-                            }
+                            value={editData.discount === 0 ? '' : editData.discount}
+                            onChange={(e) => handlePriceOrDiscountChange("discount", e.target.value)}
                             className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
                           />
                         </div>
+                        <div>
+                          <span className="font-cabin-medium text-gray-600 block mb-1">
+                            Precio Oferta:
+                          </span>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-gray-600">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={editData.price_offer === 0 ? '' : editData.price_offer}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                handleInputChange(
+                                  "price_offer",
+                                  value === '' ? 0 : parseFloat(value) || 0
+                                );
+                              }}
+                              className={`w-full text-sm font-cabin-medium text-gray-800 bg-white border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                                editData.discount > 0 ? 'border-green-300 bg-green-50' : 'border-gray-300'
+                              }`}
+                              placeholder={editData.discount > 0 ? "Calculado automáticamente" : "Igual al precio original"}
+                            />
+                          </div>
+                          {editData.discount > 0 && editData.price > 0 && (
+                            <div className="text-xs text-green-600 mt-1 font-cabin-medium">
+                              💰 Ahorro: ${((editData.price - editData.price_offer) || 0).toFixed(2)} ({editData.discount}% de descuento)
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Fila 2: Estado - Páginas */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Fila 2: Estado - Páginas - Stock */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                           <span className="font-cabin-medium text-gray-600 block mb-1">
                             Estado:
@@ -739,13 +1095,32 @@ const BookInformation = ({
                           <input
                             type="number"
                             min="1"
-                            value={editData.amount_pages}
-                            onChange={(e) =>
+                            value={editData.amount_pages === 0 ? '' : editData.amount_pages}
+                            onChange={(e) => {
+                              const value = e.target.value;
                               handleInputChange(
                                 "amount_pages",
-                                parseInt(e.target.value) || 0
-                              )
-                            }
+                                value === '' ? 0 : parseInt(value) || 0
+                              );
+                            }}
+                            className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <span className="font-cabin-medium text-gray-600 block mb-1">
+                            Stock:
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={editData.stock === 0 ? '' : editData.stock}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              handleInputChange(
+                                "stock",
+                                value === '' ? 0 : parseInt(value) || 0
+                              );
+                            }}
                             className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
                           />
                         </div>
@@ -767,11 +1142,13 @@ const BookInformation = ({
                             onChange={(values) =>
                               setEditData((prev) => ({
                                 ...prev,
-                                category_list: values.map((id) => ({
-                                  category_id: id,
-                                  category_name:
-                                    categoryMap[id] || `Categoría ${id}`,
-                                })),
+                                category_list: values.map((id) => {
+                                  const category = categories.find(c => c.category_id === id);
+                                  return {
+                                    category_id: id,
+                                    category_name: category ? category.category_name : `Categoría ${id}`,
+                                  };
+                                }),
                               }))
                             }
                             placeholder="Seleccionar..."
@@ -794,10 +1171,13 @@ const BookInformation = ({
                             onChange={(values) =>
                               setEditData((prev) => ({
                                 ...prev,
-                                topic_list: values.map((id) => ({
-                                  topic_id: id,
-                                  topic_name: topicMap[id] || `Tema ${id}`,
-                                })),
+                                topic_list: values.map((id) => {
+                                  const topic = topics.find(t => t.topic_id === id);
+                                  return {
+                                    topic_id: id,
+                                    topic_name: topic ? topic.topic_name : `Tema ${id}`,
+                                  };
+                                }),
                               }))
                             }
                             placeholder="Seleccionar..."
@@ -808,7 +1188,7 @@ const BookInformation = ({
                         </div>
                       </div>
                     </div>
-                  ) : (
+                  ) : book ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-gray-800">
                       <div>
                         <span className="font-cabin-medium text-gray-600 block">
@@ -901,7 +1281,7 @@ const BookInformation = ({
                         </span>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -919,13 +1299,36 @@ const BookInformation = ({
           {isEditMode && (
             <button
               onClick={handleSave}
-              className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-lg transition-colors font-cabin-medium text-sm sm:text-base"
+              disabled={isSaving}
+              className={`w-full sm:w-auto px-4 sm:px-6 py-2 rounded-lg transition-colors font-cabin-medium text-sm sm:text-base ${
+                isSaving
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-amber-600 text-white hover:bg-amber-700'
+              }`}
             >
-              {mode === "create" ? "Crear Libro" : "Guardar Cambios"}
+              {isSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline"></div>
+                  {pendingImages.main || pendingImages.additional.some(img => img) 
+                    ? 'Subiendo imágenes y guardando...' 
+                    : 'Guardando...'
+                  }
+                </>
+              ) : (
+                mode === "create" ? "Crear Libro" : "Guardar Cambios"
+              )}
             </button>
           )}
         </div>
       </div>
+
+      {/* Modal para crear nuevo autor */}
+      <AuthorInformation
+        isOpen={showAuthorModal}
+        onClose={() => setShowAuthorModal(false)}
+        mode="create"
+        onSave={handleCreateAuthor}
+      />
     </div>
   );
 };

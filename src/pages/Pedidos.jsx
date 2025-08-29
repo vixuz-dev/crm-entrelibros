@@ -16,195 +16,107 @@ import {
   FiDollarSign,
   FiCalendar,
   FiUser,
-  FiShoppingCart
+  FiShoppingCart,
+  FiRefreshCw
 } from 'react-icons/fi';
-import OrderInformation from '../components/modals/OrderInformation';
-import ConfirmationModal from '../components/modals/ConfirmationModal';
 import OrderChart from '../components/charts/OrderChart';
 import CustomDropdown from '../components/ui/CustomDropdown';
+import Pagination from '../components/ui/Pagination';
+import { useOrdersInformation } from '../store/useOrdersInformation';
 import { ROUTES } from '../utils/routes';
 
 const Pedidos = () => {
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('view');
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [orderToDelete, setOrderToDelete] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState('todos');
   const [selectedDateRange, setSelectedDateRange] = useState('todos');
-  const [selectedUrgency, setSelectedUrgency] = useState('todos');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+
+  // Store de órdenes
+  const {
+    orders,
+    currentPage,
+    totalPages,
+    totalOrders,
+    totalPendingOrder,
+    totalDeliveryOrders,
+    limit,
+    isLoading,
+    error,
+    isInitialized,
+    loadOrders,
+    refreshOrders,
+    goToPage,
+    changeLimit
+  } = useOrdersInformation();
+
+  // Cargar órdenes al montar el componente
+  useEffect(() => {
+    if (!isInitialized) {
+      loadOrders();
+    }
+  }, [isInitialized]);
 
   // Detectar si viene de una acción rápida para crear nuevo pedido
   useEffect(() => {
     if (location.pathname === ROUTES.ORDERS_CREATE) {
-      setModalMode('create');
-      setIsModalOpen(true);
+      // TODO: Implementar creación de pedido
+  
     }
   }, [location.pathname]);
 
-  // Datos simulados de pedidos
-  const orders = [
-    {
-      id: 'ORD-001',
-      customer: {
-        name: 'María González',
-        email: 'maria.gonzalez@email.com',
-        phone: '+52 55 1234 5678'
-      },
-      products: [
-        { id: 1, title: 'El Principito', quantity: 2, price: 15.99 },
-        { id: 2, title: 'Don Quijote', quantity: 1, price: 25.50 }
-      ],
-      total: 57.48,
-      status: 'pendiente',
-      orderDate: '2024-01-15',
-      estimatedDelivery: '2024-01-20',
-      actualDelivery: null,
-      paymentMethod: 'Tarjeta de Crédito',
-      shippingAddress: 'Av. Reforma 123, CDMX',
-      trackingNumber: null,
-      urgency: 'normal',
-      notes: 'Entregar en horario de oficina'
-    },
-    {
-      id: 'ORD-002',
-      customer: {
-        name: 'Carlos Rodríguez',
-        email: 'carlos.rodriguez@email.com',
-        phone: '+52 55 9876 5432'
-      },
-      products: [
-        { id: 3, title: 'Cien años de soledad', quantity: 1, price: 18.99 },
-        { id: 4, title: 'Harry Potter y la piedra filosofal', quantity: 3, price: 22.00 }
-      ],
-      total: 84.99,
-      status: 'en_transito',
-      orderDate: '2024-01-12',
-      estimatedDelivery: '2024-01-18',
-      actualDelivery: null,
-      paymentMethod: 'PayPal',
-      shippingAddress: 'Calle Juárez 456, Guadalajara',
-      trackingNumber: 'TRK-123456789',
-      urgency: 'urgente',
-      notes: 'Cliente VIP'
-    },
-    {
-      id: 'ORD-003',
-      customer: {
-        name: 'Ana Martínez',
-        email: 'ana.martinez@email.com',
-        phone: '+52 55 5555 1234'
-      },
-      products: [
-        { id: 5, title: 'El Señor de los Anillos', quantity: 1, price: 35.00 }
-      ],
-      total: 35.00,
-      status: 'entregado',
-      orderDate: '2024-01-08',
-      estimatedDelivery: '2024-01-15',
-      actualDelivery: '2024-01-14',
-      paymentMethod: 'Transferencia Bancaria',
-      shippingAddress: 'Plaza Mayor 789, Monterrey',
-      trackingNumber: 'TRK-987654321',
-      urgency: 'normal',
-      notes: 'Entregado antes de lo esperado'
-    },
-    {
-      id: 'ORD-004',
-      customer: {
-        name: 'Luis Pérez',
-        email: 'luis.perez@email.com',
-        phone: '+52 55 1111 2222'
-      },
-      products: [
-        { id: 6, title: '1984', quantity: 2, price: 16.50 },
-        { id: 7, title: 'Orgullo y prejuicio', quantity: 1, price: 12.99 }
-      ],
-      total: 45.99,
-      status: 'pendiente',
-      orderDate: '2024-01-16',
-      estimatedDelivery: '2024-01-22',
-      actualDelivery: null,
-      paymentMethod: 'Efectivo',
-      shippingAddress: 'Paseo de la Reforma 321, CDMX',
-      trackingNumber: null,
-      urgency: 'critico',
-      notes: 'Pedido para evento importante'
-    },
-    {
-      id: 'ORD-005',
-      customer: {
-        name: 'Sofia López',
-        email: 'sofia.lopez@email.com',
-        phone: '+52 55 3333 4444'
-      },
-      products: [
-        { id: 8, title: 'Los miserables', quantity: 1, price: 28.00 },
-        { id: 9, title: 'Crimen y castigo', quantity: 1, price: 20.50 },
-        { id: 10, title: 'El hobbit', quantity: 2, price: 18.75 }
-      ],
-      total: 86.00,
-      status: 'en_transito',
-      orderDate: '2024-01-10',
-      estimatedDelivery: '2024-01-17',
-      actualDelivery: null,
-      paymentMethod: 'Tarjeta de Débito',
-      shippingAddress: 'Av. Insurgentes 654, CDMX',
-      trackingNumber: 'TRK-456789123',
-      urgency: 'normal',
-      notes: 'Paquete frágil'
-    }
-  ];
-
-  // Datos para gráficos
+  // Datos para gráficos usando datos reales del store
   const orderStatusData = {
-    labels: ['Pendientes', 'En Tránsito', 'Entregados', 'Cancelados'],
+    labels: ['Pendientes', 'Entregados'],
     datasets: [
       {
         data: [
-          orders.filter(o => o.status === 'pendiente').length,
-          orders.filter(o => o.status === 'en_transito').length,
-          orders.filter(o => o.status === 'entregado').length,
-          orders.filter(o => o.status === 'cancelado').length
+          totalPendingOrder,
+          totalDeliveryOrders
         ],
         backgroundColor: [
           'rgba(245, 158, 11, 0.8)',
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(16, 185, 129, 0.8)',
-          'rgba(239, 68, 68, 0.8)'
+          'rgba(16, 185, 129, 0.8)'
         ],
         borderColor: [
           'rgb(245, 158, 11)',
-          'rgb(59, 130, 246)',
-          'rgb(16, 185, 129)',
-          'rgb(239, 68, 68)'
+          'rgb(16, 185, 129)'
         ],
         borderWidth: 2
       }
     ]
   };
 
-  const orderTrendData = {
-    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-    datasets: [
-      {
-        label: 'Pedidos Recibidos',
-        data: [12, 19, 15, 25, 22, 18, 14],
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.4
-      },
-      {
-        label: 'Pedidos Entregados',
-        data: [8, 15, 12, 20, 18, 16, 12],
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        tension: 0.4
+  // Función para generar datos de tendencia basados en órdenes reales
+  const generateTrendData = () => {
+    const daysOfWeek = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const ordersByDay = [0, 0, 0, 0, 0, 0, 0]; // Inicializar contadores para cada día
+    
+    // Procesar órdenes reales para contar por día de la semana
+    orders.forEach(order => {
+      if (order.created_at) {
+        const orderDate = new Date(order.created_at);
+        const dayOfWeek = orderDate.getDay(); // 0 = Domingo, 1 = Lunes, etc.
+        // Convertir a nuestro formato (0 = Lunes, 6 = Domingo)
+        const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        ordersByDay[adjustedDay]++;
       }
-    ]
+    });
+
+    return {
+      labels: daysOfWeek,
+      datasets: [
+        {
+          label: 'Pedidos Recibidos',
+          data: ordersByDay,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4
+        }
+      ]
+    };
   };
+
+  const orderTrendData = generateTrendData();
 
   // Funciones de utilidad
   const getStatusColor = (status) => {
@@ -258,75 +170,95 @@ const Pedidos = () => {
     return new Date(dateString).toLocaleDateString('es-ES');
   };
 
-  // Funciones de manejo de modales
-  const handleViewOrder = (order) => {
-    setSelectedOrder(order);
-    setModalMode('view');
-    setIsModalOpen(true);
-  };
-
-  const handleEditOrder = (order) => {
-    setSelectedOrder(order);
-    setModalMode('edit');
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteOrder = (order) => {
-    setOrderToDelete(order);
-    setIsDeleteModalOpen(true);
-  };
-
-  const confirmDeleteOrder = () => {
-    if (orderToDelete) {
-      console.log('Pedido eliminado:', orderToDelete);
+  // Función para determinar el estado del pedido basado en was_sent
+  const getOrderStatus = (order) => {
+    if (order.was_sent === 1) {
+      return {
+        status: 'enviado',
+        label: 'Enviado',
+        color: 'bg-blue-100 text-blue-800 border-blue-200',
+        icon: <FiTruck className="w-4 h-4" />
+      };
+    } else {
+      return {
+        status: 'pendiente',
+        label: 'Pendiente',
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        icon: <FiClock className="w-4 h-4" />
+      };
     }
-    setIsDeleteModalOpen(false);
-    setOrderToDelete(null);
   };
 
-  const cancelDeleteOrder = () => {
-    setIsDeleteModalOpen(false);
-    setOrderToDelete(null);
+  // Funciones de manejo
+  const handleViewOrder = (order) => {
+    // Redirigir a la página de información de la orden
+    window.location.href = `/pedidos/informacion?orderId=${order.order_id}`;
   };
 
   const clearAllFilters = () => {
     setSearchTerm('');
-    setSelectedStatus('todos');
     setSelectedDateRange('todos');
-    setSelectedUrgency('todos');
+    setSelectedStatus('all');
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedOrder(null);
-    setModalMode('view');
-  };
-
-  const handleSaveOrder = (orderData) => {
-    if (modalMode === 'edit') {
-      console.log('Pedido actualizado:', orderData);
+  // Función para verificar si una fecha está en el rango seleccionado
+  const isDateInRange = (dateString) => {
+    if (!dateString) return false;
+    
+    const orderDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    switch (selectedDateRange) {
+      case 'hoy':
+        const orderDay = new Date(orderDate);
+        orderDay.setHours(0, 0, 0, 0);
+        return orderDay.getTime() === today.getTime();
+        
+      case 'semana':
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        return orderDate >= weekAgo && orderDate <= today;
+        
+      case 'mes':
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(today.getMonth() - 1);
+        return orderDate >= monthAgo && orderDate <= today;
+        
+      case 'todos':
+      default:
+        return true;
     }
   };
 
   // Filtrado de pedidos
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
+      order.folio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.contact_information?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.contact_information?.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = selectedStatus === 'todos' || order.status === selectedStatus;
-    const matchesUrgency = selectedUrgency === 'todos' || order.urgency === selectedUrgency;
+    // Filtrar por fecha si se selecciona
+    if (!isDateInRange(order.created_at)) {
+      return false;
+    }
     
-    return matchesSearch && matchesStatus && matchesUrgency;
+    // Filtrar por estado si se selecciona
+    if (selectedStatus !== 'all') {
+      const orderStatus = getOrderStatus(order);
+      if (selectedStatus === 'pending' && orderStatus.status !== 'pendiente') {
+        return false;
+      }
+      if (selectedStatus === 'sent' && orderStatus.status !== 'enviado') {
+        return false;
+      }
+    }
+    
+    return matchesSearch;
   });
 
-  // Cálculo de métricas
-  const totalOrders = orders.length;
-  const pendingOrders = orders.filter(o => o.status === 'pendiente').length;
-  const inTransitOrders = orders.filter(o => o.status === 'en_transito').length;
-  const deliveredOrders = orders.filter(o => o.status === 'entregado').length;
-  const totalValue = orders.reduce((sum, order) => sum + order.total, 0);
+  // Cálculo de métricas usando datos del store
+  const totalValue = orders.reduce((sum, order) => sum + parseFloat(order.total), 0);
   const averageDeliveryTime = 5.2; // días promedio
 
   return (
@@ -341,14 +273,24 @@ const Pedidos = () => {
             Administra todos los pedidos del sistema
           </p>
         </div>
-        <button className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2">
-          <FiPlus className="w-5 h-5" />
-          <span>Nuevo Pedido</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <button 
+            onClick={refreshOrders}
+            className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+            title="Actualizar"
+          >
+            <FiRefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+          
+          <button className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2">
+            <FiPlus className="w-5 h-5" />
+            <span>Nuevo Pedido</span>
+          </button>
+        </div>
       </div>
 
       {/* Métricas Principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Pedidos Pendientes - Destacado */}
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl shadow-lg p-6 relative overflow-hidden md:col-span-2 lg:col-span-1">
           {/* Highlight indicator */}
@@ -360,7 +302,7 @@ const Pedidos = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-cabin-medium text-yellow-700">Pendientes</p>
-              <p className="text-3xl font-cabin-bold text-yellow-600">{pendingOrders}</p>
+              <p className="text-3xl font-cabin-bold text-yellow-600">{isLoading ? '...' : totalPendingOrder}</p>
               <p className="text-xs text-yellow-600 font-cabin-medium mt-1">
                 Requieren atención
               </p>
@@ -374,7 +316,7 @@ const Pedidos = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-cabin-medium text-gray-600">Total de Pedidos</p>
-              <p className="text-2xl font-cabin-bold text-gray-800">{totalOrders}</p>
+              <p className="text-2xl font-cabin-bold text-gray-800">{isLoading ? '...' : totalOrders}</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
               <FiShoppingCart className="w-6 h-6 text-blue-600" />
@@ -387,20 +329,8 @@ const Pedidos = () => {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-cabin-medium text-gray-600">En Tránsito</p>
-              <p className="text-2xl font-cabin-bold text-blue-600">{inTransitOrders}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <FiTruck className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
               <p className="text-sm font-cabin-medium text-gray-600">Entregados</p>
-              <p className="text-2xl font-cabin-bold text-green-600">{deliveredOrders}</p>
+              <p className="text-2xl font-cabin-bold text-green-600">{isLoading ? '...' : totalDeliveryOrders}</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
               <FiCheckCircle className="w-6 h-6 text-green-600" />
@@ -439,7 +369,7 @@ const Pedidos = () => {
       </div>
 
       {/* Alert Banner para Pedidos Pendientes */}
-      {pendingOrders > 0 && (
+      {!isLoading && totalPendingOrder > 0 && (
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -448,7 +378,7 @@ const Pedidos = () => {
               </div>
               <div>
                 <h3 className="text-lg font-cabin-semibold text-yellow-800">
-                  ¡Atención! Tienes {pendingOrders} pedido{pendingOrders !== 1 ? 's' : ''} pendiente{pendingOrders !== 1 ? 's' : ''}
+                  ¡Atención! Tienes {totalPendingOrder} pedido{totalPendingOrder !== 1 ? 's' : ''} pendiente{totalPendingOrder !== 1 ? 's' : ''}
                 </h3>
                 <p className="text-yellow-700 font-cabin-regular">
                   Estos pedidos requieren tu atención inmediata para procesamiento
@@ -456,11 +386,11 @@ const Pedidos = () => {
               </div>
             </div>
             <button
-              onClick={() => setSelectedStatus('pendiente')}
+              onClick={() => setSearchTerm('')}
               className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-cabin-medium transition-colors flex items-center space-x-2"
             >
               <FiClock className="w-4 h-4" />
-              <span>Ver Pendientes</span>
+              <span>Ver Todas</span>
             </button>
           </div>
         </div>
@@ -486,22 +416,6 @@ const Pedidos = () => {
             <div className="w-48">
               <CustomDropdown
                 options={[
-                  { value: 'todos', label: 'Todos los Estados' },
-                  { value: 'pendiente', label: 'Pendientes' },
-                  { value: 'en_transito', label: 'En Tránsito' },
-                  { value: 'entregado', label: 'Entregados' },
-                  { value: 'cancelado', label: 'Cancelados' }
-                ]}
-                selectedValues={[selectedStatus]}
-                onChange={(values) => setSelectedStatus(values[0])}
-                placeholder="Filtrar por estado"
-                className="w-full"
-              />
-            </div>
-
-            <div className="w-48">
-              <CustomDropdown
-                options={[
                   { value: 'todos', label: 'Todas las Fechas' },
                   { value: 'hoy', label: 'Hoy' },
                   { value: 'semana', label: 'Esta Semana' },
@@ -517,19 +431,18 @@ const Pedidos = () => {
             <div className="w-48">
               <CustomDropdown
                 options={[
-                  { value: 'todos', label: 'Todas las Urgencias' },
-                  { value: 'normal', label: 'Normal' },
-                  { value: 'urgente', label: 'Urgente' },
-                  { value: 'critico', label: 'Crítico' }
+                  { value: 'all', label: 'Todos los Estados' },
+                  { value: 'pending', label: 'Pendientes' },
+                  { value: 'sent', label: 'Enviados' }
                 ]}
-                selectedValues={[selectedUrgency]}
-                onChange={(values) => setSelectedUrgency(values[0])}
-                placeholder="Filtrar por urgencia"
+                selectedValues={[selectedStatus]}
+                onChange={(values) => setSelectedStatus(values[0])}
+                placeholder="Filtrar por estado"
                 className="w-full"
               />
             </div>
 
-                        <button
+            <button
               onClick={clearAllFilters}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg font-cabin-medium transition-colors flex items-center space-x-2"
             >
@@ -553,11 +466,11 @@ const Pedidos = () => {
                 {filteredOrders.length} pedido{filteredOrders.length !== 1 ? 's' : ''} encontrado{filteredOrders.length !== 1 ? 's' : ''}
               </span>
             </div>
-            {filteredOrders.filter(o => o.status === 'pendiente').length > 0 && (
+            {filteredOrders.filter(o => getOrderStatus(o).status === 'pendiente').length > 0 && (
               <div className="flex items-center space-x-2">
                 <FiAlertCircle className="w-4 h-4 text-yellow-600" />
                 <span className="text-sm font-cabin-medium text-yellow-700">
-                  {filteredOrders.filter(o => o.status === 'pendiente').length} pendiente{filteredOrders.filter(o => o.status === 'pendiente').length !== 1 ? 's' : ''}
+                  {filteredOrders.filter(o => getOrderStatus(o).status === 'pendiente').length} pendiente{filteredOrders.filter(o => getOrderStatus(o).status === 'pendiente').length !== 1 ? 's' : ''}
                 </span>
               </div>
             )}
@@ -568,13 +481,10 @@ const Pedidos = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  ID Pedido
+                  Folio
                 </th>
                 <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
                   Cliente
-                </th>
-                <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Productos
                 </th>
                 <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
                   Total
@@ -583,126 +493,115 @@ const Pedidos = () => {
                   Estado
                 </th>
                 <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Fecha Pedido
+                  Fecha Creación
                 </th>
                 <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Entrega Estimada
+                  Última Actualización
                 </th>
-                <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Urgencia
-                </th>
-                <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                  Acciones
-                </th>
+
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((order) => (
-                <tr 
-                  key={order.id} 
-                  className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    order.status === 'pendiente' ? 'bg-yellow-50 hover:bg-yellow-100' : ''
-                  }`}
-                >
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2">
-                      <div className="font-cabin-semibold text-gray-800">
-                        {order.id}
-                      </div>
-                      {order.urgency === 'critico' && (
-                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                      )}
-                      {order.urgency === 'urgente' && (
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      )}
-                    </div>
+              {isLoading ? (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600 font-cabin-medium">Cargando órdenes...</p>
                   </td>
-                  <td className="py-4 px-6">
-                    <div>
-                      <div className="font-cabin-semibold text-gray-800">
-                        {order.customer.name}
-                      </div>
-                      <div className="text-sm text-gray-600 font-cabin-regular">
-                        {order.customer.email}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-sm text-gray-700">
-                      {order.products.length} producto{order.products.length !== 1 ? 's' : ''}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {order.products[0]?.title}
-                      {order.products.length > 1 && ` +${order.products.length - 1} más`}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="font-cabin-semibold text-gray-800">
-                      {formatPrice(order.total)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(order.status)}
-                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-cabin-medium border ${getStatusColor(order.status)}`}>
-                        {order.status === 'pendiente' && 'Pendiente'}
-                        {order.status === 'en_transito' && 'En Tránsito'}
-                        {order.status === 'entregado' && 'Entregado'}
-                        {order.status === 'cancelado' && 'Cancelado'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="font-cabin-regular text-gray-700">
-                      {formatDate(order.orderDate)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="font-cabin-regular text-gray-700">
-                      {formatDate(order.estimatedDelivery)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-cabin-medium ${getUrgencyColor(order.urgency)}`}>
-                      {order.urgency === 'normal' && 'Normal'}
-                      {order.urgency === 'urgente' && 'Urgente'}
-                      {order.urgency === 'critico' && 'Crítico'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center">
+                    <p className="text-red-600 font-cabin-medium">{error}</p>
                     <button 
-                      onClick={() => window.location.href = `/pedidos/detalle/${order.id}`}
-                      className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      onClick={refreshOrders}
+                      className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
                     >
-                      <FiEye className="w-4 h-4" />
+                      Reintentar
                     </button>
                   </td>
                 </tr>
-              ))}
+              ) : filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center">
+                    <FiPackage className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 font-cabin-medium">No hay órdenes disponibles</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((order) => (
+                  <tr 
+                    key={order.order_id} 
+                    className="border-b border-gray-100 hover:bg-blue-50 transition-colors cursor-pointer group"
+                    onClick={() => handleViewOrder(order)}
+                  >
+                    <td className="py-4 px-6">
+                      <div className="font-cabin-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                        {order.folio}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div>
+                        <div className="font-cabin-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                          {order.contact_information?.full_name || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600 font-cabin-regular group-hover:text-blue-500 transition-colors">
+                          {order.contact_information?.email || 'N/A'}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-cabin-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                        ${parseFloat(order.total).toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      {(() => {
+                        const orderStatus = getOrderStatus(order);
+                        return (
+                          <div className="flex items-center space-x-2">
+                            <div className="text-gray-400 group-hover:text-blue-500 transition-colors">
+                              {orderStatus.icon}
+                            </div>
+                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-cabin-medium border transition-colors ${orderStatus.color}`}>
+                              {orderStatus.label}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-cabin-regular text-gray-700 group-hover:text-blue-600 transition-colors">
+                        {formatDate(order.created_at)}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-cabin-regular text-gray-700 group-hover:text-blue-600 transition-colors">
+                        {formatDate(order.updated_at)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        <div className="px-6 py-4 border-t border-gray-200">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalOrders}
+            itemsPerPage={limit}
+            onPageChange={goToPage}
+            onItemsPerPageChange={changeLimit}
+            itemsPerPageOptions={[8, 16, 24, 32]}
+          />
+        </div>
       </div>
 
-      {/* Modales */}
-      <OrderInformation 
-        order={selectedOrder}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        mode={modalMode}
-        onSave={handleSaveOrder}
-      />
 
-      <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        title="Eliminar Pedido"
-        description={`¿Estás seguro de que quieres eliminar el pedido "${orderToDelete?.id}"? Esta acción no se puede deshacer.`}
-        onCancel={cancelDeleteOrder}
-        onAccept={confirmDeleteOrder}
-        cancelText="Cancelar"
-        acceptText="Eliminar"
-        type="danger"
-      />
     </div>
   );
 };

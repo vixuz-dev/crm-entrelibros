@@ -1,35 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { FiX, FiGrid, FiSave, FiEdit3 } from 'react-icons/fi';
+import { FiX, FiUser, FiSave, FiEdit3 } from 'react-icons/fi';
 
-const CategoryInformation = ({ 
-  category, 
+const AuthorInformation = ({ 
+  author, 
   isOpen, 
   onClose, 
   mode = 'view', 
   onSave 
 }) => {
   const [formData, setFormData] = useState({
-    category_name: '',
-    category_description: ''
+    author_name: '',
+    status: true
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form when modal opens/closes or category changes
+  // Reset form when modal opens/closes or author changes
   useEffect(() => {
     if (isOpen) {
       if (mode === 'create') {
-        setFormData({ category_name: '', category_description: '' });
+        setFormData({ author_name: '', status: true });
         setErrors({});
-      } else if (category) {
+      } else if (author) {
         setFormData({
-          category_name: category.category_name || '',
-          category_description: category.category_description || ''
+          author_name: author.author_name || '',
+          status: author.status !== undefined ? author.status : true
         });
         setErrors({});
       }
     }
-  }, [isOpen, category, mode]);
+  }, [isOpen, author, mode]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -50,20 +50,12 @@ const CategoryInformation = ({
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.category_name.trim()) {
-      newErrors.category_name = 'El nombre de la categoría es requerido';
-    } else if (formData.category_name.trim().length < 2) {
-      newErrors.category_name = 'El nombre de la categoría debe tener al menos 2 caracteres';
-    } else if (formData.category_name.trim().length > 100) {
-      newErrors.category_name = 'El nombre de la categoría no puede exceder 100 caracteres';
-    }
-
-    if (!formData.category_description.trim()) {
-      newErrors.category_description = 'La descripción de la categoría es requerida';
-    } else if (formData.category_description.trim().length < 10) {
-      newErrors.category_description = 'La descripción debe tener al menos 10 caracteres';
-    } else if (formData.category_description.trim().length > 500) {
-      newErrors.category_description = 'La descripción no puede exceder 500 caracteres';
+    if (!formData.author_name.trim()) {
+      newErrors.author_name = 'El nombre del autor es requerido';
+    } else if (formData.author_name.trim().length < 2) {
+      newErrors.author_name = 'El nombre del autor debe tener al menos 2 caracteres';
+    } else if (formData.author_name.trim().length > 100) {
+      newErrors.author_name = 'El nombre del autor no puede exceder 100 caracteres';
     }
 
     setErrors(newErrors);
@@ -82,7 +74,7 @@ const CategoryInformation = ({
       await onSave(formData);
       onClose();
     } catch (error) {
-      console.error('Error saving category:', error);
+      console.error('Error saving author:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -107,18 +99,18 @@ const CategoryInformation = ({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <FiGrid className="w-5 h-5 text-amber-600" />
+              <FiUser className="w-5 h-5 text-amber-600" />
             </div>
             <div>
               <h2 className="text-xl font-cabin-bold text-gray-800">
-                {isCreateMode && 'Nueva Categoría'}
-                {isEditMode && 'Editar Categoría'}
-                {isViewMode && 'Información de la Categoría'}
+                {isCreateMode && 'Nuevo Autor'}
+                {isEditMode && 'Editar Autor'}
+                {isViewMode && 'Información del Autor'}
               </h2>
               <p className="text-sm text-gray-600 font-cabin-regular">
-                {isCreateMode && 'Agregar una nueva categoría al sistema'}
-                {isEditMode && 'Modificar información de la categoría'}
-                {isViewMode && 'Detalles de la categoría'}
+                {isCreateMode && 'Agregar un nuevo autor al sistema'}
+                {isEditMode && 'Modificar información del autor'}
+                {isViewMode && 'Detalles del autor'}
               </p>
             </div>
           </div>
@@ -138,55 +130,46 @@ const CategoryInformation = ({
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                  Nombre de la Categoría
+                  Nombre del Autor
                 </label>
                 <p className="text-lg font-cabin-semibold text-gray-800">
-                  {category?.category_name || 'N/A'}
+                  {author?.author_name || 'N/A'}
                 </p>
               </div>
               
-              <div>
-                <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                  Descripción
-                </label>
-                <p className="text-lg font-cabin-semibold text-gray-800">
-                  {category?.category_description || 'N/A'}
-                </p>
-              </div>
-              
-              {category?.category_id && (
+              {author?.author_id && (
                 <div>
                   <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                    ID de la Categoría
+                    ID del Autor
                   </label>
                   <p className="text-lg font-cabin-semibold text-gray-800">
-                    #{category.category_id}
+                    #{author.author_id}
                   </p>
                 </div>
               )}
               
-              {category?.status !== undefined && (
+              {author?.status !== undefined && (
                 <div>
                   <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
                     Estado
                   </label>
                   <span className={`inline-flex px-3 py-1 rounded-full text-sm font-cabin-medium border ${
-                    category.status === true 
+                    author.status === true 
                       ? 'bg-green-100 text-green-800 border-green-200' 
                       : 'bg-red-100 text-red-800 border-red-200'
                   }`}>
-                    {category.status === true ? 'Activo' : 'Inactivo'}
+                    {author.status === true ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
               )}
               
-              {category?.created_at && (
+              {author?.created_at && (
                 <div>
                   <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
                     Fecha de Creación
                   </label>
                   <p className="text-lg font-cabin-semibold text-gray-800">
-                    {new Date(category.created_at).toLocaleDateString('es-ES', {
+                    {new Date(author.created_at).toLocaleDateString('es-ES', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
@@ -199,54 +182,64 @@ const CategoryInformation = ({
             // Edit/Create Mode
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="category_name" className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                  Nombre de la Categoría *
+                <label htmlFor="author_name" className="text-sm font-cabin-medium text-gray-600 mb-2 block">
+                  Nombre del Autor *
                 </label>
                 <input
                   type="text"
-                  id="category_name"
-                  name="category_name"
-                  value={formData.category_name}
+                  id="author_name"
+                  name="author_name"
+                  value={formData.author_name}
                   onChange={handleInputChange}
-                  placeholder="Ingresa el nombre de la categoría"
+                  placeholder="Ingresa el nombre del autor"
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular transition-colors ${
-                    errors.category_name 
+                    errors.author_name 
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                   disabled={isSubmitting}
                 />
-                {errors.category_name && (
+                {errors.author_name && (
                   <p className="text-red-500 text-sm font-cabin-regular mt-1">
-                    {errors.category_name}
+                    {errors.author_name}
                   </p>
                 )}
               </div>
 
-              <div>
-                <label htmlFor="category_description" className="text-sm font-cabin-medium text-gray-600 mb-2 block">
-                  Descripción *
-                </label>
-                <textarea
-                  id="category_description"
-                  name="category_description"
-                  value={formData.category_description}
-                  onChange={handleInputChange}
-                  placeholder="Ingresa la descripción de la categoría"
-                  rows={3}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular transition-colors resize-none ${
-                    errors.category_description 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                  disabled={isSubmitting}
-                />
-                {errors.category_description && (
-                  <p className="text-red-500 text-sm font-cabin-regular mt-1">
-                    {errors.category_description}
-                  </p>
-                )}
-              </div>
+              {/* Campo de estado solo en modo edición */}
+              {isEditMode && (
+                <div>
+                  <label className="text-sm font-cabin-medium text-gray-600 mb-2 block">
+                    Estado del Autor
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="true"
+                        checked={formData.status === true}
+                        onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value === 'true' }))}
+                        disabled={isSubmitting}
+                        className="w-4 h-4 text-amber-600 border-gray-300 focus:ring-amber-500"
+                      />
+                      <span className="font-cabin-regular text-gray-700">Activo</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="false"
+                        checked={formData.status === false}
+                        onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value === 'false' }))}
+                        disabled={isSubmitting}
+                        className="w-4 h-4 text-amber-600 border-gray-300 focus:ring-amber-500"
+                      />
+                      <span className="font-cabin-regular text-gray-700">Inactivo</span>
+                    </label>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -271,7 +264,7 @@ const CategoryInformation = ({
                   ) : (
                     <>
                       {isCreateMode ? <FiSave className="w-4 h-4" /> : <FiEdit3 className="w-4 h-4" />}
-                      <span>{isCreateMode ? 'Crear Categoría' : 'Guardar Cambios'}</span>
+                      <span>{isCreateMode ? 'Crear Autor' : 'Guardar Cambios'}</span>
                     </>
                   )}
                 </button>
@@ -284,4 +277,4 @@ const CategoryInformation = ({
   );
 };
 
-export default CategoryInformation; 
+export default AuthorInformation;

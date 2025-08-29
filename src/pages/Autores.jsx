@@ -1,36 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { FiUser, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiBook, FiRefreshCw } from 'react-icons/fi';
-import CategoryInformation from '../components/modals/CategoryInformation';
+import { FiUser, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiBook, FiRefreshCw, FiUserX, FiUserCheck } from 'react-icons/fi';
+import AuthorInformation from '../components/modals/AuthorInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
-import { useAuthorsInformation } from '../store/useAuthorsInformation';
+import { useAuthors } from '../hooks/useCatalogs';
+import { addAuthor, updateAuthor, toggleAuthorStatus } from '../api/authors';
 
 const Autores = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedAuthor, setSelectedAuthor] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('view');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [authorToDelete, setAuthorToDelete] = useState(null);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [authorToDeactivate, setAuthorToDeactivate] = useState(null);
+  const [isActivateModalOpen, setIsActivateModalOpen] = useState(false);
+  const [authorToActivate, setAuthorToActivate] = useState(null);
 
   const {
     authors,
-    currentPage,
-    totalPages,
     totalAuthors,
-    limit,
+    totalAvailableAuthors,
+    totalDisabledAuthors,
     isLoading,
     error,
-    loadAuthors,
-    refreshAuthors,
-    goToPage,
-    changeLimit,
-    getPaginatedAuthors
-  } = useAuthorsInformation();
+    isInitialized,
+    refreshAuthors
+  } = useAuthors();
 
-  useEffect(() => {
-    loadAuthors();
-  }, [loadAuthors]);
+  // Estado local para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(8);
+
+  // Filtrar autores basado en el término de búsqueda y estado
+  const filteredAuthors = authors.filter(author => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = author.author_name?.toLowerCase().includes(searchLower);
+    
+    // Filtrar por estado
+    if (selectedStatus === 'all') {
+      return matchesSearch;
+    } else if (selectedStatus === 'active') {
+      return matchesSearch && author.status === true;
+    } else if (selectedStatus === 'inactive') {
+      return matchesSearch && author.status === false;
+    }
+    
+    return matchesSearch;
+  });
+
+  // Calcular paginación
+  const filteredTotalAuthors = filteredAuthors.length;
+  const totalPages = Math.ceil(filteredTotalAuthors / limit);
+  const paginatedAuthors = filteredAuthors.slice((currentPage - 1) * limit, currentPage * limit);
+
+  // Funciones de paginación
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const changeLimit = (newLimit) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
+  };
 
   const getStatusColor = (status) => {
     return status === true 
@@ -66,14 +102,57 @@ const Autores = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveAuthor = (authorData) => {
-    if (modalMode === 'create') {
-      console.log('Nuevo autor creado:', authorData);
-    } else {
-      console.log('Autor actualizado:', authorData);
+  const handleSaveAuthor = async (authorData) => {
+    try {
+      if (modalMode === 'create') {
+        // Crear nuevo autor
+        const response = await addAuthor(authorData);
+        
+        if (response.status === true || response.status === 'true') {
+  
+          // Recargar la lista de autores
+          await refreshAuthors();
+          // Cerrar modal
+          setIsModalOpen(false);
+        } else {
+          alert(response.status_Message || 'Error al crear el autor');
+        }
+      } else if (modalMode === 'edit' && selectedAuthor) {
+        // Editar autor existente
+        const updateData = {
+          author_id: selectedAuthor.author_id,
+          author_name: authorData.author_name,
+          status: authorData.status
+        };
+        
+        const response = await updateAuthor(updateData);
+        
+        if (response.status === true || response.status === 'true') {
+  
+          // Recargar la lista de autores
+          await refreshAuthors();
+          // Cerrar modal
+          setIsModalOpen(false);
+        } else {
+  
+          alert(response.status_Message || 'Error al actualizar el autor');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving author:', error);
+      // El error ya se maneja en el servicio con notificaciones
     }
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedStatus('all');
+  };
+
+  const handleCloseModal = () => {
     setIsModalOpen(false);
-    refreshAuthors();
+    setSelectedAuthor(null);
+    setModalMode('view');
   };
 
   const handleDeleteAuthor = (author) => {
@@ -83,7 +162,7 @@ const Autores = () => {
 
   const confirmDeleteAuthor = () => {
     if (authorToDelete) {
-      console.log('Autor eliminado:', authorToDelete);
+      
     }
     setIsDeleteModalOpen(false);
     setAuthorToDelete(null);
@@ -95,16 +174,61 @@ const Autores = () => {
     setAuthorToDelete(null);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedAuthor(null);
-    setModalMode('view');
+  const handleDeactivateAuthor = (author) => {
+    setAuthorToDeactivate(author);
+    setIsDeactivateModalOpen(true);
   };
 
-  // Filtrar autores basado en el término de búsqueda
-  const filteredAuthors = getPaginatedAuthors().filter(author =>
-    author.author_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const confirmDeactivateAuthor = async () => {
+    if (authorToDeactivate) {
+      try {
+        const response = await toggleAuthorStatus(authorToDeactivate.author_id);
+        
+        if (response.status === true || response.status === 'true') {
+          // Recargar la lista de autores
+          await refreshAuthors();
+        }
+      } catch (error) {
+        console.error('Error toggling author status:', error);
+        // El error ya se maneja en el servicio con notificaciones
+      }
+    }
+    setIsDeactivateModalOpen(false);
+    setAuthorToDeactivate(null);
+  };
+
+  const cancelDeactivateAuthor = () => {
+    setIsDeactivateModalOpen(false);
+    setAuthorToDeactivate(null);
+  };
+
+  const handleActivateAuthor = (author) => {
+    setAuthorToActivate(author);
+    setIsActivateModalOpen(true);
+  };
+
+  const confirmActivateAuthor = async () => {
+    if (authorToActivate) {
+      try {
+        const response = await toggleAuthorStatus(authorToActivate.author_id);
+        
+        if (response.status === true || response.status === 'true') {
+          // Recargar la lista de autores
+          await refreshAuthors();
+        }
+      } catch (error) {
+        console.error('Error toggling author status:', error);
+        // El error ya se maneja en el servicio con notificaciones
+      }
+    }
+    setIsActivateModalOpen(false);
+    setAuthorToActivate(null);
+  };
+
+  const cancelActivateAuthor = () => {
+    setIsActivateModalOpen(false);
+    setAuthorToActivate(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -156,34 +280,34 @@ const Autores = () => {
           </div>
         </div>
         
-        {/* Card - Autores Activos */}
+        {/* Card - Autores Disponibles */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <FiUser className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Autores Activos</h3>
+              <h3 className="font-cabin-semibold text-gray-800">Autores Disponibles</h3>
               <p className="text-2xl font-cabin-bold text-green-600">
-                {isLoading ? '...' : authors.filter(author => author.status === true).length}
+                {isLoading ? '...' : totalAvailableAuthors}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">Disponibles</p>
+              <p className="text-sm font-cabin-regular text-gray-500">Activos</p>
             </div>
           </div>
         </div>
         
-        {/* Card - Autores Inactivos */}
+        {/* Card - Autores Desactivados */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
               <FiUser className="w-6 h-6 text-red-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Autores Inactivos</h3>
+              <h3 className="font-cabin-semibold text-gray-800">Autores Desactivados</h3>
               <p className="text-2xl font-cabin-bold text-red-600">
-                {isLoading ? '...' : authors.filter(author => author.status === false).length}
+                {isLoading ? '...' : totalDisabledAuthors}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">No disponibles</p>
+              <p className="text-sm font-cabin-regular text-gray-500">Inactivos</p>
             </div>
           </div>
         </div>
@@ -208,11 +332,24 @@ const Autores = () => {
           
           {/* Filtros */}
           <div className="flex gap-3">
-            <select className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular">
+            <select 
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+            >
               <option value="all">Todos los estados</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
             </select>
+            
+            {(searchTerm || selectedStatus !== 'all') && (
+              <button
+                onClick={clearAllFilters}
+                className="px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-cabin-medium"
+              >
+                Limpiar Filtros
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -234,7 +371,7 @@ const Autores = () => {
               Reintentar
             </button>
           </div>
-        ) : filteredAuthors.length === 0 ? (
+                      ) : paginatedAuthors.length === 0 ? (
           <div className="p-8 text-center">
             <FiUser className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 font-cabin-medium">
@@ -265,7 +402,7 @@ const Autores = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAuthors.map((author) => (
+                  {paginatedAuthors.map((author) => (
                     <tr key={author.author_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6">
                         <span className="font-cabin-semibold text-gray-800">
@@ -303,13 +440,23 @@ const Autores = () => {
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
-                          <button 
-                            onClick={() => handleDeleteAuthor(author)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Eliminar"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
+                          {author.status ? (
+                            <button 
+                              onClick={() => handleDeactivateAuthor(author)}
+                              className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                              title="Desactivar"
+                            >
+                              <FiUserX className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleActivateAuthor(author)}
+                              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Activar"
+                            >
+                              <FiUserCheck className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -335,8 +482,8 @@ const Autores = () => {
       </div>
 
       {/* Modal de Información del Autor */}
-      <CategoryInformation 
-        category={selectedAuthor}
+      <AuthorInformation 
+        author={selectedAuthor}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         mode={modalMode}
@@ -353,6 +500,30 @@ const Autores = () => {
         cancelText="Cancelar"
         acceptText="Eliminar"
         type="danger"
+      />
+
+      {/* Modal de Confirmación de Cambio de Estado */}
+      <ConfirmationModal
+        isOpen={isDeactivateModalOpen}
+        title="Cambiar Estado del Autor"
+        description={`¿Estás seguro de que quieres cambiar el estado del autor "${authorToDeactivate?.author_name}"?`}
+        onCancel={cancelDeactivateAuthor}
+        onAccept={confirmDeactivateAuthor}
+        cancelText="Cancelar"
+        acceptText="Cambiar Estado"
+        type="warning"
+      />
+
+      {/* Modal de Confirmación de Cambio de Estado */}
+      <ConfirmationModal
+        isOpen={isActivateModalOpen}
+        title="Cambiar Estado del Autor"
+        description={`¿Estás seguro de que quieres cambiar el estado del autor "${authorToActivate?.author_name}"?`}
+        onCancel={cancelActivateAuthor}
+        onAccept={confirmActivateAuthor}
+        cancelText="Cancelar"
+        acceptText="Cambiar Estado"
+        type="warning"
       />
     </div>
   );

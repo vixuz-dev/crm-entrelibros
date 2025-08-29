@@ -1,36 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { FiGrid, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiBook, FiRefreshCw } from 'react-icons/fi';
-import CategoryInformation from '../components/modals/CategoryInformation';
+import { FiGrid, FiPlus, FiSearch, FiFilter, FiEdit, FiEye, FiBook, FiRefreshCw, FiX, FiCheck } from 'react-icons/fi';
+import TopicInformation from '../components/modals/TopicInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
-import { useTopicsInformation } from '../store/useTopicsInformation';
+import { useTopics } from '../hooks/useCatalogs';
+import { addTopic, updateTopic, toggleTopicStatus } from '../api/topics';
 
 const Temas = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('view');
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [topicToDelete, setTopicToDelete] = useState(null);
+
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [topicToDeactivate, setTopicToDeactivate] = useState(null);
+  const [isActivateModalOpen, setIsActivateModalOpen] = useState(false);
+  const [topicToActivate, setTopicToActivate] = useState(null);
 
   const {
     topics,
-    currentPage,
-    totalPages,
     totalTopics,
-    limit,
+    totalAvailableTopics,
+    totalDisabledTopics,
     isLoading,
     error,
-    loadTopics,
-    refreshTopics,
-    goToPage,
-    changeLimit,
-    getPaginatedTopics
-  } = useTopicsInformation();
+    isInitialized,
+    refreshTopics
+  } = useTopics();
 
-  useEffect(() => {
-    loadTopics();
-  }, [loadTopics]);
+  // Estado local para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(8);
+
+  // Filtrar temas basado en el término de búsqueda y estado
+  const filteredTopics = topics.filter(topic => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = topic.topic_name?.toLowerCase().includes(searchLower);
+    
+    // Filtrar por estado
+    if (selectedStatus === 'all') {
+      return matchesSearch;
+    } else if (selectedStatus === 'active') {
+      return matchesSearch && topic.status === true;
+    } else if (selectedStatus === 'inactive') {
+      return matchesSearch && topic.status === false;
+    }
+    
+    return matchesSearch;
+  });
+
+  // Calcular paginación
+  const filteredTotalTopics = filteredTopics.length;
+  const totalPages = Math.ceil(filteredTotalTopics / limit);
+  const paginatedTopics = filteredTopics.slice((currentPage - 1) * limit, currentPage * limit);
+
+  // Funciones de paginación
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const changeLimit = (newLimit) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
+  };
 
   const getStatusColor = (status) => {
     return status === true 
@@ -66,34 +101,52 @@ const Temas = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveTopic = (topicData) => {
-    if (modalMode === 'create') {
-      console.log('Nuevo tema creado:', topicData);
-    } else {
-      console.log('Tema actualizado:', topicData);
+  const handleSaveTopic = async (topicData) => {
+    try {
+      if (modalMode === 'create') {
+        // Crear nuevo tema
+        const response = await addTopic(topicData);
+        
+        if (response.status === true || response.status === 'true') {
+  
+          // Recargar la lista de temas
+          await refreshTopics();
+          // Cerrar modal
+          setIsModalOpen(false);
+        } else {
+          alert(response.status_Message || 'Error al crear el tema');
+        }
+      } else if (modalMode === 'edit' && selectedTopic) {
+        // Editar tema existente
+        const updateData = {
+          topic_id: selectedTopic.topic_id,
+          topic_name: topicData.topic_name
+        };
+        
+        const response = await updateTopic(updateData);
+        
+        if (response.status === true || response.status === 'true') {
+  
+          // Recargar la lista de temas
+          await refreshTopics();
+          // Cerrar modal
+          setIsModalOpen(false);
+        } else {
+          alert(response.status_Message || 'Error al actualizar el tema');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving topic:', error);
+      // El error ya se maneja en el servicio con notificaciones
     }
-    setIsModalOpen(false);
-    refreshTopics();
   };
 
-  const handleDeleteTopic = (topic) => {
-    setTopicToDelete(topic);
-    setIsDeleteModalOpen(true);
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedStatus('all');
   };
 
-  const confirmDeleteTopic = () => {
-    if (topicToDelete) {
-      console.log('Tema eliminado:', topicToDelete);
-    }
-    setIsDeleteModalOpen(false);
-    setTopicToDelete(null);
-    refreshTopics();
-  };
 
-  const cancelDeleteTopic = () => {
-    setIsDeleteModalOpen(false);
-    setTopicToDelete(null);
-  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -101,10 +154,70 @@ const Temas = () => {
     setModalMode('view');
   };
 
-  // Filtrar temas basado en el término de búsqueda
-  const filteredTopics = getPaginatedTopics().filter(topic =>
-    topic.topic_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Funciones para activar/desactivar temas
+  const handleDeactivateTopic = (topic) => {
+    setTopicToDeactivate(topic);
+    setIsDeactivateModalOpen(true);
+  };
+
+  const confirmDeactivateTopic = async () => {
+    if (topicToDeactivate) {
+      try {
+        const response = await toggleTopicStatus(topicToDeactivate.topic_id);
+        
+        if (response.status === true || response.status === 'true') {
+  
+          // Recargar la lista de temas
+          await refreshTopics();
+        } else {
+          console.error('Error deactivating topic:', response);
+        }
+      } catch (error) {
+        console.error('Error deactivating topic:', error);
+        // El error ya se maneja en el servicio con notificaciones
+      }
+    }
+    setIsDeactivateModalOpen(false);
+    setTopicToDeactivate(null);
+  };
+
+  const cancelDeactivateTopic = () => {
+    setIsDeactivateModalOpen(false);
+    setTopicToDeactivate(null);
+  };
+
+  const handleActivateTopic = (topic) => {
+    setTopicToActivate(topic);
+    setIsActivateModalOpen(true);
+  };
+
+  const confirmActivateTopic = async () => {
+    if (topicToActivate) {
+      try {
+        const response = await toggleTopicStatus(topicToActivate.topic_id);
+        
+        if (response.status === true || response.status === 'true') {
+  
+          // Recargar la lista de temas
+          await refreshTopics();
+        } else {
+          console.error('Error activating topic:', response);
+        }
+      } catch (error) {
+        console.error('Error activating topic:', error);
+        // El error ya se maneja en el servicio con notificaciones
+      }
+    }
+    setIsActivateModalOpen(false);
+    setTopicToActivate(null);
+  };
+
+  const cancelActivateTopic = () => {
+    setIsActivateModalOpen(false);
+    setTopicToActivate(null);
+  };
+
+
 
   return (
     <div className="space-y-6">
@@ -156,34 +269,34 @@ const Temas = () => {
           </div>
         </div>
         
-        {/* Card - Temas Activos */}
+        {/* Card - Temas Disponibles */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <FiGrid className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Temas Activos</h3>
+              <h3 className="font-cabin-semibold text-gray-800">Temas Disponibles</h3>
               <p className="text-2xl font-cabin-bold text-green-600">
-                {isLoading ? '...' : topics.filter(topic => topic.status === true).length}
+                {isLoading ? '...' : totalAvailableTopics}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">Disponibles</p>
+              <p className="text-sm font-cabin-regular text-gray-500">Activos</p>
             </div>
           </div>
         </div>
         
-        {/* Card - Temas Inactivos */}
+        {/* Card - Temas Desactivados */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
               <FiGrid className="w-6 h-6 text-red-600" />
             </div>
             <div>
-              <h3 className="font-cabin-semibold text-gray-800">Temas Inactivos</h3>
+              <h3 className="font-cabin-semibold text-gray-800">Temas Desactivados</h3>
               <p className="text-2xl font-cabin-bold text-red-600">
-                {isLoading ? '...' : topics.filter(topic => topic.status === false).length}
+                {isLoading ? '...' : totalDisabledTopics}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">No disponibles</p>
+              <p className="text-sm font-cabin-regular text-gray-500">Inactivos</p>
             </div>
           </div>
         </div>
@@ -208,11 +321,24 @@ const Temas = () => {
           
           {/* Filtros */}
           <div className="flex gap-3">
-            <select className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular">
+            <select 
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+            >
               <option value="all">Todos los estados</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
             </select>
+            
+            {(searchTerm || selectedStatus !== 'all') && (
+              <button
+                onClick={clearAllFilters}
+                className="px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-cabin-medium"
+              >
+                Limpiar Filtros
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -234,7 +360,7 @@ const Temas = () => {
               Reintentar
             </button>
           </div>
-        ) : filteredTopics.length === 0 ? (
+                      ) : paginatedTopics.length === 0 ? (
           <div className="p-8 text-center">
             <FiGrid className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 font-cabin-medium">
@@ -265,7 +391,7 @@ const Temas = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTopics.map((topic) => (
+                  {paginatedTopics.map((topic) => (
                     <tr key={topic.topic_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6">
                         <span className="font-cabin-semibold text-gray-800">
@@ -291,7 +417,7 @@ const Temas = () => {
                         <div className="flex items-center space-x-2">
                           <button 
                             onClick={() => handleViewTopic(topic)}
-                            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                             title="Ver detalles"
                           >
                             <FiEye className="w-4 h-4" />
@@ -303,13 +429,23 @@ const Temas = () => {
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
-                          <button 
-                            onClick={() => handleDeleteTopic(topic)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Eliminar"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
+                          {topic.status ? (
+                            <button 
+                              onClick={() => handleDeactivateTopic(topic)}
+                              className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                              title="Desactivar"
+                            >
+                              <FiX className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleActivateTopic(topic)}
+                              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Activar"
+                            >
+                              <FiCheck className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -335,24 +471,38 @@ const Temas = () => {
       </div>
 
       {/* Modal de Información del Tema */}
-      <CategoryInformation 
-        category={selectedTopic}
+      <TopicInformation 
+        topic={selectedTopic}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         mode={modalMode}
         onSave={handleSaveTopic}
       />
 
-      {/* Modal de Confirmación de Eliminación */}
+
+
+      {/* Modal de Confirmación de Desactivación */}
       <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        title="Eliminar Tema"
-        description={`¿Estás seguro de que quieres eliminar el tema "${topicToDelete?.topic_name}"? Esta acción no se puede deshacer.`}
-        onCancel={cancelDeleteTopic}
-        onAccept={confirmDeleteTopic}
+        isOpen={isDeactivateModalOpen}
+        title="Desactivar Tema"
+        description={`¿Estás seguro de que quieres desactivar el tema "${topicToDeactivate?.topic_name}"?`}
+        onCancel={cancelDeactivateTopic}
+        onAccept={confirmDeactivateTopic}
         cancelText="Cancelar"
-        acceptText="Eliminar"
+        acceptText="Desactivar"
         type="danger"
+      />
+
+      {/* Modal de Confirmación de Activación */}
+      <ConfirmationModal
+        isOpen={isActivateModalOpen}
+        title="Activar Tema"
+        description={`¿Estás seguro de que quieres activar el tema "${topicToActivate?.topic_name}"?`}
+        onCancel={cancelActivateTopic}
+        onAccept={confirmActivateTopic}
+        cancelText="Cancelar"
+        acceptText="Activar"
+        type="warning"
       />
     </div>
   );

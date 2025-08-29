@@ -21,7 +21,7 @@ import {
   FiChevronRight
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
-import { clearSession } from '../../utils/sessionCookie';
+import { logout as logoutService } from '../../api/auth';
 import { ROUTES } from '../../utils/routes';
 
 const Sidebar = ({ onClose }) => {
@@ -108,28 +108,32 @@ const Sidebar = ({ onClose }) => {
       label: 'Inventario',
       icon: FiPackage,
       route: ROUTES.INVENTORY,
-      active: location.pathname.startsWith(ROUTES.INVENTORY)
+      active: location.pathname.startsWith(ROUTES.INVENTORY),
+      disabled: true
     },
     {
       id: 'reportes',
       label: 'Reportes',
       icon: FiBarChart2,
       route: ROUTES.REPORTS,
-      active: location.pathname.startsWith(ROUTES.REPORTS)
+      active: location.pathname.startsWith(ROUTES.REPORTS),
+      disabled: true
     },
     {
       id: 'configuracion',
       label: 'Configuración',
       icon: FiSettings,
       route: ROUTES.SETTINGS,
-      active: location.pathname.startsWith(ROUTES.SETTINGS)
+      active: location.pathname.startsWith(ROUTES.SETTINGS),
+      disabled: true
     },
     {
       id: 'ayuda',
       label: 'Ayuda',
       icon: FiHelpCircle,
       route: ROUTES.HELP,
-      active: location.pathname.startsWith(ROUTES.HELP)
+      active: location.pathname.startsWith(ROUTES.HELP),
+      disabled: true
     }
   ];
 
@@ -140,7 +144,8 @@ const Sidebar = ({ onClose }) => {
       icon: FiBell,
       route: ROUTES.NOTIFICATIONS,
       badge: 24,
-      badgeColor: 'bg-green-500'
+      badgeColor: 'bg-green-500',
+      disabled: true
     },
     {
       id: 'logout',
@@ -151,17 +156,24 @@ const Sidebar = ({ onClose }) => {
     }
   ];
 
-  const handleNavigation = async (route) => {
+  const handleNavigation = async (route, disabled = false) => {
+    // No permitir navegación si está deshabilitado
+    if (disabled) {
+      return;
+    }
+    
     // Manejar logout
     if (route === ROUTES.LOGIN) {
       try {
-        console.log('Cerrando sesión...');
+    
         
-        // Limpiar información del administrador y token
+        // Usar el servicio de logout que limpia catálogos y token
+        await logoutService();
+        
+        // Limpiar información del administrador
         logout();
-        clearSession();
         
-        console.log('Sesión cerrada exitosamente');
+        
         
         // Redirigir al login
         navigate(ROUTES.LOGIN);
@@ -170,7 +182,6 @@ const Sidebar = ({ onClose }) => {
         
         // Aún limpiar datos locales y redirigir al login
         logout();
-        clearSession();
         navigate(ROUTES.LOGIN);
       }
       return;
@@ -230,14 +241,19 @@ const Sidebar = ({ onClose }) => {
               <div key={item.id}>
                 <button
                   onClick={() => {
+                    if (item.disabled) {
+                      return;
+                    }
                     if (hasSubmenu) {
                       toggleSubmenu(item.id);
                     } else {
-                      handleNavigation(item.route);
+                      handleNavigation(item.route, item.disabled);
                     }
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors duration-200 ${
-                    item.active
+                    item.disabled
+                      ? 'text-gray-400 cursor-not-allowed opacity-50'
+                      : item.active
                       ? 'bg-amber-50 text-amber-600 border border-amber-200'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
                   }`}
@@ -298,8 +314,12 @@ const Sidebar = ({ onClose }) => {
             return (
               <button
                 key={item.id}
-                onClick={() => handleNavigation(item.route)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200"
+                onClick={() => handleNavigation(item.route, item.disabled)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors duration-200 ${
+                  item.disabled
+                    ? 'text-gray-400 cursor-not-allowed opacity-50'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                }`}
               >
                 <div className="flex items-center space-x-3">
                   <Icon className="w-5 h-5" />

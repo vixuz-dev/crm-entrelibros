@@ -12,9 +12,13 @@ export const useUsersInformation = create(
       currentPage: 1,
       totalPages: 0,
       totalUsers: 0,
+      totalAvailableUsers: 0,
+      totalDisabledUsers: 0,
       limit: 5,
       isLoading: false,
       error: null,
+      isInitialized: false,
+      lastLoadTime: 0, // Para evitar llamadas muy cercanas
 
       // Acciones
       setUsers: (users) => set({ users }),
@@ -32,57 +36,80 @@ export const useUsersInformation = create(
       setError: (error) => set({ error }),
 
       // Cargar usuarios desde la API
-      loadUsers: async (page = 1, limit = 5) => {
+      loadUsers: async (page = 1, limit = 5, user_name = '') => {
         try {
-          set({ isLoading: true, error: null });
+          // Evitar llamadas duplicadas si ya está cargando
+          const currentState = get();
+          const now = Date.now();
+          
+          if (currentState.isLoading) {
+            console.log('🚫 loadUsers: Ya está cargando, evitando llamada duplicada');
+            return;
+          }
+          
+          // Evitar llamadas muy cercanas (menos de 100ms)
+          if (now - currentState.lastLoadTime < 100) {
+            console.log('🚫 loadUsers: Llamada muy cercana, evitando duplicado');
+            return;
+          }
+          
+          console.log('📞 loadUsers llamado:', { page, limit, user_name, isInitialized: currentState.isInitialized, timestamp: now });
+      
+          set({ isLoading: true, error: null, lastLoadTime: now });
           
           const { getUsers } = await import('../api/users');
-          const response = await getUsers(page, limit);
+          const response = await getUsers(page, limit, user_name);
           
-          // Verificar si la respuesta es exitosa
-          if (response.status === true) {
-            // Actualizar estado con la respuesta de tu API
+          // Verificar si la respuesta es exitosa o si es un resultado válido de búsqueda sin resultados
+          if (response.status === true || response.status === 'true' || response.status_Message === "No se encontraron usuarios") {
+            // Actualizar estado con la respuesta de la API
             set({
               users: response.users || [],
               currentPage: page,
               totalPages: response.total_pages || 0,
-              totalUsers: response.users ? response.users.length * (response.total_pages || 1) : 0,
+              totalUsers: response.totalUsers || (response.users ? response.users.length : 0),
+              totalAvailableUsers: response.totalAvailableUsers || 0,
+              totalDisabledUsers: response.totalDisabledUsers || 0,
               limit: limit,
-              isLoading: false
+              isLoading: false,
+              isInitialized: true,
+              error: null // Limpiar cualquier error previo
             });
             
-            console.log('Users loaded successfully:', response);
+            
           } else {
-            // Manejar respuesta con error
+            // Manejar otros errores reales
             set({ 
               error: response.status_Message || 'Error al cargar usuarios',
-              isLoading: false 
+              isLoading: false,
+              isInitialized: true
             });
           }
         } catch (error) {
           console.error('Error loading users:', error);
           set({ 
             error: error.message || 'Error al cargar usuarios',
-            isLoading: false 
+            isLoading: false,
+            isInitialized: true
           });
         }
       },
 
       // Refrescar usuarios (recargar página actual)
-      refreshUsers: async () => {
+      refreshUsers: async (user_name = '') => {
         const { currentPage, limit } = get();
-        await get().loadUsers(currentPage, limit);
+        await get().loadUsers(currentPage, limit, user_name);
       },
 
       // Ir a página específica
-      goToPage: async (page) => {
+      goToPage: async (page, user_name = '') => {
         const { limit } = get();
-        await get().loadUsers(page, limit);
+        await get().loadUsers(page, limit, user_name);
       },
 
       // Cambiar límite de elementos por página
-      changeLimit: async (newLimit) => {
-        await get().loadUsers(1, newLimit); // Volver a página 1 con nuevo límite
+      changeLimit: async (newLimit, user_name = '') => {
+        await get().loadUsers(1, newLimit, user_name); // Volver a página 1 con nuevo límite
       },
 
       // Limpiar estado
@@ -92,9 +119,12 @@ export const useUsersInformation = create(
           currentPage: 1,
           totalPages: 0,
           totalUsers: 0,
+          totalAvailableUsers: 0,
+          totalDisabledUsers: 0,
           limit: 5,
           isLoading: false,
-          error: null
+          error: null,
+          isInitialized: false
         });
       },
 
