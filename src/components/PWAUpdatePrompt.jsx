@@ -8,25 +8,47 @@ const PWAUpdatePrompt = () => {
   useEffect(() => {
     // Verificar si el service worker está disponible
     if ('serviceWorker' in navigator) {
+      let updateFound = false;
+
       // Escuchar actualizaciones del service worker
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // El service worker ha cambiado, mostrar prompt de actualización
-        setShowUpdatePrompt(true);
-      });
+      const handleUpdateFound = () => {
+        updateFound = true;
+      };
 
       // Verificar si hay una nueva versión disponible
       const checkForUpdates = async () => {
         try {
           const registration = await navigator.serviceWorker.getRegistration();
-          if (registration && registration.waiting) {
-            setShowUpdatePrompt(true);
+          
+          if (registration) {
+            // Solo mostrar el prompt si hay un service worker esperando Y no es la primera carga
+            if (registration.waiting && updateFound) {
+              setShowUpdatePrompt(true);
+            }
+
+            // Escuchar cuando se encuentra una nueva versión
+            registration.addEventListener('updatefound', handleUpdateFound);
           }
         } catch (error) {
           console.log('Error checking for updates:', error);
         }
       };
 
-      checkForUpdates();
+      // Esperar un poco antes de verificar para evitar falsos positivos
+      const timer = setTimeout(() => {
+        checkForUpdates();
+      }, 2000);
+
+      return () => {
+        clearTimeout(timer);
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistration().then(registration => {
+            if (registration) {
+              registration.removeEventListener('updatefound', handleUpdateFound);
+            }
+          });
+        }
+      };
     }
   }, []);
 
