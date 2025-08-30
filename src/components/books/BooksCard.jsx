@@ -68,7 +68,8 @@ const BooksCard = ({ book, onView, onEdit, onDelete }) => {
 
   const calculateDiscountedPrice = (originalPrice, discount) => {
     if (!discount || discount === 0) return originalPrice;
-    return originalPrice - (originalPrice * discount / 100);
+    const discountedPrice = originalPrice - (originalPrice * discount / 100);
+    return Math.round(discountedPrice); // Redondear al entero más cercano
   };
 
   const getStockStatus = (stock) => {
@@ -103,7 +104,7 @@ const BooksCard = ({ book, onView, onEdit, onDelete }) => {
           {/* Badge de descuento */}
           {book.discount > 0 && (
             <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-cabin-bold px-2 py-1 rounded-full">
-              -{book.discount}%
+              -{Math.round(book.discount)}%
             </div>
           )}
           

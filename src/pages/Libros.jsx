@@ -398,7 +398,7 @@ const Libros = () => {
                         </div>
                         {product.discount > 0 && (
                           <div className="text-sm text-red-600">
-                            -{product.discount}% descuento
+                            -{Math.round(product.discount)}% descuento
                           </div>
                         )}
                       </td>

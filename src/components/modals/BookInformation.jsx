@@ -169,12 +169,24 @@ const BookInformation = ({
     }
     const discountAmount = originalPrice * (discountPercent / 100);
     const discountedPrice = originalPrice - discountAmount;
-    return Math.round(discountedPrice * 100) / 100; // Redondear a 2 decimales
+    return Math.round(discountedPrice); // Redondear al entero más cercano
   };
 
   // Función para manejar cambios en precio y descuento con cálculo automático
   const handlePriceOrDiscountChange = (field, value) => {
-    const newValue = value === '' ? 0 : (field === 'discount' ? parseInt(value) || 0 : parseFloat(value) || 0);
+    let newValue;
+    if (value === '') {
+      newValue = 0;
+    } else if (field === 'discount') {
+      // Para descuento, forzar número entero y limitar a 0-100
+      const parsedValue = Math.floor(parseFloat(value) || 0);
+      newValue = Math.max(0, Math.min(100, parsedValue));
+    } else if (field === 'price') {
+      // Para precio, redondear al entero más cercano
+      newValue = Math.round(parseFloat(value) || 0);
+    } else {
+      newValue = parseFloat(value) || 0;
+    }
     
     setEditData((prev) => {
       const updatedData = {
@@ -1017,7 +1029,8 @@ const BookInformation = ({
                             <span className="text-gray-600">$</span>
                             <input
                               type="number"
-                              step="0.01"
+                              step="1"
+                              min="0"
                               value={editData.price === 0 ? '' : editData.price}
                               onChange={(e) => handlePriceOrDiscountChange("price", e.target.value)}
                               className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -1032,6 +1045,7 @@ const BookInformation = ({
                             type="number"
                             min="0"
                             max="100"
+                            step="1"
                             value={editData.discount === 0 ? '' : editData.discount}
                             onChange={(e) => handlePriceOrDiscountChange("discount", e.target.value)}
                             className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -1045,13 +1059,14 @@ const BookInformation = ({
                             <span className="text-gray-600">$</span>
                             <input
                               type="number"
-                              step="0.01"
+                              step="1"
+                              min="0"
                               value={editData.price_offer === 0 ? '' : editData.price_offer}
                               onChange={(e) => {
                                 const value = e.target.value;
                                 handleInputChange(
                                   "price_offer",
-                                  value === '' ? 0 : parseFloat(value) || 0
+                                  value === '' ? 0 : Math.round(parseFloat(value) || 0)
                                 );
                               }}
                               className={`w-full text-sm font-cabin-medium text-gray-800 bg-white border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -1208,7 +1223,7 @@ const BookInformation = ({
                           Descuento:
                         </span>
                         <span className="font-cabin-medium">
-                          {book.discount || 0}%
+                          {Math.round(book.discount || 0)}%
                         </span>
                       </div>
                       <div>

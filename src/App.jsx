@@ -13,6 +13,7 @@ import Membresias from './pages/Membresias';
 import Pedidos from './pages/Pedidos';
 import InformacionPedido from './pages/InformacionPedido';
 import Login from './pages/Login';
+import PWAUpdatePrompt from './components/PWAUpdatePrompt';
 import { ROUTES } from './utils/routes';
 import { useAuth } from './hooks/useAuth';
 import "./index.css";
@@ -79,6 +80,9 @@ function App() {
           )
         } />
       </Routes>
+      
+      {/* PWA Update Prompt */}
+      <PWAUpdatePrompt />
     </Router>
   );
 }
