@@ -46,7 +46,6 @@ export const getUsers = async (page = 1, limit = 8, user_name = '') => {
       //   console.log('No se encontraron usuarios');
       // }
       
-      console.log('Users fetched successfully:', response.data);
       return response.data;
     } else {
       showError(response.data.status_Message || 'Error al cargar usuarios');
