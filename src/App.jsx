@@ -14,6 +14,7 @@ import Pedidos from './pages/Pedidos';
 import InformacionPedido from './pages/InformacionPedido';
 import Login from './pages/Login';
 import PWAManager from './components/PWAManager';
+import PWACacheReset from './components/PWACacheReset';
 import { ROUTES } from './utils/routes';
 import { useAuth } from './hooks/useAuth';
 import "./index.css";
@@ -83,6 +84,9 @@ function App() {
       
       {/* PWA Manager */}
       <PWAManager />
+      
+      {/* PWA Cache Reset (solo en desarrollo) */}
+      <PWACacheReset />
     </Router>
   );
 }

@@ -7,6 +7,47 @@ const PWAManager = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Función para limpiar cache y resetear PWA
+  const clearPWACache = async () => {
+    try {
+      // Limpiar service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+      }
+
+      // Limpiar cache del navegador
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      }
+
+      // Limpiar localStorage relacionado con PWA
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('pwa') || key.includes('workbox') || key.includes('sw'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      console.log('Cache PWA limpiado exitosamente');
+      
+      // Recargar la página después de limpiar
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error limpiando cache PWA:', error);
+    }
+  };
+
   useEffect(() => {
     // Variables para controlar el estado
     let updateFound = false;
