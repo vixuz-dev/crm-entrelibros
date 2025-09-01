@@ -3,7 +3,7 @@ import { clearSession, getSessionToken } from './sessionCookie';
 import { ROUTES } from './routes';
 
 // Base URL for the API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Configurar interceptor para agregar token automáticamente
 axios.interceptors.request.use(

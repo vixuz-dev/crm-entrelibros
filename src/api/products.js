@@ -1,7 +1,7 @@
 import axios from "axios";
 import { showDataLoadError, showDataLoadSuccess } from "../utils/notifications";
 import { prepareSearchTerm } from "../utils/searchUtils";
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Crear una instancia de axios sin interceptores para endpoints públicos
 const publicAxios = axios.create();

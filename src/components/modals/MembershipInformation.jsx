@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiX, FiCreditCard, FiEdit, FiSave, FiPlus, FiBook, FiDollarSign, FiCalendar, FiCheck } from 'react-icons/fi';
 import CustomDropdown from '../ui/CustomDropdown';
 import { getProducts } from '../../api/products';
-import { addMembership } from '../../api/memberships';
+import { addMembership, updateMembership } from '../../api/memberships';
 import { showSuccess, showError } from '../../utils/notifications';
 import { useDebounce } from '../../hooks/useDebounce';
 
@@ -206,11 +206,22 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
           showError(response.status_Message || 'Error al crear la membresía');
         }
       } else {
-        // TODO: Implementar actualización cuando esté disponible
-        if (onSave) {
-          await onSave(membershipData);
+        // Actualizar membresía existente
+        const updateData = {
+          ...membershipData,
+          membership_id: membership.membership_id
+        };
+        
+        const response = await updateMembership(updateData);
+        if (response.status === true) {
+          showSuccess('Membresía actualizada correctamente');
+          if (onSave) {
+            await onSave(updateData);
+          }
+          onClose();
+        } else {
+          showError(response.status_Message || 'Error al actualizar la membresía');
         }
-        onClose();
       }
     } catch (error) {
       console.error('Error saving membership:', error);

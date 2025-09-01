@@ -80,14 +80,14 @@ function App() {
             <Navigate to={ROUTES.LOGIN} replace />
           )
         } />
-      </Routes>
-      
-      {/* PWA Manager */}
-      <PWAManager />
-      
-      {/* PWA Cache Reset (solo en desarrollo) */}
-      <PWACacheReset />
-    </Router>
+              </Routes>
+        
+        {/* PWA Manager */}
+        <PWAManager />
+        
+        {/* PWA Cache Reset (solo en desarrollo) */}
+        <PWACacheReset />
+      </Router>
   );
 }
 

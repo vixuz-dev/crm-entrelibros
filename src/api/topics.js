@@ -1,7 +1,7 @@
 import axios from '../utils/axiosConfig';
 import { showTopicCreated, showTopicUpdated, showTopicDeleted, showError } from '../utils/notifications';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Add new topic

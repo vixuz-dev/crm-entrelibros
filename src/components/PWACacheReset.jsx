@@ -1,19 +1,18 @@
-import { useState } from 'react';
+import React from 'react';
 import { FiRefreshCw, FiTrash2 } from 'react-icons/fi';
 
 const PWACacheReset = () => {
-  const [isClearing, setIsClearing] = useState(false);
-
   const clearPWACache = async () => {
-    setIsClearing(true);
-    
     try {
+      console.log('🔄 Iniciando limpieza de cache PWA...');
+      
       // Limpiar service workers
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (const registration of registrations) {
           await registration.unregister();
         }
+        console.log('✅ Service Workers desregistrados');
       }
 
       // Limpiar cache del navegador
@@ -22,6 +21,7 @@ const PWACacheReset = () => {
         await Promise.all(
           cacheNames.map(cacheName => caches.delete(cacheName))
         );
+        console.log('✅ Cache del navegador limpiado');
       }
 
       // Limpiar localStorage relacionado con PWA
@@ -33,6 +33,18 @@ const PWACacheReset = () => {
         }
       }
       keysToRemove.forEach(key => localStorage.removeItem(key));
+      console.log('✅ localStorage PWA limpiado');
+
+      // Limpiar sessionStorage relacionado con PWA
+      const sessionKeysToRemove = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (key.includes('pwa') || key.includes('workbox') || key.includes('sw'))) {
+          sessionKeysToRemove.push(key);
+        }
+      }
+      sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
+      console.log('✅ sessionStorage PWA limpiado');
 
       console.log('✅ Cache PWA limpiado exitosamente');
       
@@ -43,7 +55,6 @@ const PWACacheReset = () => {
 
     } catch (error) {
       console.error('❌ Error limpiando cache PWA:', error);
-      setIsClearing(false);
     }
   };
 
@@ -53,24 +64,16 @@ const PWACacheReset = () => {
   }
 
   return (
-    <div className="fixed top-4 left-4 z-50">
+    <div className="fixed bottom-4 left-4 z-50">
       <button
         onClick={clearPWACache}
-        disabled={isClearing}
-        className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-2 transition-colors"
+        className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg transition-colors duration-200 group"
         title="Limpiar cache PWA para testing"
       >
-        {isClearing ? (
-          <>
-            <FiRefreshCw className="w-4 h-4 animate-spin" />
-            <span>Limpiando...</span>
-          </>
-        ) : (
-          <>
-            <FiTrash2 className="w-4 h-4" />
-            <span>Limpiar PWA Cache</span>
-          </>
-        )}
+        <div className="flex items-center space-x-2">
+          <FiTrash2 className="w-5 h-5 group-hover:animate-pulse" />
+          <span className="text-sm font-medium hidden sm:block">Limpiar PWA Cache</span>
+        </div>
       </button>
     </div>
   );

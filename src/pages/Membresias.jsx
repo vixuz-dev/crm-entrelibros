@@ -128,7 +128,15 @@ const Membresias = () => {
   };
 
   const handleSaveMembership = async (membershipData) => {
-    // Recargar la lista de membresías después de crear/editar
+    if (modalMode === 'create') {
+      // Agregar nueva membresía al store
+      addMembership(membershipData);
+    } else if (modalMode === 'edit') {
+      // Actualizar membresía en el store
+      updateMembership(membershipData.membership_id, membershipData);
+    }
+    
+    // Recargar la lista de membresías para asegurar sincronización
     await loadMemberships();
   };
 

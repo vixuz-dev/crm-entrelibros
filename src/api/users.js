@@ -2,7 +2,7 @@ import axios from '../utils/axiosConfig';
 import { showError, showDataLoadError, showDataLoadSuccess } from '../utils/notifications';
 import { prepareSearchTerm } from '../utils/searchUtils';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Get all users (administrators, clients, etc.)

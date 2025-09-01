@@ -212,7 +212,7 @@ const Sidebar = ({ onClose }) => {
         <div className="flex items-center justify-between">
           <div className="flex justify-center flex-1">
             <img 
-              src="/src/assets/images/entrelibros_logo.webp" 
+              src="/entrelibros_logo.webp" 
               alt="EntreLibros Logo" 
               className="h-12 w-auto"
             />

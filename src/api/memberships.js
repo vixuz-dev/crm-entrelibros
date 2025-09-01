@@ -1,7 +1,7 @@
 import axios from "axios";
 import { showDataLoadError, showDataLoadSuccess } from "../utils/notifications";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Instancia de axios con interceptores para endpoints que requieren token
 import axiosConfig from "../utils/axiosConfig";
@@ -66,5 +66,38 @@ export const getMemberships = async () => {
     const errorMessage = error.response?.data?.status_Message || 'Error al cargar membresías';
     showDataLoadError('membresías', errorMessage);
     throw error;
+  }
+};
+
+/**
+ * Update existing membership
+ * @param {Object} membershipData - Membership data to update
+ * @param {number} membershipData.membership_id - Membership ID
+ * @param {string} membershipData.membership_name - Membership name
+ * @param {string} membershipData.description - Membership description
+ * @param {Array<string>} membershipData.benefits - List of benefits
+ * @param {number} membershipData.price - Membership price
+ * @param {boolean} membershipData.status - Membership status
+ * @param {Array<number>} membershipData.product_id_list - List of product IDs
+ * @returns {Promise} Promise with update result
+ */
+export const updateMembership = async (membershipData) => {
+  try {
+    const response = await axiosConfig.put(
+      `${API_BASE_URL}/memberships/update-membership`,
+      membershipData
+    );
+
+    if (response.data.status === true || response.data.status === 'true') {
+      
+      return response.data;
+    } else {
+      console.error('Error updating membership:', response.data.status_Message);
+      throw new Error(response.data.status_Message || 'Error al actualizar membresía');
+    }
+  } catch (error) {
+    console.error('Error updating membership:', error);
+    const errorMessage = error.response?.data?.status_Message || 'Error al actualizar membresía';
+    throw new Error(errorMessage);
   }
 };
