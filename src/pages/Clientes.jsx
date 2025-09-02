@@ -4,6 +4,7 @@ import { FiUsers, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiRefresh
 import ClientInformation from '../components/modals/ClientInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
+import CustomDropdown from '../components/ui/CustomDropdown';
 import { useClientsStore } from '../store/useClientsStore';
 import { ROUTES } from '../utils/routes';
 import { useDebounce } from '../hooks/useDebounce';
@@ -187,7 +188,7 @@ const Clientes = () => {
             className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
             title="Actualizar"
           >
-            <FiRefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                            <FiRefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
           
           <button 
@@ -250,39 +251,54 @@ const Clientes = () => {
       </div>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
           {/* Búsqueda */}
           <div className="flex-1">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
               <input
                 type="text"
                 placeholder="Buscar clientes por nombre de usuario..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+                className="w-full pl-9 lg:pl-10 pr-20 lg:pr-24 py-2.5 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular text-sm lg:text-base"
               />
               {searchTerm && (
                 <button
                   onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-12 lg:right-16 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Limpiar búsqueda"
                 >
-                  <FiX className="w-4 h-4" />
+                  <FiX className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>
               )}
+              <button 
+                onClick={() => refreshClients(searchTerm)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                title="Actualizar"
+              >
+                <FiRefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
           
           {/* Filtros */}
           <div className="flex gap-3">
-            <select className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular">
-              <option value="all">Todos los estados</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
-              <option value="suspendido">Suspendidos</option>
-            </select>
+            <CustomDropdown
+              options={[
+                { value: 'all', label: 'Todos los estados' },
+                { value: 'activo', label: 'Activos' },
+                { value: 'inactivo', label: 'Inactivos' },
+                { value: 'suspendido', label: 'Suspendidos' }
+              ]}
+              selectedValues={['all']}
+              onChange={(values) => console.log('Estado seleccionado:', values[0])}
+              placeholder="Filtrar por estado"
+              multiple={false}
+              searchable={false}
+              className="min-w-[180px]"
+            />
           </div>
         </div>
       </div>

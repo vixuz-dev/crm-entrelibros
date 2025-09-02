@@ -4,7 +4,7 @@ import { FiRefreshCw, FiTrash2 } from 'react-icons/fi';
 const PWACacheReset = () => {
   const clearPWACache = async () => {
     try {
-      console.log('🔄 Iniciando limpieza de cache PWA...');
+      // console.log('🔄 Iniciando limpieza de cache PWA...');
       
       // Limpiar service workers
       if ('serviceWorker' in navigator) {
@@ -12,7 +12,7 @@ const PWACacheReset = () => {
         for (const registration of registrations) {
           await registration.unregister();
         }
-        console.log('✅ Service Workers desregistrados');
+        // console.log('✅ Service Workers desregistrados');
       }
 
       // Limpiar cache del navegador
@@ -21,7 +21,7 @@ const PWACacheReset = () => {
         await Promise.all(
           cacheNames.map(cacheName => caches.delete(cacheName))
         );
-        console.log('✅ Cache del navegador limpiado');
+        // console.log('✅ Cache del navegador limpiado');
       }
 
       // Limpiar localStorage relacionado con PWA
@@ -33,7 +33,7 @@ const PWACacheReset = () => {
         }
       }
       keysToRemove.forEach(key => localStorage.removeItem(key));
-      console.log('✅ localStorage PWA limpiado');
+      // console.log('✅ localStorage PWA limpiado');
 
       // Limpiar sessionStorage relacionado con PWA
       const sessionKeysToRemove = [];
@@ -44,9 +44,9 @@ const PWACacheReset = () => {
         }
       }
       sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
-      console.log('✅ sessionStorage PWA limpiado');
+      // console.log('✅ sessionStorage PWA limpiado');
 
-      console.log('✅ Cache PWA limpiado exitosamente');
+      // console.log('✅ Cache PWA limpiado exitosamente');
       
       // Recargar la página después de limpiar
       setTimeout(() => {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import './Sidebar.css';
 import { 
   FiGrid,
   FiUsers, 
@@ -208,7 +209,7 @@ const Sidebar = ({ onClose }) => {
   return (
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col">
       {/* Logo/Brand */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex justify-center flex-1">
             <img 
@@ -230,7 +231,7 @@ const Sidebar = ({ onClose }) => {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto sidebar-nav">
         <div className="space-y-2">
           {mainMenuItems.map((item) => {
             const Icon = item.icon;
@@ -302,7 +303,7 @@ const Sidebar = ({ onClose }) => {
       </nav>
 
       {/* Account Section */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 flex-shrink-0">
         <div className="mb-3">
           <h3 className="text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
             Sesión

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from 'react-icons/fi';
+import CustomDropdown from './CustomDropdown';
 
 const Pagination = ({ 
   currentPage, 
@@ -14,6 +15,12 @@ const Pagination = ({
   // Calcular información de paginación
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  
+  // Opciones para el dropdown de elementos por página
+  const itemsPerPageDropdownOptions = itemsPerPageOptions.map(option => ({
+    value: option,
+    label: option.toString()
+  }));
   
   // Generar array de páginas a mostrar
   const getPageNumbers = () => {
@@ -50,36 +57,16 @@ const Pagination = ({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-lg shadow-sm border p-4">
-      {/* Información de elementos mostrados */}
-      <div className="text-sm text-gray-600 font-cabin-regular">
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white rounded-lg shadow-sm border p-4">
+      {/* Información de elementos mostrados - Arriba en móviles, izquierda en desktop */}
+      <div className="text-sm text-gray-600 font-cabin-regular text-center lg:text-left">
         Mostrando {startItem} a {endItem} de {totalItems} elementos
       </div>
 
-      {/* Controles de paginación */}
-      <div className="flex items-center gap-2">
-        {/* Selector de elementos por página */}
-        {showItemsPerPage && onItemsPerPageChange && (
-          <div className="flex items-center gap-2 mr-4">
-            <span className="text-sm text-gray-600 font-cabin-regular">
-              Mostrar:
-            </span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-              className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
-            >
-              {itemsPerPageOptions.map(option => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
+      {/* Controles de paginación - Medio en móviles, centro en desktop */}
+      <div className="flex flex-col items-center lg:flex-row lg:items-center gap-4 lg:gap-6">
         {/* Botones de navegación */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center gap-1">
           {/* Primera página */}
           <button
             onClick={() => onPageChange(1)}
@@ -170,7 +157,45 @@ const Pagination = ({
             <FiChevronsRight className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Selector de elementos por página para desktop - Oculto en móviles */}
+        {showItemsPerPage && onItemsPerPageChange && (
+          <div className="hidden lg:flex items-center gap-2">
+            <span className="text-sm text-gray-600 font-cabin-regular">
+              Mostrar:
+            </span>
+            <CustomDropdown
+              options={itemsPerPageDropdownOptions}
+              selectedValues={[itemsPerPage]}
+              onChange={(values) => onItemsPerPageChange(Number(values[0]))}
+              placeholder="Seleccionar"
+              multiple={false}
+              searchable={false}
+              className="min-w-[80px]"
+            />
+          </div>
+        )}
       </div>
+
+      {/* Selector de elementos por página - Abajo en móviles, junto a paginación en desktop */}
+      {showItemsPerPage && onItemsPerPageChange && (
+        <div className="flex items-center justify-center gap-2 lg:hidden">
+          <span className="text-sm text-gray-600 font-cabin-regular">
+            Mostrar:
+          </span>
+          <CustomDropdown
+            options={itemsPerPageDropdownOptions}
+            selectedValues={[itemsPerPage]}
+            onChange={(values) => onItemsPerPageChange(Number(values[0]))}
+            placeholder="Seleccionar"
+            multiple={false}
+            searchable={false}
+            className="min-w-[80px]"
+          />
+        </div>
+      )}
+
+
     </div>
   );
 };

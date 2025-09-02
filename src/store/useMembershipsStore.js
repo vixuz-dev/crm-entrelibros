@@ -15,17 +15,14 @@ const useMembershipsStore = create((set, get) => ({
     const now = Date.now();
     
     if (currentState.isLoading) {
-      console.log('🚫 loadMemberships: Ya está cargando, evitando llamada duplicada');
       return;
     }
     
     // Evitar llamadas muy cercanas (menos de 100ms)
     if (now - currentState.lastLoadTime < 100) {
-      console.log('🚫 loadMemberships: Llamada muy cercana, evitando duplicado');
       return;
     }
     
-    console.log('📞 loadMemberships llamado:', { isInitialized: currentState.isInitialized, timestamp: now });
     
     set({ isLoading: true, error: null, lastLoadTime: now });
     

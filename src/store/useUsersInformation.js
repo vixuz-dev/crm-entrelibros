@@ -43,17 +43,14 @@ export const useUsersInformation = create(
           const now = Date.now();
           
           if (currentState.isLoading) {
-            console.log('🚫 loadUsers: Ya está cargando, evitando llamada duplicada');
             return;
           }
           
           // Evitar llamadas muy cercanas (menos de 100ms)
           if (now - currentState.lastLoadTime < 100) {
-            console.log('🚫 loadUsers: Llamada muy cercana, evitando duplicado');
             return;
           }
           
-          console.log('📞 loadUsers llamado:', { page, limit, user_name, isInitialized: currentState.isInitialized, timestamp: now });
       
           set({ isLoading: true, error: null, lastLoadTime: now });
           

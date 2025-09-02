@@ -10,11 +10,12 @@ import Categorias from './pages/Categorias';
 import Temas from './pages/Temas';
 import Autores from './pages/Autores';
 import Membresias from './pages/Membresias';
+import DetalleMembresia from './pages/DetalleMembresia';
 import Pedidos from './pages/Pedidos';
 import InformacionPedido from './pages/InformacionPedido';
 import Login from './pages/Login';
 import PWAManager from './components/PWAManager';
-import PWACacheReset from './components/PWACacheReset';
+// import PWACacheReset from './components/PWACacheReset';
 import { ROUTES } from './utils/routes';
 import { useAuth } from './hooks/useAuth';
 import "./index.css";
@@ -61,6 +62,7 @@ function App() {
                 <Route path={ROUTES.CATEGORIES} element={<Categorias />} />
                 <Route path={ROUTES.TOPICS} element={<Temas />} />
                 <Route path={ROUTES.MEMBERSHIPS} element={<Membresias />} />
+                <Route path={ROUTES.MEMBERSHIPS_DETAIL} element={<DetalleMembresia />} />
                 <Route path={ROUTES.ORDERS} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_CREATE} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_INFORMATION} element={<InformacionPedido />} />
@@ -86,7 +88,7 @@ function App() {
         <PWAManager />
         
         {/* PWA Cache Reset (solo en desarrollo) */}
-        <PWACacheReset />
+        {/* <PWACacheReset /> */}
       </Router>
   );
 }

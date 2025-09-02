@@ -3,6 +3,7 @@ import { FiUser, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiBook, Fi
 import AuthorInformation from '../components/modals/AuthorInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
+import CustomDropdown from '../components/ui/CustomDropdown';
 import { useAuthors } from '../hooks/useCatalogs';
 import { addAuthor, updateAuthor, toggleAuthorStatus } from '../api/authors';
 
@@ -233,114 +234,115 @@ const Autores = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-cabin-bold text-gray-800 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-cabin-bold text-gray-800 mb-2">
             Gestión de Autores
           </h1>
-          <p className="text-gray-600 font-cabin-regular">
+          <p className="text-sm sm:text-base text-gray-600 font-cabin-regular">
             Administra los autores de libros del sistema
           </p>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={refreshAuthors}
-            className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-            title="Actualizar"
-          >
-            <FiRefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-
-          <button 
-            onClick={handleCreateAuthor}
-            className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2"
-          >
-            <FiPlus className="w-5 h-5" />
-            <span>Nuevo Autor</span>
-          </button>
-        </div>
+        <button 
+          onClick={handleCreateAuthor}
+          className="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center justify-center space-x-2 w-full sm:w-auto"
+        >
+          <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="text-sm sm:text-base">Nuevo Autor</span>
+        </button>
       </div>
 
       {/* Cards de métricas */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Card - Total de Autores */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FiUser className="w-6 h-6 text-blue-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUser className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Total de Autores</h3>
-              <p className="text-2xl font-cabin-bold text-blue-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Total de Autores</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-blue-600">
                 {isLoading ? '...' : totalAuthors}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">En el sistema</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">En el sistema</p>
             </div>
           </div>
         </div>
         
         {/* Card - Autores Disponibles */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FiUser className="w-6 h-6 text-green-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUser className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Autores Disponibles</h3>
-              <p className="text-2xl font-cabin-bold text-green-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Autores Disponibles</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-green-600">
                 {isLoading ? '...' : totalAvailableAuthors}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">Activos</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Activos</p>
             </div>
           </div>
         </div>
         
         {/* Card - Autores Desactivados */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <FiUser className="w-6 h-6 text-red-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUser className="w-5 h-5 lg:w-6 lg:h-6 text-red-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Autores Desactivados</h3>
-              <p className="text-2xl font-cabin-bold text-red-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Autores Desactivados</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-red-600">
                 {isLoading ? '...' : totalDisabledAuthors}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">Inactivos</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Inactivos</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
           {/* Búsqueda */}
           <div className="flex-1">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
               <input
                 type="text"
                 placeholder="Buscar autores por nombre..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+                className="w-full pl-9 lg:pl-10 pr-12 py-2.5 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular text-sm lg:text-base"
               />
+              <button 
+                onClick={() => refreshAuthors()}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                title="Actualizar"
+              >
+                <FiRefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
           
           {/* Filtros */}
           <div className="flex gap-3">
-            <select 
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
-            >
-              <option value="all">Todos los estados</option>
-              <option value="active">Activos</option>
-              <option value="inactive">Inactivos</option>
-            </select>
+            <CustomDropdown
+              options={[
+                { value: 'all', label: 'Todos los estados' },
+                { value: 'active', label: 'Activos' },
+                { value: 'inactive', label: 'Inactivos' }
+              ]}
+              selectedValues={[selectedStatus]}
+              onChange={(values) => setSelectedStatus(values[0])}
+              placeholder="Filtrar por estado"
+              multiple={false}
+              searchable={false}
+              className="min-w-[180px]"
+            />
             
             {(searchTerm || selectedStatus !== 'all') && (
               <button

@@ -173,112 +173,107 @@ const Libros = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-cabin-bold text-gray-800 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-cabin-bold text-gray-800 mb-2">
             Gestión de Libros
           </h1>
-          <p className="text-gray-600 font-cabin-regular">
+          <p className="text-sm sm:text-base text-gray-600 font-cabin-regular">
             Administra el catálogo completo de libros infantiles
           </p>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <button 
-            onClick={() => refreshProducts(debouncedSearchTerm)}
-            className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-            title="Actualizar"
-          >
-            <FiRefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-        
         <button 
-            onClick={handleCreateProduct}
-          className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2"
+          onClick={handleCreateProduct}
+          className="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center justify-center space-x-2 w-full sm:w-auto"
         >
-          <FiPlus className="w-5 h-5" />
-          <span>Nuevo Libro</span>
+          <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="text-sm sm:text-base">Nuevo Libro</span>
         </button>
-        </div>
       </div>
 
       {/* Cards de métricas */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Card - Total Libros */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FiBook className="w-6 h-6 text-blue-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiBook className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Total Libros</h3>
-              <p className="text-2xl font-cabin-bold text-blue-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Total Libros</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-blue-600">
                 {isLoading ? '...' : totalBooks}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">En catálogo</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">En catálogo</p>
             </div>
           </div>
         </div>
         
         {/* Card - Libros Disponibles */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FiBook className="w-6 h-6 text-green-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiBook className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Libros Disponibles</h3>
-              <p className="text-2xl font-cabin-bold text-green-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Libros Disponibles</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-green-600">
                 {isLoading ? '...' : totalAvailableBooks}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">Disponibles</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Disponibles</p>
             </div>
           </div>
         </div>
         
         {/* Card - Libros Desactivados */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <FiBook className="w-6 h-6 text-red-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiBook className="w-5 h-5 lg:w-6 lg:h-6 text-red-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Libros Desactivados</h3>
-              <p className="text-2xl font-cabin-bold text-red-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Libros Desactivados</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-red-600">
                 {isLoading ? '...' : totalDisabledBooks}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">No disponibles</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">No disponibles</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Barra de búsqueda y filtros */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
+      <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:gap-4">
           <div className="flex-1">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
               <input
                 type="text"
                 placeholder="Buscar libros por nombre..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+                className="w-full pl-9 lg:pl-10 pr-20 lg:pr-24 py-2.5 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular text-sm lg:text-base"
               />
               {searchTerm && (
                 <button
                   onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-12 lg:right-16 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Limpiar búsqueda"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>
               )}
+              <button 
+                onClick={() => refreshProducts(debouncedSearchTerm)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                title="Actualizar"
+              >
+                <FiRefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
-          
-
         </div>
         
         {/* Estado de búsqueda - Separado para no afectar el layout */}

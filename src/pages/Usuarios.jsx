@@ -3,6 +3,7 @@ import { FiUsers, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiRefresh
 import UserInformation from '../components/modals/UserInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
+import CustomDropdown from '../components/ui/CustomDropdown';
 import { useUsersInformation } from '../store/useUsersInformation';
 import { createClient, updateClient, toggleClientStatus, createAdminUser } from '../api/users';
 import { useDebounce } from '../hooks/useDebounce';
@@ -27,11 +28,31 @@ const Usuarios = () => {
   } = useUsersInformation();
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState(['all']);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('view');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+
+  // Opciones para el filtro de estado
+  const statusOptions = [
+    { value: 'all', label: 'Todos los estados' },
+    { value: 'activo', label: 'Activos' },
+    { value: 'inactivo', label: 'Inactivos' }
+  ];
+
+  // Filtrar usuarios por estado
+  const filteredUsers = users.filter(user => {
+    if (statusFilter.includes('all')) return true;
+    
+    const isActive = user.status === 'Activo' || user.status === 1 || user.status === true;
+    
+    if (statusFilter.includes('activo')) return isActive;
+    if (statusFilter.includes('inactivo')) return !isActive;
+    
+    return true;
+  });
 
   // Debounce para la búsqueda
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -189,114 +210,117 @@ const Usuarios = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-cabin-bold text-gray-800 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-cabin-bold text-gray-800 mb-2">
             Gestión de Usuarios del Sistema
           </h1>
-          <p className="text-gray-600 font-cabin-regular">
+          <p className="text-sm sm:text-base text-gray-600 font-cabin-regular">
             Administra el acceso de usuarios a la plataforma
           </p>
         </div>
         
         <button 
           onClick={handleCreateUser}
-          className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2"
+          className="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center justify-center space-x-2 w-full sm:w-auto"
         >
-          <FiPlus className="w-5 h-5" />
-          <span>Nuevo Usuario del Sistema</span>
+          <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="text-sm sm:text-base">Nuevo Usuario del Sistema</span>
         </button>
       </div>
 
       {/* Cards de métricas */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Card - Total de Usuarios */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-blue-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUsers className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Total de Usuarios</h3>
-              <p className="text-2xl font-cabin-bold text-blue-600">{isLoading ? '...' : totalUsers}</p>
-              <p className="text-sm font-cabin-regular text-gray-500">En el sistema</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Total de Usuarios</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-blue-600">{isLoading ? '...' : totalUsers}</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">En el sistema</p>
             </div>
           </div>
         </div>
         
         {/* Card - Usuarios Disponibles */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-green-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUsers className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Usuarios Disponibles</h3>
-              <p className="text-2xl font-cabin-bold text-green-600">{isLoading ? '...' : totalAvailableUsers}</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Activos</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Usuarios Disponibles</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-green-600">{isLoading ? '...' : totalAvailableUsers}</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Activos</p>
             </div>
           </div>
         </div>
         
         {/* Card - Usuarios Desactivados */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-red-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUsers className="w-5 h-5 lg:w-6 lg:h-6 text-red-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Usuarios Desactivados</h3>
-              <p className="text-2xl font-cabin-bold text-red-600">{isLoading ? '...' : totalDisabledUsers}</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Inactivos</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Usuarios Desactivados</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-red-600">{isLoading ? '...' : totalDisabledUsers}</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Inactivos</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
           {/* Búsqueda */}
           <div className="flex-1">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
               <input
                 type="text"
                 placeholder="Buscar por nombre de usuario..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+                className="w-full pl-9 lg:pl-10 pr-20 lg:pr-24 py-2.5 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular text-sm lg:text-base"
               />
               {searchTerm && (
                 <button
                   onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-12 lg:right-16 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Limpiar búsqueda"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>
               )}
+              <button 
+                onClick={() => refreshUsers(debouncedSearchTerm)}
+                disabled={isLoading}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Actualizar usuarios"
+              >
+                <FiRefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
           
           {/* Filtros */}
-          <div className="flex gap-3">
-            <select className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular">
-              <option value="all">Todos los estados</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
-            </select>
+          <div className="flex gap-2 lg:gap-3">
+            <CustomDropdown
+              options={statusOptions}
+              selectedValues={statusFilter}
+              onChange={setStatusFilter}
+              placeholder="Filtrar por estado"
+              multiple={false}
+              searchable={false}
+              className="min-w-[180px]"
+            />
             
-            {/* Botón de refresh */}
-            <button
-              onClick={() => refreshUsers(debouncedSearchTerm)}
-              disabled={isLoading}
-              className="px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Actualizar usuarios"
-            >
-              <FiRefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Actualizar
-            </button>
+
           </div>
         </div>
         
@@ -357,8 +381,8 @@ const Usuarios = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.length > 0 ? (
-                    users.map((user) => (
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((user) => (
                       <tr key={user.user_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="py-4 px-6">
                           <div className="font-cabin-semibold text-gray-800">
@@ -414,20 +438,36 @@ const Usuarios = () => {
                     <tr>
                       <td colSpan="5" className="py-8 px-6 text-center">
                         <div className="flex flex-col items-center space-y-3">
-                          {searchTerm ? (
+                          {(searchTerm || (statusFilter.length > 0 && !statusFilter.includes('all'))) ? (
                             <>
                               <FiSearch className="w-12 h-12 text-gray-300" />
                               <div className="text-gray-500 font-cabin-regular">
                                 <p className="font-cabin-medium mb-1">No se encontraron usuarios</p>
-                                <p className="text-sm">que coincidan con "{searchTerm}"</p>
-                                <p className="text-xs mt-2">Intenta con otro término de búsqueda</p>
+                                <p className="text-sm">
+                                  {searchTerm && `que coincidan con "${searchTerm}"`}
+                                  {searchTerm && statusFilter.length > 0 && !statusFilter.includes('all') && ' y '}
+                                  {statusFilter.length > 0 && !statusFilter.includes('all') && 'con los filtros aplicados'}
+                                </p>
+                                <p className="text-xs mt-2">Intenta con otros términos o filtros</p>
                               </div>
-                              <button 
-                                onClick={handleClearSearch}
-                                className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-cabin-medium"
-                              >
-                                Limpiar búsqueda
-                              </button>
+                              <div className="flex flex-wrap gap-2 justify-center mt-2">
+                                {searchTerm && (
+                                  <button
+                                    onClick={handleClearSearch}
+                                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-cabin-medium text-sm"
+                                  >
+                                    Limpiar búsqueda
+                                  </button>
+                                )}
+                                {statusFilter.length > 0 && !statusFilter.includes('all') && (
+                                  <button
+                                    onClick={() => setStatusFilter(['all'])}
+                                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-cabin-medium text-sm"
+                                  >
+                                    Limpiar filtros
+                                  </button>
+                                )}
+                              </div>
                             </>
                           ) : (
                             <>

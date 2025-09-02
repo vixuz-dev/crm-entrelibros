@@ -32,17 +32,14 @@ export const useProductsInformation = create(
           const now = Date.now();
           
           if (currentState.isLoading) {
-            console.log('🚫 loadProducts: Ya está cargando, evitando llamada duplicada');
             return;
           }
           
           // Evitar llamadas muy cercanas (menos de 100ms)
           if (now - currentState.lastLoadTime < 100) {
-            console.log('🚫 loadProducts: Llamada muy cercana, evitando duplicado');
             return;
           }
           
-          console.log('📞 loadProducts llamado:', { page, limit, searchTerm, isInitialized: currentState.isInitialized, timestamp: now });
       
           set({ isLoading: true, error: null, lastLoadTime: now });
           const { getProducts } = await import('../api/products');

@@ -29,7 +29,7 @@ const Layout = ({ children }) => {
         />
         
         {/* Sidebar */}
-        <div className={`fixed left-0 top-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`fixed left-0 top-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-out overflow-hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <Sidebar onClose={toggleSidebar} />
         </div>
       </div>

@@ -36,17 +36,14 @@ export const useClientsStore = create(
           const now = Date.now();
           
           if (currentState.isLoading) {
-            console.log('🚫 loadClients: Ya está cargando, evitando llamada duplicada');
             return;
           }
           
           // Evitar llamadas muy cercanas (menos de 100ms)
           if (now - currentState.lastLoadTime < 100) {
-            console.log('🚫 loadClients: Llamada muy cercana, evitando duplicado');
             return;
           }
           
-          console.log('📞 loadClients llamado:', { page, limit, user_name, isInitialized: currentState.isInitialized, timestamp: now });
           
           set({ isLoading: true, error: null, lastLoadTime: now });
           const response = await getClients(page, limit, user_name);

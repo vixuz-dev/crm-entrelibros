@@ -3,6 +3,7 @@ import { FiGrid, FiPlus, FiSearch, FiFilter, FiEdit, FiTrash2, FiEye, FiBook, Fi
 import CategoryInformation from '../components/modals/CategoryInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
+import CustomDropdown from '../components/ui/CustomDropdown';
 import { useCategories } from '../hooks/useCatalogs';
 import { addCategory, updateCategory, toggleCategoryStatus } from '../api/categories';
 
@@ -233,33 +234,23 @@ const Categorias = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-cabin-bold text-gray-800 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-cabin-bold text-gray-800 mb-2">
             Gestión de Categorías
           </h1>
-          <p className="text-gray-600 font-cabin-regular">
+          <p className="text-sm sm:text-base text-gray-600 font-cabin-regular">
             Administra las categorías de libros del sistema
           </p>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={refreshCategories}
-            className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-            title="Actualizar"
-          >
-            <FiRefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-
-          <button 
-            onClick={handleCreateCategory}
-            className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2"
-          >
-            <FiPlus className="w-5 h-5" />
-            <span>Nueva Categoría</span>
-          </button>
-        </div>
+        <button 
+          onClick={handleCreateCategory}
+          className="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center justify-center space-x-2 w-full sm:w-auto"
+        >
+          <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="text-sm sm:text-base">Nueva Categoría</span>
+        </button>
       </div>
 
       {/* Cards de métricas */}
@@ -314,33 +305,44 @@ const Categorias = () => {
       </div>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
           {/* Búsqueda */}
           <div className="flex-1">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
               <input
                 type="text"
                 placeholder="Buscar categorías por nombre o descripción..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
+                className="w-full pl-9 lg:pl-10 pr-12 py-2.5 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular text-sm lg:text-base"
               />
+              <button 
+                onClick={() => refreshCategories()}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                title="Actualizar"
+              >
+                <FiRefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
           
           {/* Filtros */}
           <div className="flex gap-3">
-            <select 
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
-            >
-              <option value="all">Todos los estados</option>
-              <option value="active">Activas</option>
-              <option value="inactive">Inactivas</option>
-            </select>
+            <CustomDropdown
+              options={[
+                { value: 'all', label: 'Todos los estados' },
+                { value: 'active', label: 'Activas' },
+                { value: 'inactive', label: 'Inactivas' }
+              ]}
+              selectedValues={[selectedStatus]}
+              onChange={(values) => setSelectedStatus(values[0])}
+              placeholder="Filtrar por estado"
+              multiple={false}
+              searchable={false}
+              className="min-w-[180px]"
+            />
             
             {(searchTerm || selectedStatus !== 'all') && (
               <button

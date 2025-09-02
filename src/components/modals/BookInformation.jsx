@@ -1089,19 +1089,23 @@ const BookInformation = ({
                           <span className="font-cabin-medium text-gray-600 block mb-1">
                             Estado:
                           </span>
-                          <select
-                            value={editData.status}
-                            onChange={(e) =>
+                          <CustomDropdown
+                            options={[
+                              { value: 1, label: 'Activo' },
+                              { value: 0, label: 'Inactivo' }
+                            ]}
+                            selectedValues={[editData.status]}
+                            onChange={(values) =>
                               handleInputChange(
                                 "status",
-                                parseInt(e.target.value)
+                                parseInt(values[0])
                               )
                             }
-                            className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          >
-                            <option value={1}>Activo</option>
-                            <option value={0}>Inactivo</option>
-                          </select>
+                            placeholder="Seleccionar estado"
+                            multiple={false}
+                            searchable={false}
+                            className="w-full text-sm"
+                          />
                         </div>
                         <div>
                           <span className="font-cabin-medium text-gray-600 block mb-1">

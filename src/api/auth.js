@@ -2,6 +2,7 @@ import axios from '../utils/axiosConfig';
 import { setSessionToken } from '../utils/sessionCookie';
 import { useCatalogStore } from '../store/useCatalogStore';
 import { showLoginSuccess, showLoginError, showLogoutSuccess } from '../utils/notifications';
+import { encryptPassword } from '../utils/encryption';
 
 // Base URL for the API
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -10,7 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
  * Login service
  * @param {Object} credentials - User credentials
  * @param {string} credentials.email - User email
- * @param {string} credentials.password - User password
+ * @param {string} credentials.password - User password (será encriptada antes del envío)
  * @returns {Promise} Promise that resolves to the authentication data
  */
 export const login = async (credentials) => {
@@ -20,8 +21,16 @@ export const login = async (credentials) => {
       throw new Error('Email y contraseña son requeridos');
     }
 
-    // Llamada real al backend
-    const response = await axios.post(`${API_BASE_URL}/users/login-admin`, credentials);
+    // Encriptar la contraseña antes de enviarla al backend
+    // Esto asegura que la contraseña nunca se transmita en texto plano
+    const encryptedCredentials = {
+      email: credentials.email,
+      password: encryptPassword(credentials.password)
+    };
+
+    // Llamada real al backend con contraseña encriptada
+    // El backend debe tener la misma lógica de encriptado para comparar
+    const response = await axios.post(`${API_BASE_URL}/users/login-admin`, encryptedCredentials);
     
     // Verificar el status de la respuesta
     if (!response.data.status) {

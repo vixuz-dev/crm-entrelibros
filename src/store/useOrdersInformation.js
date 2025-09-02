@@ -33,17 +33,14 @@ export const useOrdersInformation = create(
           const now = Date.now();
           
           if (currentState.isLoading) {
-            console.log('🚫 loadOrders: Ya está cargando, evitando llamada duplicada');
             return;
           }
           
           // Evitar llamadas muy cercanas (menos de 100ms)
           if (now - currentState.lastLoadTime < 100) {
-            console.log('🚫 loadOrders: Llamada muy cercana, evitando duplicado');
             return;
           }
           
-          console.log('📞 loadOrders llamado:', { page, limit, isInitialized: currentState.isInitialized, timestamp: now });
           
           set({ isLoading: true, error: null, lastLoadTime: now });
           const { getProductOrders } = await import('../api/orders');

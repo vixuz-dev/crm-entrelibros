@@ -1,0 +1,64 @@
+/* Estilos personalizados para el sidebar */
+
+/* Scroll personalizado para navegadores webkit (Chrome, Safari, Edge) */
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Scroll personalizado para Firefox */
+.sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+/* Mejoras para dispositivos móviles */
+@media (max-width: 1024px) {
+  .sidebar-nav {
+    /* Scroll suave en móviles */
+    -webkit-overflow-scrolling: touch;
+    /* Mejor rendimiento en iOS */
+    overscroll-behavior: contain;
+  }
+  
+  /* Ocultar scrollbar en móviles pero mantener funcionalidad */
+  .sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(209, 213, 219, 0.5);
+  }
+}
+
+/* Animación suave para el scroll */
+.sidebar-nav {
+  scroll-behavior: smooth;
+}
+
+/* Mejorar la experiencia táctil en móviles */
+@media (hover: none) and (pointer: coarse) {
+  .sidebar-nav {
+    /* Scroll más suave en dispositivos táctiles */
+    scroll-behavior: smooth;
+    /* Prevenir zoom accidental */
+    touch-action: pan-y;
+  }
+}
