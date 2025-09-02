@@ -19,12 +19,12 @@ const UserInformation = ({ user, isOpen, onClose, mode = 'view', onSave }) => {
   useEffect(() => {
     if (user && mode !== 'create') {
       setFormData({
-        user_name: user.name || '',
-        user_email: user.email || '',
+        user_name: user.user_name || user.name || '',
+        user_email: user.user_email || user.email || '',
         user_password: '',
-        user_paternal_lastname: user.paternal_lastname || '',
-        user_maternal_lastname: user.maternal_lastname || '',
-        user_phone: user.phone || ''
+        user_paternal_lastname: user.user_paternal_lastname || user.paternal_lastname || '',
+        user_maternal_lastname: user.user_maternal_lastname || user.maternal_lastname || '',
+        user_phone: user.user_phone || user.phone || ''
       });
     } else {
       setFormData({
@@ -154,12 +154,12 @@ const UserInformation = ({ user, isOpen, onClose, mode = 'view', onSave }) => {
       // Restaurar datos originales
       if (user) {
         setFormData({
-          user_name: user.name || '',
-          user_email: user.email || '',
+          user_name: user.user_name || user.name || '',
+          user_email: user.user_email || user.email || '',
           user_password: '',
-          user_paternal_lastname: user.paternal_lastname || '',
-          user_maternal_lastname: user.maternal_lastname || '',
-          user_phone: user.phone || ''
+          user_paternal_lastname: user.user_paternal_lastname || user.paternal_lastname || '',
+          user_maternal_lastname: user.user_maternal_lastname || user.maternal_lastname || '',
+          user_phone: user.user_phone || user.phone || ''
         });
       }
     }
@@ -172,9 +172,9 @@ const UserInformation = ({ user, isOpen, onClose, mode = 'view', onSave }) => {
   };
 
   const getModalSubtitle = () => {
-    if (mode === 'create') return 'Agregar un nuevo usuario del sistema';
-    if (isEditing) return `Editando información de ${user?.name || 'usuario'}`;
-    return `Detalles completos de ${user?.name || 'usuario'}`;
+    if (mode === 'create') return 'Agregar un nuevo usuario administrador del sistema';
+    if (isEditing) return `Editando información de ${user?.user_name || user?.name || 'usuario'}`;
+    return `Detalles completos de ${user?.user_name || user?.name || 'usuario'}`;
   };
 
   return (

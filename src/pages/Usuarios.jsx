@@ -4,7 +4,7 @@ import UserInformation from '../components/modals/UserInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
 import { useUsersInformation } from '../store/useUsersInformation';
-import { createClient, updateClient, toggleClientStatus } from '../api/users';
+import { createClient, updateClient, toggleClientStatus, createAdminUser } from '../api/users';
 import { useDebounce } from '../hooks/useDebounce';
 
 const Usuarios = () => {
@@ -123,8 +123,8 @@ const Usuarios = () => {
   const handleSaveUser = async (userData) => {
     try {
       if (modalMode === 'create') {
-        // Crear nuevo usuario
-        const response = await createClient(userData);
+        // Crear nuevo usuario administrador
+        const response = await createAdminUser(userData);
         
         if (response.status === true) {
   

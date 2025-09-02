@@ -60,7 +60,7 @@ export const getUsers = async (page = 1, limit = 8, user_name = '') => {
 };
 
 /**
- * Get all clients/users
+ * Get all users
  * @param {number} page - Page number (optional, default: 1)
  * @param {number} limit - Items per page (optional, default: 8)
  * @param {string} user_name - User name to search (optional)
@@ -199,6 +199,36 @@ export const toggleClientStatus = async (userId) => {
   } catch (error) {
     console.error('Error toggling client status:', error);
     const errorMessage = error.response?.data?.status_Message || 'Error al cambiar el estado del cliente';
+    showError(errorMessage);
+    throw error;
+  }
+};
+
+/**
+ * Create new admin user
+ * @param {Object} adminData - Admin user data to create
+ * @param {string} adminData.user_email - User email address
+ * @param {string} adminData.user_password - User password
+ * @param {string} adminData.user_name - User first name
+ * @param {string} adminData.user_paternal_lastname - User paternal lastname
+ * @param {string} adminData.user_maternal_lastname - User maternal lastname
+ * @param {string} adminData.user_phone - User phone number
+ * @returns {Promise} Promise with creation result
+ */
+export const createAdminUser = async (adminData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/add-user-admin`, adminData);
+    
+    if (response.data.status === true || response.data.status === 'true') {
+      
+      return response.data;
+    } else {
+      showError(response.data.status_Message || 'Error al crear usuario administrador');
+      throw new Error(response.data.status_Message || 'Error al crear usuario administrador');
+    }
+  } catch (error) {
+    console.error('Error creating admin user:', error);
+    const errorMessage = error.response?.data?.status_Message || 'Error al crear usuario administrador';
     showError(errorMessage);
     throw error;
   }
