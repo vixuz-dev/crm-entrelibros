@@ -13,7 +13,6 @@ import {
   FiMapPin
 } from 'react-icons/fi';
 import useMembershipsStore from '../store/useMembershipsStore';
-import useSubscriptionsStore from '../store/useSubscriptionsStore';
 import { showError } from '../utils/notifications';
 import { ROUTES } from '../utils/routes';
 
@@ -28,17 +27,13 @@ const DetalleMembresia = () => {
   const [showSubscribers, setShowSubscribers] = useState(false);
   const [expandedUsers, setExpandedUsers] = useState({});
 
-  // Stores
+  // Store de membresías (ahora incluye suscripciones)
   const { 
     memberships, 
     isInitialized, 
-    loadMemberships
+    loadMemberships,
+    refreshSubscriptions
   } = useMembershipsStore();
-
-  const { 
-    loadSubscriptions, 
-    memberships: subscriptionsMemberships 
-  } = useSubscriptionsStore();
 
   // Cargar datos al montar el componente
   useEffect(() => {
@@ -49,15 +44,15 @@ const DetalleMembresia = () => {
     }
   }, [isInitialized, id]);
 
-  // Recargar datos cuando cambien las suscripciones
+  // Recargar datos cuando cambien las membresías
   useEffect(() => {
-    if (subscriptionsMemberships.length > 0) {
-      const updatedMembership = subscriptionsMemberships.find(m => m.membership_id == id);
-      if (updatedMembership) {
-        setMembership(updatedMembership);
+    if (memberships.length > 0) {
+      const foundMembership = memberships.find(m => m.membership_id == id);
+      if (foundMembership) {
+        setMembership(foundMembership);
       }
     }
-  }, [subscriptionsMemberships, id]);
+  }, [memberships, id]);
 
   const loadMembershipData = async () => {
     try {
@@ -77,13 +72,13 @@ const DetalleMembresia = () => {
         return;
       }
       
-      // Cargar todas las suscripciones
-      await loadSubscriptions();
+      // Si no tiene suscripciones, intentar refrescarlas
+      if (!foundMembership.subscriptions || foundMembership.subscriptions.length === 0) {
+        await refreshSubscriptions();
+      }
       
-      // Buscar la membresía con suscripciones actualizadas
-      const updatedMembership = subscriptionsMemberships.find(m => m.membership_id == id);
-      
-      
+      // Buscar la membresía actualizada
+      const updatedMembership = memberships.find(m => m.membership_id == id);
       if (updatedMembership) {
         setMembership(updatedMembership);
       } else {
@@ -99,7 +94,7 @@ const DetalleMembresia = () => {
   };
 
   const handleGoBack = () => {
-    navigate(ROUTES.MEMBERSHIPS);
+    navigate(ROUTES.MEMBRESIAS);
   };
 
   // Funciones de utilidad
@@ -131,18 +126,13 @@ const DetalleMembresia = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FiUsers className="w-8 h-8 text-red-500" />
-          </div>
-          <h2 className="text-xl font-cabin-bold text-gray-800 mb-2">Membresía no encontrada</h2>
-          <p className="text-gray-600 font-cabin-regular mb-4">La membresía que buscas no existe o ha sido eliminada.</p>
-          <Link 
-            to={ROUTES.MEMBRESIAS}
-            className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+          <div className="text-red-600 text-xl font-cabin-bold mb-4">Membresía no encontrada</div>
+          <button
+            onClick={handleGoBack}
+            className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
           >
-            <FiArrowLeft className="w-4 h-4 mr-2" />
             Volver a Membresías
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -150,127 +140,93 @@ const DetalleMembresia = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header con navegación */}
-      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            {/* Botón de regreso y título */}
-            <div className="flex items-center space-x-3">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-6">
+            <div className="flex items-center space-x-4">
               <button
                 onClick={handleGoBack}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-                title="Volver a la lista de membresías"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <FiArrowLeft className="w-5 h-5" />
+                <FiArrowLeft className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-cabin-bold text-gray-800">
+                <h1 className="text-2xl font-cabin-bold text-gray-800">
                   {membership.membership_name}
                 </h1>
-                <p className="text-sm text-gray-600 font-cabin-regular">
+                <p className="text-gray-600 font-cabin-regular">
                   Detalles de la membresía
                 </p>
               </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(membership.status)}`}>
+                {getStatusText(membership.status)}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Contenido principal */}
-      <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        {/* Botón de regreso adicional para móviles */}
-        <div className="mb-4 lg:hidden">
-          <Link
-            to={ROUTES.MEMBRESIAS}
-            className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <FiArrowLeft className="w-4 h-4 mr-2" />
-            Volver a Membresías
-          </Link>
-        </div>
-        
-        <div className="space-y-6">
-          
-          {/* Card principal de información */}
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Información principal */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
+            <div className="p-6 sm:p-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Información básica */}
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-                      <FiPackage className="w-6 h-6 text-amber-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-cabin-bold text-gray-800">
-                        {membership.membership_name}
-                      </h2>
-                      <p className="text-gray-600 font-cabin-regular">
-                        {membership.description}
-                      </p>
-                    </div>
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-cabin-bold text-gray-800 mb-2">
+                      {membership.membership_name}
+                    </h2>
+                    <p className="text-gray-600 font-cabin-regular leading-relaxed">
+                      {membership.description}
+                    </p>
                   </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <FiDollarSign className="w-5 h-5 text-green-600" />
-                        <span className="font-cabin-medium text-gray-700">Precio mensual</span>
-                      </div>
-                      <span className="text-2xl font-cabin-bold text-green-600">
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <FiDollarSign className="w-5 h-5 text-green-600" />
+                      <span className="text-2xl font-cabin-bold text-gray-800">
                         {formatPrice(membership.price)}
                       </span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <FiTrendingUp className="w-5 h-5 text-blue-600" />
-                        <span className="font-cabin-medium text-gray-700">Estado</span>
-                      </div>
-                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-cabin-medium border ${getStatusColor(membership.status)}`}>
-                        {getStatusText(membership.status)}
-                      </span>
+                      <span className="text-gray-600 font-cabin-regular">/mes</span>
                     </div>
                   </div>
-                </div>
-
-                {/* Beneficios - Expandible */}
-                <div className="space-y-4">
-                  <button
-                    onClick={() => setShowBenefits(!showBenefits)}
-                    className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <FiUsers className="w-5 h-5 text-green-600" />
-                      <span className="text-lg font-cabin-semibold text-gray-800">Beneficios incluidos</span>
-                      <span className="text-sm text-gray-500 font-cabin-regular">
-                        ({membership.benefits?.length || 0})
-                      </span>
-                    </div>
-                    <div className={`transform transition-transform duration-200 ${showBenefits ? 'rotate-180' : ''}`}>
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </button>
                   
-                  {showBenefits && membership.benefits && membership.benefits.length > 0 && (
-                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
-                      {membership.benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                          <FiUsers className="w-4 h-4 text-green-600 flex-shrink-0" />
-                          <span className="text-gray-700 font-cabin-regular">{benefit}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {showBenefits && (!membership.benefits || membership.benefits.length === 0) && (
-                    <div className="p-4 bg-gray-50 rounded-lg text-center animate-in slide-in-from-top-2 duration-200">
-                      <p className="text-gray-500 font-cabin-regular">Sin beneficios definidos</p>
-                    </div>
-                  )}
+                  {/* Beneficios */}
+                  <div>
+                    <button
+                      onClick={() => setShowBenefits(!showBenefits)}
+                      className="flex items-center space-x-2 text-amber-600 hover:text-amber-700 font-cabin-medium transition-colors"
+                    >
+                      <FiPackage className="w-5 h-5" />
+                      <span>Ver Beneficios</span>
+                    </button>
+                    
+                    {showBenefits && membership.benefits && membership.benefits.length > 0 && (
+                      <div className="mt-4 p-4 bg-amber-50 rounded-lg animate-in slide-in-from-top-2 duration-200">
+                        <ul className="space-y-2">
+                          {membership.benefits.map((benefit, index) => (
+                            <li key={index} className="flex items-start space-x-2">
+                              <span className="text-amber-600 mt-1">•</span>
+                              <span className="text-gray-700 font-cabin-regular">{benefit}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {showBenefits && (!membership.benefits || membership.benefits.length === 0) && (
+                      <div className="p-4 bg-gray-50 rounded-lg text-center animate-in slide-in-from-top-2 duration-200">
+                        <p className="text-gray-500 font-cabin-regular">Sin beneficios definidos</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -329,54 +285,68 @@ const DetalleMembresia = () => {
 
           {/* Información adicional */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-cabin-semibold text-gray-800">Información Adicional</h3>
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-lg font-cabin-semibold text-gray-800">
+                Información Adicional
+              </h3>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div className="flex items-center space-x-3">
-                    <FiCreditCard className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm text-gray-600 font-cabin-regular">ID de Membresía:</span>
-                    <span className="font-mono text-sm font-cabin-medium text-gray-800">{membership.membership_id}</span>
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <FiCreditCard className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-cabin-medium text-gray-600">ID de Membresía</div>
+                      <div className="font-cabin-semibold text-gray-800">#{membership.membership_id}</div>
+                    </div>
                   </div>
                   
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <FiCalendar className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-cabin-medium text-gray-600">Fecha de Creación</div>
+                      <div className="font-cabin-semibold text-gray-800">
+                        {membership.created_at ? new Date(membership.created_at).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
                   {membership.stripe_product_id && (
                     <div className="flex items-center space-x-3">
-                      <FiCreditCard className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm text-gray-600 font-cabin-regular">Stripe Product ID:</span>
-                      <span className="font-mono text-sm font-cabin-medium text-gray-800">{membership.stripe_product_id}</span>
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <FiPackage className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-cabin-medium text-gray-600">Stripe Product ID</div>
+                        <div className="font-cabin-semibold text-gray-800 font-mono text-sm">
+                          {membership.stripe_product_id}
+                        </div>
+                      </div>
                     </div>
                   )}
                   
                   {membership.stripe_price_id && (
-                    <div className="flex items-center space-x-3">
-                      <FiCreditCard className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm text-gray-600 font-cabin-regular">Stripe Price ID:</span>
-                      <span className="font-mono text-sm font-cabin-medium text-gray-800">{membership.stripe_price_id}</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="space-y-3">
-                  {membership.created_at && (
-                    <div className="flex items-center space-x-3">
-                      <FiCalendar className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm text-gray-600 font-cabin-regular">Creada:</span>
-                      <span className="text-sm font-cabin-medium text-gray-800">
-                        {new Date(membership.created_at).toLocaleDateString('es-ES', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <label className="text-sm font-cabin-medium text-gray-600">Stripe Price ID</label>
+                      <p className="font-cabin-regular text-gray-700 text-sm font-mono">
+                        {membership.stripe_price_id}
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
           </div>
-        </div>
         
         {/* Sección de Usuarios Suscritos - Expandible */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mt-10">
@@ -403,7 +373,7 @@ const DetalleMembresia = () => {
                   <div className="text-2xl font-cabin-bold text-green-600">
                     {membership.subscriptions?.length || 0}
                   </div>
-                  <div className="text-sm text-gray-500 font-cabin-regular">
+                  <div className="text-sm text-500 font-cabin-regular">
                     Suscriptores
                   </div>
                 </div>
@@ -480,22 +450,20 @@ const DetalleMembresia = () => {
                             </div>
                             
                             <div className="flex items-center space-x-3">
-                              <span className={`inline-flex px-2 py-1 rounded-full text-xs font-cabin-medium ${
-                                subscription.status === 'active' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : subscription.status === 'canceled'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {subscription.status === 'active' ? 'Activa' : 
-                                 subscription.status === 'canceled' ? 'Cancelada' : 
-                                 subscription.status === 'past_due' ? 'Vencida' : subscription.status}
-                              </span>
-                              
-                              <div className={`transform transition-transform duration-200 ${expandedUsers[subscription.subscription_id] ? 'rotate-180' : ''}`}>
-                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
+                              <div className="text-right">
+                                <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  subscription.status === 'active' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {subscription.status === 'active' ? 'Activa' : 'Inactiva'}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {subscription.current_period_end ? 
+                                    new Date(subscription.current_period_end).toLocaleDateString('es-ES') : 
+                                    'Sin fecha de fin'
+                                  }
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -561,83 +529,25 @@ const DetalleMembresia = () => {
 
                               {/* Información de dirección */}
                               {subscription.metadata?.address_information && (
-                                <div className="border-t border-gray-100 pt-4">
+                                <div className="border-t border-gray-200 pt-4">
                                   <h4 className="font-cabin-semibold text-gray-700 text-sm uppercase tracking-wide mb-3">
                                     Dirección de Envío
                                   </h4>
-                                  
                                   <div className="bg-white rounded-lg p-4 border border-gray-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                      <div className="space-y-2">
-                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                          <FiMapPin className="w-4 h-4 text-gray-400" />
-                                          <span className="font-cabin-medium">Calle:</span>
-                                          <span>{subscription.metadata.address_information.street}</span>
+                                    <div className="flex items-start space-x-2">
+                                      <FiMapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                                      <div className="text-sm text-gray-600">
+                                        <div className="font-cabin-medium">
+                                          {subscription.metadata.address_information.street} {subscription.metadata.address_information.external_number}
+                                          {subscription.metadata.address_information.internal_number && ` Int. ${subscription.metadata.address_information.internal_number}`}
                                         </div>
-                                        
-                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                          <FiMapPin className="w-4 h-4 text-gray-400" />
-                                          <span className="font-cabin-medium">Número:</span>
-                                          <span>
-                                            {subscription.metadata.address_information.external_number}
-                                            {subscription.metadata.address_information.internal_number && 
-                                              ` Int. ${subscription.metadata.address_information.internal_number}`
-                                            }
-                                          </span>
+                                        <div>
+                                          {subscription.metadata.address_information.neighborhood}, {subscription.metadata.address_information.city}
                                         </div>
-                                        
-                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                          <FiMapPin className="w-4 h-4 text-gray-400" />
-                                          <span className="font-cabin-medium">Colonia:</span>
-                                          <span>{subscription.metadata.address_information.neighborhood}</span>
+                                        <div>
+                                          {subscription.metadata.address_information.state} {subscription.metadata.address_information.postal_code}
                                         </div>
                                       </div>
-                                      
-                                      <div className="space-y-2">
-                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                          <FiMapPin className="w-4 h-4 text-gray-400" />
-                                          <span className="font-cabin-medium">Ciudad:</span>
-                                          <span>{subscription.metadata.address_information.city}</span>
-                                        </div>
-                                        
-                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                          <FiMapPin className="w-4 h-4 text-gray-400" />
-                                          <span className="font-cabin-medium">Estado:</span>
-                                          <span>{subscription.metadata.address_information.state}</span>
-                                        </div>
-                                        
-                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                          <FiMapPin className="w-4 h-4 text-gray-400" />
-                                          <span className="font-cabin-medium">CP:</span>
-                                          <span>{subscription.metadata.address_information.postal_code}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Información adicional si no hay dirección */}
-                              {!subscription.metadata?.address_information && (
-                                <div className="border-t border-gray-100 pt-4">
-                                  <div className="text-center py-3">
-                                    <div className="text-sm text-gray-500 font-cabin-regular">
-                                      📍 No hay información de dirección disponible
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Fecha de creación */}
-                              {subscription.created && (
-                                <div className="border-t border-gray-100 pt-4">
-                                  <div className="text-center">
-                                    <div className="text-xs text-gray-500 font-cabin-regular">
-                                      Creada: {new Date(subscription.created).toLocaleDateString('es-ES', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                      })}
                                     </div>
                                   </div>
                                 </div>
@@ -654,27 +564,25 @@ const DetalleMembresia = () => {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <FiUsers className="w-8 h-8 text-gray-400" />
                   </div>
-                  <h4 className="text-lg font-cabin-medium text-gray-600 mb-2">
-                    No hay usuarios suscritos
-                  </h4>
-                  <p className="text-sm text-gray-500 font-cabin-regular">
-                    Esta membresía aún no tiene suscriptores activos
+                  <h3 className="text-lg font-cabin-semibold text-gray-600 mb-2">
+                    {membership.subscriptions ? 'No hay suscriptores' : 'Cargando suscriptores...'}
+                  </h3>
+                  <p className="text-gray-500 font-cabin-regular">
+                    {membership.subscriptions 
+                      ? 'Esta membresía aún no tiene usuarios registrados. Los suscriptores aparecerán aquí cuando se registren.'
+                      : 'Obteniendo información de suscriptores...'
+                    }
                   </p>
+                  {!membership.subscriptions && (
+                    <div className="mt-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
         </div>
-
-        {/* Botón de regreso en la parte inferior */}
-        <div className="mt-8 text-center">
-          <button
-            onClick={handleGoBack}
-            className="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-cabin-medium"
-          >
-            <FiArrowLeft className="w-4 h-4 mr-2" />
-            Volver a la Lista de Membresías
-          </button>
         </div>
       </div>
     </div>

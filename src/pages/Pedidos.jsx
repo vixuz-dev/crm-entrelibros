@@ -371,13 +371,7 @@ const Pedidos = () => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setSearchTerm('')}
-              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-cabin-medium transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
-            >
-              <FiClock className="w-4 h-4" />
-              <span className="text-sm sm:text-base">Ver Todas</span>
-            </button>
+            
           </div>
         </div>
       )}

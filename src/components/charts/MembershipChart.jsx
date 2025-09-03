@@ -136,7 +136,7 @@ const MembershipChart = ({ data, type = 'line', title, description }) => {
   };
 
   return (
-    <div className="h-full">
+    <div className="h-80 w-full">
       {renderChart()}
     </div>
   );

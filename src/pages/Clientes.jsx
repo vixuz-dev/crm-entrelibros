@@ -203,13 +203,13 @@ const Clientes = () => {
           </p>
         </div>
         
-        <button 
+        {/* <button 
           onClick={handleCreateClient}
           className="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center justify-center space-x-2 w-full sm:w-auto"
         >
           <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="text-sm sm:text-base">Nuevo Cliente</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Cards de métricas */}
@@ -446,12 +446,12 @@ const Clientes = () => {
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
-                          <button 
+                          {/* <button 
                             onClick={() => handleEditClient(client)}
                             className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                           >
                             <FiEdit className="w-4 h-4" />
-                          </button>
+                          </button> */}
                           {/* <button 
                             onClick={() => handleDeleteClient(client)}
                             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"

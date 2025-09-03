@@ -499,22 +499,12 @@ const BookInformation = ({
     if (mode === "create") {
       onClose();
     } else {
-      setIsEditMode(false);
-      // Restaurar datos originales solo si no hay cambios pendientes
-      if (book) {
-        setEditData({
-          product_name: book.product_name || "",
-          product_description: book.product_description || "",
-          product_type: book.product_type || "",
-          price: book.price || 0,
-          price_offer: book.price_offer || 0,
-          discount: book.discount || 0,
-          status: book.status || 1,
-          main_image_url: book.main_image_url || "",
-          category_list: book.category_list || [],
-          topic_list: book.topic_list || [],
-          author_list: book.author_list || [],
-        });
+      if (isEditMode) {
+        // Si está en modo edición, cerrar completamente el modal
+        onClose();
+      } else {
+        // Si no está en modo edición, cerrar el modal
+        onClose();
       }
     }
   };
@@ -588,7 +578,7 @@ const BookInformation = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl w-full max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-4xl max-h-[95vh] sm:max-h-[85vh] flex flex-col">
+      <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl w-full max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-4xl max-h-[90dvh] sm:max-h-[90dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
@@ -625,7 +615,7 @@ const BookInformation = ({
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain flex-1">
           {isLoadingDetail ? (
             <div className="flex items-center justify-center h-32">
               <div className="text-center">
@@ -1308,7 +1298,7 @@ const BookInformation = ({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0 rounded-b-lg sm:rounded-b-xl">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-3 p-4 sm:p-6 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:pb-[calc(env(safe-area-inset-bottom)+1rem)] border-t border-gray-200 bg-gray-50 flex-shrink-0 rounded-b-lg sm:rounded-b-xl">
           <button
             onClick={handleCancel}
             className="w-full sm:w-auto px-4 sm:px-6 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-lg transition-colors font-cabin-medium text-sm sm:text-base"

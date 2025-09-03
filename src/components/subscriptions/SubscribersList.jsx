@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiCreditCard, FiX } from 'react-icons/fi';
-import useSubscriptionsStore from '../../store/useSubscriptionsStore';
+import useMembershipsStore from '../../store/useMembershipsStore';
 import CustomDropdown from '../ui/CustomDropdown';
 
 const SubscribersList = ({ membership, onClose }) => {
@@ -9,7 +9,7 @@ const SubscribersList = ({ membership, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const { getSubscriptionsByMembershipId, getActiveSubscriptionsByMembershipId } = useSubscriptionsStore();
+  const { getSubscriptionsByMembershipId, getActiveSubscriptionsByMembershipId } = useMembershipsStore();
 
   useEffect(() => {
     loadSubscriptions();
@@ -77,12 +77,19 @@ const SubscribersList = ({ membership, onClose }) => {
     }
   };
 
+  const statusOptions = [
+    { value: 'all', label: 'Todos los estados' },
+    { value: 'active', label: 'Activas' },
+    { value: 'canceled', label: 'Canceladas' },
+    { value: 'past_due', label: 'Vencidas' }
+  ];
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-cabin-regular">Cargando suscriptores...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-cabin-medium">Cargando suscriptores...</p>
         </div>
       </div>
     );
@@ -90,217 +97,174 @@ const SubscribersList = ({ membership, onClose }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header con estadísticas */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-cabin-bold text-gray-800">
-              {subscriptions.length}
-            </div>
-            <div className="text-sm text-gray-600 font-cabin-regular">
-              Total Suscriptores
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-cabin-bold text-green-600">
-              {subscriptions.filter(s => s.status === 'active').length}
-            </div>
-            <div className="text-sm text-gray-600 font-cabin-regular">
-              Suscripciones Activas
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-cabin-bold text-amber-600">
-              ${membership.price}
-            </div>
-            <div className="text-sm text-gray-600 font-cabin-regular">
-              Precio por Mes
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-cabin-bold text-blue-600">
-              ${(subscriptions.filter(s => s.status === 'active').length * membership.price).toFixed(2)}
-            </div>
-            <div className="text-sm text-gray-600 font-cabin-regular">
-              Ingresos Mensuales
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filtros y búsqueda */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
         <div className="flex-1">
           <div className="relative">
+            <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Buscar por nombre, email o teléfono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-cabin-regular"
             />
-            <FiUser className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
         </div>
-        <div className="sm:w-48">
+        
+        <div className="w-full sm:w-48">
           <CustomDropdown
-            options={[
-              { value: 'all', label: 'Todos los estados' },
-              { value: 'active', label: 'Solo activas' },
-              { value: 'canceled', label: 'Solo canceladas' },
-              { value: 'past_due', label: 'Solo vencidas' }
-            ]}
+            options={statusOptions}
             selectedValues={[filterStatus]}
-            onChange={(values) => setFilterStatus(values[0])}
+            onChange={(values) => setFilterStatus(values[0] || 'all')}
             placeholder="Filtrar por estado"
             multiple={false}
             searchable={false}
-            className="w-full"
           />
         </div>
       </div>
 
-      {/* Lista de suscriptores */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {filteredSubscriptions.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500 font-cabin-medium">
-              {searchTerm || filterStatus !== 'all' 
-                ? 'No se encontraron suscriptores con los filtros aplicados' 
-                : 'No hay suscriptores para esta membresía'
-              }
-            </div>
-            {(searchTerm || filterStatus !== 'all') && (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setFilterStatus('all');
-                }}
-                className="mt-2 text-green-600 hover:text-green-700 font-cabin-medium"
-              >
-                Limpiar filtros
-              </button>
-            )}
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-blue-50 rounded-lg p-4 text-center">
+          <div className="text-2xl font-cabin-bold text-blue-600">
+            {subscriptions.length}
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                    Cliente
-                  </th>
-                  <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                    Contacto
-                  </th>
-                  <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                    Dirección
-                  </th>
-                  <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                    Estado
-                  </th>
-                  <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                    Fechas
-                  </th>
-                  <th className="text-left py-4 px-6 font-cabin-semibold text-gray-700">
-                    ID Stripe
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSubscriptions.map((subscription, index) => (
-                  <tr key={subscription.subscription_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                          <FiUser className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                          <div className="font-cabin-semibold text-gray-800">
-                            {subscription.metadata?.contact_information?.fullname || 'Sin nombre'}
-                          </div>
-                          <div className="text-sm text-gray-600 font-cabin-regular">
-                            ID: {subscription.metadata?.user_id || 'N/A'}
-                          </div>
-                        </div>
+          <div className="text-sm text-blue-700 font-cabin-medium">
+            Total Suscriptores
+          </div>
+        </div>
+        <div className="bg-green-50 rounded-lg p-4 text-center">
+          <div className="text-2xl font-cabin-bold text-green-600">
+            {subscriptions.filter(s => s.status === 'active').length}
+          </div>
+          <div className="text-sm text-green-700 font-cabin-medium">
+            Suscripciones Activas
+          </div>
+        </div>
+        <div className="bg-amber-50 rounded-lg p-4 text-center">
+          <div className="text-2xl font-cabin-bold text-amber-600">
+            {subscriptions.filter(s => s.status === 'canceled').length}
+          </div>
+          <div className="text-sm text-amber-700 font-cabin-medium">
+            Suscripciones Canceladas
+          </div>
+        </div>
+      </div>
+
+      {/* Lista de suscriptores */}
+      {filteredSubscriptions.length === 0 ? (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FiUser className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-cabin-semibold text-gray-600 mb-2">
+            No se encontraron suscriptores
+          </h3>
+          <p className="text-gray-500 font-cabin-regular">
+            {searchTerm || filterStatus !== 'all' 
+              ? 'Intenta ajustar los filtros de búsqueda' 
+              : 'No hay suscriptores en esta membresía'
+            }
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredSubscriptions.map((subscription) => (
+            <div key={subscription.subscription_id} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+              <div className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FiUser className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-cabin-semibold text-gray-800">
+                        {subscription.metadata?.contact_information?.fullname || 'Usuario sin nombre'}
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2 text-sm">
-                          <FiMail className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-800">
-                            {subscription.metadata?.contact_information?.email || 'Sin email'}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm">
-                          <FiPhone className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-800">
-                            {subscription.metadata?.contact_information?.phone || 'Sin teléfono'}
-                          </span>
-                        </div>
+                      <div className="text-sm text-gray-600 font-cabin-regular">
+                        {subscription.metadata?.contact_information?.email || 'Sin email'}
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="max-w-xs">
-                        {subscription.metadata?.address_information ? (
-                          <div className="space-y-1">
-                            <div className="flex items-center space-x-2 text-sm">
-                              <FiMapPin className="w-4 h-4 text-gray-400" />
-                              <span className="text-gray-800 truncate">
-                                {subscription.metadata.address_information.street} {subscription.metadata.address_information.external_number}
-                              </span>
+                      {subscription.metadata?.contact_information?.phone && (
+                        <div className="text-sm text-gray-600 font-cabin-regular">
+                          {subscription.metadata.contact_information.phone}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(subscription.status)}`}>
+                      {getStatusText(subscription.status)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Información adicional */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <FiCreditCard className="w-4 h-4 text-gray-400" />
+                        <span>ID: {subscription.subscription_id}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <FiUser className="w-4 h-4 text-gray-400" />
+                        <span>Cliente: {subscription.customer_id}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <FiCalendar className="w-4 h-4 text-gray-400" />
+                        <span>Creada: {formatDate(subscription.created)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {subscription.current_period_start && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <FiCalendar className="w-4 h-4 text-gray-400" />
+                          <span>Inicio: {formatDate(subscription.current_period_start)}</span>
+                        </div>
+                      )}
+                      {subscription.current_period_end && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <FiCalendar className="w-4 h-4 text-gray-400" />
+                          <span>Fin: {formatDate(subscription.current_period_end)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Información de dirección si está disponible */}
+                  {subscription.metadata?.address_information && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <h4 className="font-cabin-semibold text-gray-700 text-sm uppercase tracking-wide mb-2">
+                        Dirección de Envío
+                      </h4>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-start space-x-2">
+                          <FiMapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                          <div className="text-sm text-gray-600">
+                            <div className="font-cabin-medium">
+                              {subscription.metadata.address_information.street} {subscription.metadata.address_information.external_number}
+                              {subscription.metadata.address_information.internal_number && ` Int. ${subscription.metadata.address_information.internal_number}`}
                             </div>
-                            <div className="text-xs text-gray-600">
+                            <div>
                               {subscription.metadata.address_information.neighborhood}, {subscription.metadata.address_information.city}
                             </div>
-                            <div className="text-xs text-gray-600">
+                            <div>
                               {subscription.metadata.address_information.state} {subscription.metadata.address_information.postal_code}
                             </div>
                           </div>
-                        ) : (
-                          <span className="text-sm text-gray-500">Sin dirección</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-cabin-medium border ${getStatusColor(subscription.status)}`}>
-                        {getStatusText(subscription.status)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="space-y-1 text-sm">
-                        <div>
-                          <span className="text-gray-600">Creada:</span>
-                          <div className="text-gray-800 font-cabin-medium">
-                            {formatDate(subscription.created)}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Válida hasta:</span>
-                          <div className="text-gray-800 font-cabin-medium">
-                            {formatDate(subscription.current_period_end)}
-                          </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="space-y-1 text-xs">
-                        <div className="font-mono text-gray-600">
-                          {subscription.subscription_id}
-                        </div>
-                        <div className="font-mono text-gray-500">
-                          {subscription.customer_id}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
