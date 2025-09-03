@@ -4,7 +4,7 @@ import AuthorInformation from '../components/modals/AuthorInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
 import CustomDropdown from '../components/ui/CustomDropdown';
-import { useAuthors } from '../hooks/useCatalogs';
+import { useAuthorsInformation } from '../store/useAuthorsInformation';
 import { addAuthor, updateAuthor, toggleAuthorStatus } from '../api/authors';
 
 const Autores = () => {
@@ -27,13 +27,23 @@ const Autores = () => {
     totalDisabledAuthors,
     isLoading,
     error,
-    isInitialized,
-    refreshAuthors
-  } = useAuthors();
+    currentPage: storeCurrentPage,
+    totalPages: storeTotalPages,
+    limit: storeLimit,
+    loadAuthors,
+    refreshAuthors,
+    goToPage: storeGoToPage,
+    changeLimit: storeChangeLimit
+  } = useAuthorsInformation();
 
   // Estado local para paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
+
+  // Cargar autores al montar el componente
+  useEffect(() => {
+    loadAuthors();
+  }, []);
 
   // Filtrar autores basado en el término de búsqueda y estado
   const filteredAuthors = authors.filter(author => {

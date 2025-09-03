@@ -4,6 +4,20 @@ import { showTopicCreated, showTopicUpdated, showTopicDeleted, showError } from 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
+ * Get all topics
+ * @returns {Promise} Promise with topics list
+ */
+export const getTopics = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/topics/get-topics`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting topics:', error);
+    throw error;
+  }
+};
+
+/**
  * Add new topic
  * @param {Object} topicData - Topic data to create
  * @param {string} topicData.topic_name - Topic name

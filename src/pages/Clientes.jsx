@@ -17,6 +17,7 @@ const Clientes = () => {
   const [modalMode, setModalMode] = useState('view');
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Store de clientes
   const {
@@ -161,93 +162,101 @@ const Clientes = () => {
     loadClients(1, 8, '');
   };
 
-  // Usar clientes directamente del store (la búsqueda se hace en el servidor)
-  const filteredClients = clients;
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    loadClients(1, 8, '');
+  };
+
+
 
   // Calcular métricas
   const totalClientsCount = clients.length;
   const activeClientsCount = clients.filter(client => client.status === 1).length;
   const inactiveClientsCount = clients.filter(client => client.status === 0).length;
 
+  // Filtrar clientes por búsqueda y estado
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = !searchTerm || 
+      client.contact_information?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.contact_information?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.contact_information?.phone?.includes(searchTerm);
+    
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'activo' && client.status === 1) ||
+      (statusFilter === 'inactivo' && client.status === 0) ||
+      (statusFilter === 'suspendido' && client.status === 2);
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-cabin-bold text-gray-800 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-cabin-bold text-gray-800 mb-2">
             Gestión de Clientes
           </h1>
-          <p className="text-gray-600 font-cabin-regular">
+          <p className="text-sm sm:text-base text-gray-600 font-cabin-regular">
             Administra todos los clientes del sistema
           </p>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => refreshClients(searchTerm)}
-            className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-            title="Actualizar"
-          >
-                            <FiRefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-          
-          <button 
-            onClick={handleCreateClient}
-            className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center space-x-2"
-          >
-            <FiPlus className="w-5 h-5" />
-            <span>Nuevo Cliente</span>
-          </button>
-        </div>
+        <button 
+          onClick={handleCreateClient}
+          className="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center justify-center space-x-2 w-full sm:w-auto"
+        >
+          <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="text-sm sm:text-base">Nuevo Cliente</span>
+        </button>
       </div>
 
       {/* Cards de métricas */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Card - Total Clientes */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-blue-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUsers className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Total Clientes</h3>
-              <p className="text-2xl font-cabin-bold text-blue-600">{isLoading ? '...' : totalClientsCount}</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Registrados</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Total Clientes</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-blue-600">{isLoading ? '...' : totalClientsCount}</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Registrados</p>
             </div>
           </div>
         </div>
         
         {/* Card - Clientes Activos */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-green-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUsers className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Clientes Activos</h3>
-              <p className="text-2xl font-cabin-bold text-green-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Clientes Activos</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-green-600">
                 {isLoading ? '...' : activeClientsCount}
               </p>
-              <p className="text-sm font-cabin-regular text-gray-500">Actualmente activos</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Actualmente activos</p>
             </div>
           </div>
         </div>
         
         {/* Card - Nuevos este Mes */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-purple-600" />
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FiUsers className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" />
             </div>
-            <div>
-              <h3 className="font-cabin-semibold text-gray-800">Nuevos este Mes</h3>
-              <p className="text-2xl font-cabin-bold text-purple-600">3</p>
-              <p className="text-sm font-cabin-regular text-gray-500">Enero 2024</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Nuevos este Mes</h3>
+              <p className="text-xl lg:text-2xl font-cabin-bold text-purple-600">3</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Enero 2024</p>
             </div>
           </div>
         </div>
-
-
       </div>
 
       {/* Filtros y Búsqueda */}
@@ -292,8 +301,8 @@ const Clientes = () => {
                 { value: 'inactivo', label: 'Inactivos' },
                 { value: 'suspendido', label: 'Suspendidos' }
               ]}
-              selectedValues={['all']}
-              onChange={(values) => console.log('Estado seleccionado:', values[0])}
+              selectedValues={[statusFilter]}
+              onChange={(values) => setStatusFilter(values[0])}
               placeholder="Filtrar por estado"
               multiple={false}
               searchable={false}
@@ -443,12 +452,12 @@ const Clientes = () => {
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
-                          <button 
+                          {/* <button 
                             onClick={() => handleDeleteClient(client)}
                             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <FiTrash2 className="w-4 h-4" />
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                     </tr>

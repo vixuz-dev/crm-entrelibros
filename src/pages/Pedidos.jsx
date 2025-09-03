@@ -273,11 +273,6 @@ const Pedidos = () => {
             Administra todos los pedidos del sistema
           </p>
         </div>
-        
-        <button className="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-cabin-medium transition-colors duration-200 flex items-center justify-center space-x-2 w-full sm:w-auto">
-          <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-sm sm:text-base">Nuevo Pedido</span>
-        </button>
       </div>
 
       {/* Métricas Principales */}

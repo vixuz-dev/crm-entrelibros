@@ -4,7 +4,7 @@ import TopicInformation from '../components/modals/TopicInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
 import CustomDropdown from '../components/ui/CustomDropdown';
-import { useTopics } from '../hooks/useCatalogs';
+import { useTopicsInformation } from '../store/useTopicsInformation';
 import { addTopic, updateTopic, toggleTopicStatus } from '../api/topics';
 
 const Temas = () => {
@@ -26,13 +26,23 @@ const Temas = () => {
     totalDisabledTopics,
     isLoading,
     error,
-    isInitialized,
-    refreshTopics
-  } = useTopics();
+    currentPage: storeCurrentPage,
+    totalPages: storeTotalPages,
+    limit: storeLimit,
+    loadTopics,
+    refreshTopics,
+    goToPage: storeGoToPage,
+    changeLimit: storeChangeLimit
+  } = useTopicsInformation();
 
   // Estado local para paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
+
+  // Cargar temas al montar el componente
+  useEffect(() => {
+    loadTopics();
+  }, []);
 
   // Filtrar temas basado en el término de búsqueda y estado
   const filteredTopics = topics.filter(topic => {

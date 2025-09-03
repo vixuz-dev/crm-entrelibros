@@ -424,12 +424,12 @@ const Usuarios = () => {
                             >
                               <FiEdit className="w-4 h-4" />
                             </button>
-                            <button 
+                            {/* <button 
                               onClick={() => handleDeleteUser(user)}
                               className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             >
                               <FiTrash2 className="w-4 h-4" />
-                            </button>
+                            </button> */}
                           </div>
                         </td>
                       </tr>

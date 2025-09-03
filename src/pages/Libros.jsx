@@ -442,7 +442,7 @@ const Libros = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteProduct(product)}
-                            className="text-red-600 hover:text-red-900 p-1"
+                            className="text-red-600 hover:text-red-900 p-1 hidden"
                             title="Eliminar"
                           >
                             <FiTrash2 className="w-4 h-4" />

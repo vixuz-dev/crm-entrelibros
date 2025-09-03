@@ -60,6 +60,14 @@ const ClientInformation = ({ client, isOpen, onClose, mode = 'view', onSave }) =
     setIsEditing(mode === 'create' || mode === 'edit');
   }, [client, mode]);
 
+  // Limpiar estado cuando se cierre el modal
+  useEffect(() => {
+    if (!isOpen) {
+      // setErrors({});
+      setIsEditing(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleInputChange = (field, value) => {
@@ -77,29 +85,16 @@ const ClientInformation = ({ client, isOpen, onClose, mode = 'view', onSave }) =
   };
 
   const handleCancel = () => {
+   
+    
     if (mode === 'create') {
       onClose();
+    } else if (mode === 'edit') {
+      onClose();
+    } else if (isEditing) {
+      onClose();
     } else {
-      setIsEditing(false);
-      // Restaurar datos originales
-      if (client) {
-        setFormData({
-          name: client.name || '',
-          email: client.email || '',
-          phone: client.phone || '',
-          address: client.address || '',
-          city: client.city || '',
-          state: client.state || '',
-          zipCode: client.zipCode || '',
-          country: client.country || '',
-          status: client.status === 1 ? 'Activo' : client.status === 0 ? 'Inactivo' : 'Activo',
-          joinDate: client.joinDate || '',
-          lastLogin: client.lastLogin || '',
-          totalOrders: client.totalOrders || 0,
-          totalSpent: client.totalSpent || 0,
-          notes: client.notes || ''
-        });
-      }
+      onClose();
     }
   };
 
@@ -133,7 +128,10 @@ const ClientInformation = ({ client, isOpen, onClose, mode = 'view', onSave }) =
       {/* Overlay */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
+        onClick={() => {
+          onClose();
+        }}
+        style={{ cursor: 'pointer' }}
       />
       
       {/* Modal */}
@@ -170,7 +168,9 @@ const ClientInformation = ({ client, isOpen, onClose, mode = 'view', onSave }) =
                 </button>
               )}
               <button
-                onClick={onClose}
+                onClick={() => {
+                  onClose();
+                }}
                 className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <FiX className="w-6 h-6" />

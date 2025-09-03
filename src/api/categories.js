@@ -4,6 +4,20 @@ import { showCategoryCreated, showCategoryUpdated, showCategoryDeleted, showErro
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
+ * Get all categories
+ * @returns {Promise} Promise with categories list
+ */
+export const getCategories = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/categories/get-categories`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting categories:', error);
+    throw error;
+  }
+};
+
+/**
  * Add new category
  * @param {Object} categoryData - Category data to create
  * @param {string} categoryData.category_name - Category name

@@ -4,7 +4,7 @@ import CategoryInformation from '../components/modals/CategoryInformation';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import Pagination from '../components/ui/Pagination';
 import CustomDropdown from '../components/ui/CustomDropdown';
-import { useCategories } from '../hooks/useCatalogs';
+import { useCategoriesInformation } from '../store/useCategoriesInformation';
 import { addCategory, updateCategory, toggleCategoryStatus } from '../api/categories';
 
 const Categorias = () => {
@@ -27,13 +27,23 @@ const Categorias = () => {
     totalDisabledCategories,
     isLoading,
     error,
-    isInitialized,
-    refreshCategories
-  } = useCategories();
+    currentPage: storeCurrentPage,
+    totalPages: storeTotalPages,
+    limit: storeLimit,
+    loadCategories,
+    refreshCategories,
+    goToPage: storeGoToPage,
+    changeLimit: storeChangeLimit
+  } = useCategoriesInformation();
 
   // Estado local para paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
+
+  // Cargar categorías al montar el componente
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   // Filtrar categorías basado en el término de búsqueda y estado
   const filteredCategories = categories.filter(category => {

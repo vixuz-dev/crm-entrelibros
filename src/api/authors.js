@@ -4,6 +4,20 @@ import { showAuthorCreated, showAuthorUpdated, showAuthorDeleted, showError } fr
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
+ * Get all authors
+ * @returns {Promise} Promise with authors list
+ */
+export const getAuthors = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/authors/get-authors`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting authors:', error);
+    throw error;
+  }
+};
+
+/**
  * Add new author
  * @param {Object} authorData - Author data to create
  * @param {string} authorData.author_name - Author name
