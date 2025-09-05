@@ -233,6 +233,11 @@ const Pedidos = () => {
 
   // Filtrado de pedidos
   const filteredOrders = orders.filter(order => {
+    // Filtrar órdenes con payment_status "Pendiente de pago"
+    if (order.payment_status === "Pendiente de pago") {
+      return false;
+    }
+    
     const matchesSearch = 
       order.folio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.contact_information?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
