@@ -48,6 +48,11 @@ export const ROUTES = {
   MEMBERSHIPS_DETAIL: "/membresias/detalle/:id",
   MEMBERSHIPS_PLANS: "/membresias/planes",
   
+  // Rutas de Book Club Lectores
+  BOOK_CLUB_LECTORES: "/book-club-lectores",
+  BOOK_CLUB_LECTORES_CREATE: "/book-club-lectores/crear",
+  BOOK_CLUB_LECTORES_LIST: "/book-club-lectores/listado",
+  
   // Rutas de ventas y pedidos
   ORDERS: "/pedidos",
   ORDERS_CREATE: "/pedidos/crear",
@@ -131,6 +136,9 @@ export const getPageTitle = (pathname) => {
     [ROUTES.CATEGORIES]: "Categorías",
     [ROUTES.TOPICS]: "Temas",
     [ROUTES.MEMBERSHIPS]: "Membresías",
+    [ROUTES.BOOK_CLUB_LECTORES]: "Book Club Lectores",
+    [ROUTES.BOOK_CLUB_LECTORES_CREATE]: "Crear Book Club",
+    [ROUTES.BOOK_CLUB_LECTORES_LIST]: "Listado de Book Clubs",
     [ROUTES.ORDERS]: "Pedidos",
     [ROUTES.CUSTOMERS]: "Clientes",
     [ROUTES.INVENTORY]: "Inventario",

@@ -19,7 +19,9 @@ import {
   FiTag,
   FiList,
   FiChevronDown,
-  FiChevronRight
+  FiChevronRight,
+  FiAward,
+  FiPlus
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { logout as logoutService } from '../../api/auth';
@@ -89,6 +91,29 @@ const Sidebar = ({ onClose }) => {
       icon: FiCreditCard,
       route: ROUTES.MEMBERSHIPS,
       active: location.pathname.startsWith(ROUTES.MEMBERSHIPS)
+    },
+    {
+      id: 'book-club-lectores',
+      label: 'Book Club Lectores',
+      icon: FiAward,
+      route: ROUTES.BOOK_CLUB_LECTORES,
+      active: location.pathname.startsWith(ROUTES.BOOK_CLUB_LECTORES),
+      submenu: [
+        {
+          id: 'crear-book-club',
+          label: 'Crear book club',
+          icon: FiPlus,
+          route: ROUTES.BOOK_CLUB_LECTORES_CREATE,
+          active: location.pathname === ROUTES.BOOK_CLUB_LECTORES_CREATE || location.pathname === ROUTES.BOOK_CLUB_LECTORES
+        },
+        {
+          id: 'listado-book-club',
+          label: 'Listado',
+          icon: FiList,
+          route: ROUTES.BOOK_CLUB_LECTORES_LIST,
+          active: location.pathname === ROUTES.BOOK_CLUB_LECTORES_LIST
+        }
+      ]
     },
     {
       id: 'pedidos',

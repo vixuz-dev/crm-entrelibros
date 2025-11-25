@@ -1,0 +1,403 @@
+{
+  "metadata": {
+    "month": "Octubre",
+    "theme": "Monstruosamente divertido",
+    "lastUpdated": "2024-10-01T00:00:00Z",
+    "version": "1.0.0",
+    "description": "Configuración dinámica para Book Club Lectores - Octubre 2024",
+    "createdBy": "admin"
+  },
+  "heroSection": {
+    "title": "Book Club",
+    "subtitle": "Lectores",
+    "fileUrl": "https://entrelibros-landing-assets.s3.us-west-2.amazonaws.com/heroSectionBg.jpg",
+    "fileType": "image",
+    "sectionNumber": 1
+  },
+  "sections": {
+    "welcomeAudioSection": {
+      "title": "Audio de bienvenida",
+      "subtitle": "Te cuento cuáles son los 2 \"ingredientes\" que hacen que los libros de este mes sean irresistibles.",
+      "fileUrl": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/audios/audio-bienvenida-enhanced-v2.wav",
+      "fileType": "video",
+      "sectionNumber": 2
+    },
+    "monthlyActivitySection": {
+      "title": "Actividad del mes",
+      "subtitle": "Una actividad especial para disfrutar en familia",
+      "fileUrl": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/actividades/Recorta+el+títere.pdf",
+      "fileType": "pdf",
+      "sectionNumber": 3,
+      "activity": {
+        "name": "Titere",
+        "description": "Descarga la ficha para realizar esta divertida actividad en casa."
+      }
+    }
+  },
+  "books": [
+    {
+      "order": 1,
+      "bookId": 100,
+      "ownerDescription": "Una aventura emocionante que combina fútbol y misterio, perfecta para introducir a los niños en el mundo de la lectura a través de una historia que los mantendrá enganchados desde la primera página."
+    },
+    {
+      "order": 2,
+      "bookId": 200,
+      "ownerDescription": "Descripción del segundo libro relacionada con el tema del mes."
+    },
+    {
+      "order": 3,
+      "bookId": 300,
+      "ownerDescription": "Una historia divertida sobre un monstruo que aprende sobre la moderación, perfecta para trabajar valores mientras se divierten con la lectura."
+    },
+    {
+      "order": 4,
+      "bookId": 400,
+      "ownerDescription": "Una historia llena de humor y aventuras que mantendrá a los niños riendo mientras desarrollan su comprensión lectora y creatividad."
+    }
+  ],
+
+  "timbiriche": {
+    "square1": {
+      "squareNumber": 1,
+      "unlockDay": 1,
+      "type": "book",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "sections": {
+          "previousActivitySection": {
+            "title": "Actividad previa",
+            "subtitle": "Leer tú el libro así como la ficha que puedes ver si das click en el botón de abajo que dice \"descargar ficha\"."
+          },
+          "activitiesSection": {
+            "title": "Actividades con tu hijo (una cada día):",
+            "subtitle": "",
+            "activities": [
+              {
+                "title": "Primera lectura",
+                "subtitle": "Realiza las preguntas para antes y durante la lectura. También, si así lo quieres, puedes hacer una de las preguntas para después de leer."
+              },
+              {
+                "title": "Segunda lectura",
+                "subtitle": "Solo haz las preguntas para después de leer."
+              }
+            ]
+          },
+          "noteSection": {
+            "title": "Nota",
+            "subtitle": "Las preguntas para antes de leer y durante la lectura solo son funcionales para la primera lectura que haces con tu hijo, así que te recomiendo no saltártelas porque perderías una oportunidad muy valiosa de desarrollar habilidades lectoras. Por su parte, las preguntas para después de leer las puedes hacer cuando sea."
+          }
+        },
+        "actions": [
+          {
+            "labelTitle": "Descargar ficha",
+            "kind": "download",
+            "url": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/fichas/ficha-libro-1-octubre.jpeg"
+          }
+        ]
+      }
+    },
+    "square2": {
+      "squareNumber": 2,
+      "unlockDay": 1,
+      "type": "activity",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "title": "",
+        "subtitle": "En la ficha que puedes descargar abajo, vienen actividades para **mitad de la semana** y para el **fin de semana** (los días que a ti te acomoden mejor). La idea es que primero lean el libro y luego realicen las actividades.",
+        "activities": [
+          {
+            "title": "Actividad de mitad de la semana",
+            "subtitle": "Ideal para reforzar la lectura a mitad de semana con una propuesta sencilla y práctica.",
+            "actions": [
+              {
+                "labelTitle": "Descargar ficha",
+                "kind": "download",
+                "url": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/fichas/ficha-octubre-fantasmaencasa.jpeg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "square3": {
+      "squareNumber": 3,
+      "unlockDay": 1,
+      "type": "audio",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "audios": [
+          {
+            "title": "El poder de la relectura",
+            "subTitle": "Porqué tu hijo debería leer, el mismo libro, más de una vez.",
+            "url": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/audios/casilla-3-audio-enhanced-v2.wav"
+          }
+        ]
+      }
+    },
+    "square4": {
+      "squareNumber": 4,
+      "unlockDay": 7,
+      "type": "book",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "sections": {
+          "previousActivitySection": {
+            "title": "Actividad previa",
+            "subtitle": "Leer tú el libro así como la ficha que puedes ver si das click en el botón de abajo que dice \"descargar ficha\"."
+          },
+          "activitiesSection": {
+            "title": "Actividades con tu hijo (una cada día):",
+            "subtitle": "",
+            "activities": [
+              {
+                "title": "Primera lectura",
+                "subtitle": "Realiza las preguntas para antes y durante la lectura. También, si así lo quieres, puedes hacer una de las preguntas para después de leer."
+              },
+              {
+                "title": "Segunda lectura",
+                "subtitle": "Solo haz las preguntas para después de leer."
+              }
+            ]
+          },
+          "noteSection": {
+            "title": "Nota",
+            "subtitle": "Las preguntas para antes de leer y durante la lectura solo son funcionales para la primera lectura que haces con tu hijo, así que te recomiendo no saltártelas porque perderías una oportunidad muy valiosa de desarrollar habilidades lectoras. Por su parte, las preguntas para después de leer las puedes hacer cuando sea."
+          }
+        },
+        "actions": [
+          {
+            "labelTitle": "Descargar ficha",
+            "kind": "download",
+            "url": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/fichas/ficha-libro-2-octubre.jpeg"
+          }
+        ]
+      }
+    },
+    "square5": {
+      "squareNumber": 5,
+      "unlockDay": 7,
+      "type": "activity",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "title": "",
+        "subtitle": "En la ficha que puedes descargar abajo, vienen actividades para **mitad de la semana** y para el **fin de semana** (los días que a ti te acomoden mejor). La idea es que primero lean el libro y luego realicen las actividades.",
+        "activities": [
+          {
+            "title": "Actividad de mitad de la semana",
+            "subtitle": "Ideal para reforzar la lectura a mitad de semana con una propuesta sencilla y práctica.",
+            "actions": [
+              {
+                "labelTitle": "Actividad de mitad de semana",
+                "kind": "download",
+                "url": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/fichas/actividad-5-1.jpeg"
+              }
+            ]
+          },
+          {
+            "title": "Actividad para fin de semana",
+            "subtitle": "Ideal para reforzar la lectura a mitad de semana con una propuesta sencilla y práctica.",
+            "actions": [
+              {
+                "labelTitle": "Actividad para fin de semana",
+                "kind": "download",
+                "url": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/fichas/actividad-5-2.jpeg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "square6": {
+      "squareNumber": 6,
+      "unlockDay": 14,
+      "type": "book",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "sections": {
+          "previousActivitySection": {
+            "title": "Actividad previa",
+            "subtitle": "Leer tú el libro así como la ficha que puedes ver si das click en el botón de abajo que dice \"descargar ficha\"."
+          },
+          "activitiesSection": {
+            "title": "Actividades con tu hijo (una cada día):",
+            "subtitle": "",
+            "activities": [
+              {
+                "title": "Primera lectura",
+                "subtitle": "Realiza las preguntas para antes y durante la lectura. También, si así lo quieres, puedes hacer una de las preguntas para después de leer."
+              },
+              {
+                "title": "Segunda lectura",
+                "subtitle": "Solo haz las preguntas para después de leer."
+              }
+            ]
+          },
+          "noteSection": {
+            "title": "Nota",
+            "subtitle": "Las preguntas para antes de leer y durante la lectura solo son funcionales para la primera lectura que haces con tu hijo, así que te recomiendo no saltártelas porque perderías una oportunidad muy valiosa de desarrollar habilidades lectoras. Por su parte, las preguntas para después de leer las puedes hacer cuando sea."
+          }
+        },
+        "actions": [
+          {
+            "labelTitle": "Descargar ficha",
+            "kind": "download",
+            "url": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/fichas/ficha-libro-3-octubre.jpeg"
+          }
+        ]
+      }
+    },
+    "square7": {
+      "squareNumber": 7,
+      "unlockDay": 14,
+      "type": "activity",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "title": "",
+        "subtitle": "En la ficha que puedes descargar abajo, vienen actividades para **mitad de la semana** y para el **fin de semana** (los días que a ti te acomoden mejor). La idea es que primero lean el libro y luego realicen las actividades.",
+        "activities": [
+          {
+            "title": "Actividad de mitad de la semana",
+            "subtitle": "Ideal para reforzar la lectura a mitad de semana con una propuesta sencilla y práctica.",
+            "actions": [
+              {
+                "labelTitle": "Ver video corto",
+                "kind": "video",
+                "url": "https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/octubre/videos-cortos/monstruo-voraz.mp4"
+              }
+            ]
+          },
+          {
+            "title": "Actividad para fin de semana",
+            "subtitle": "Ideal para reforzar la lectura a mitad de semana con una propuesta sencilla y práctica.",
+            "actions": [
+              {
+                "labelTitle": "Actividad para fin de semana",
+                "kind": "download",
+                "url": "https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/octubre/fichas/actividad-findesemana.jpeg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "square8": {
+      "squareNumber": 8,
+      "unlockDay": 21,
+      "type": "book",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "sections": {
+          "previousActivitySection": {
+            "title": "Actividad previa",
+            "subtitle": "Leer tú el libro así como la ficha que puedes ver si das click en el botón de abajo que dice \"descargar ficha\"."
+          },
+          "activitiesSection": {
+            "title": "Actividades con tu hijo (una cada día):",
+            "subtitle": "",
+            "activities": [
+              {
+                "title": "Primera lectura",
+                "subtitle": "Realiza las preguntas para antes y durante la lectura. También, si así lo quieres, puedes hacer una de las preguntas para después de leer."
+              },
+              {
+                "title": "Segunda lectura",
+                "subtitle": "Solo haz las preguntas para después de leer."
+              }
+            ]
+          },
+          "noteSection": {
+            "title": "Nota",
+            "subtitle": "Las preguntas para antes de leer y durante la lectura solo son funcionales para la primera lectura que haces con tu hijo, así que te recomiendo no saltártelas porque perderías una oportunidad muy valiosa de desarrollar habilidades lectoras. Por su parte, las preguntas para después de leer las puedes hacer cuando sea."
+          }
+        },
+        "actions": [
+          {
+            "labelTitle": "Leer",
+            "kind": "link",
+            "url": "https://entrelibros.com.mx/producto/el-fantasma-de-las-bragas-rotas"
+          },
+          {
+            "labelTitle": "Descargar ficha",
+            "kind": "download",
+            "url": "https://entrelibros-fichas-membresias.s3.us-east-1.amazonaws.com/bookclub/octubre/fichas/ficha-libro-4-octubre.jpeg"
+          }
+        ]
+      }
+    },
+    "square9": {
+      "squareNumber": 9,
+      "unlockDay": 21,
+      "type": "audio",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "audios": [
+          {
+            "title": "Audio complementario",
+            "subTitle": "",
+            "url": "https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/octubre/audios/audio-complementario-fantasma-bragas.mp3"
+          }
+        ]
+      }
+    },
+    "square10": {
+      "squareNumber": 10,
+      "unlockDay": 21,
+      "type": "activity",
+      "bookInfo": {
+        "bookId": 100
+      },
+      "cardContent": {
+        "title": "",
+        "subtitle": "En la ficha que puedes descargar abajo, vienen actividades para **mitad de la semana** y para el **fin de semana** (los días que a ti te acomoden mejor). La idea es que primero lean el libro y luego realicen las actividades.",
+        "activities": [
+          {
+            "title": "Actividad de mitad de la semana",
+            "subtitle": "Ideal para reforzar la lectura a mitad de semana con una propuesta sencilla y práctica.",
+            "actions": [
+              {
+                "labelTitle": "Descargar ficha",
+                "kind": "download",
+                "url": "https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/octubre/fichas/ficha-finsemana-mediasemana.jpeg"
+              }
+            ]
+          },
+          {
+            "title": "Actividad para fin de semana",
+            "subtitle": "Ideal para reforzar la lectura a mitad de semana con una propuesta sencilla y práctica.",
+            "actions": [
+              {
+                "labelTitle": "Descargar imprimible",
+                "kind": "download",
+                "url": "https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/octubre/fichas/actividad-fantasmas-bragas.pdf"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "nextReleases": {
+    "month": "Noviembre",
+    "theme": "Celebro la vida",
+    "description": "Exploraremos libros sobre la pérdida y sobre disfrutar el día a día."
+  }
+}

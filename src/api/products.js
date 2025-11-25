@@ -3,6 +3,13 @@ import { showDataLoadError, showDataLoadSuccess } from "../utils/notifications";
 import { prepareSearchTerm } from "../utils/searchUtils";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+// Helper function para construir URLs sin barras duplicadas
+const buildApiUrl = (endpoint) => {
+  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${baseUrl}${path}`;
+};
+
 // Crear una instancia de axios sin interceptores para endpoints públicos
 const publicAxios = axios.create();
 
@@ -69,9 +76,11 @@ export const getProducts = async (page = 1, limit = 8, searchTerm = '') => {
  */
 export const getProductDetail = async (productId) => {
   try {
-    const response = await axiosConfig.get(
-      `${API_BASE_URL}/products/get-detail-product?product_id=${productId}`
-    );
+    // Usar publicAxios en lugar de axiosConfig para evitar enviar el token
+    // ya que este endpoint no lo requiere (comentado temporalmente)
+    // const response = await axiosConfig.get(
+    const url = `${buildApiUrl('/products/get-detail-product')}?product_id=${productId}`;
+    const response = await publicAxios.get(url);
 
     
     return response.data;

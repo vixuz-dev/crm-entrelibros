@@ -160,4 +160,175 @@
   }
 }
 
+/* Estilos para TipTap Editor */
+.ProseMirror {
+  outline: none;
+  font-family: 'Cabin', sans-serif;
+}
+
+.ProseMirror h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin-top: 0.67em;
+  margin-bottom: 0.67em;
+  font-family: 'Cabin', sans-serif;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-top: 0.83em;
+  margin-bottom: 0.83em;
+  font-family: 'Cabin', sans-serif;
+}
+
+.ProseMirror h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  font-family: 'Cabin', sans-serif;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 1em 0;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror li {
+  margin: 0.5em 0;
+  display: list-item;
+}
+
+.ProseMirror p {
+  margin: 0.5em 0;
+}
+
+.ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+.ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+.ProseMirror strong,
+.ProseMirror strong * {
+  font-weight: 700 !important;
+  font-family: 'Cabin', sans-serif;
+}
+
+.ProseMirror em,
+.ProseMirror em * {
+  font-style: italic !important;
+}
+
+/* Estilos para HTML renderizado (preview) */
+.prose {
+  color: inherit;
+  position: relative;
+  z-index: 0;
+}
+
+.prose h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin-top: 0.67em;
+  margin-bottom: 0.67em;
+  font-family: 'Cabin', sans-serif;
+}
+
+.prose h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-top: 0.83em;
+  margin-bottom: 0.83em;
+  font-family: 'Cabin', sans-serif;
+}
+
+.prose h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  font-family: 'Cabin', sans-serif;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+  margin: 1em 0;
+}
+
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
+.prose li {
+  margin: 0.5em 0;
+  display: list-item;
+}
+
+.prose p {
+  margin: 0.5em 0;
+}
+
+.prose p:first-child {
+  margin-top: 0;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.prose strong,
+.prose strong * {
+  font-weight: 700 !important;
+  font-family: 'Cabin', sans-serif;
+}
+
+.prose em,
+.prose em * {
+  font-style: italic !important;
+}
+
+/* Asegurar que todos los elementos dentro de .prose no se sobrepongan */
+.prose {
+  isolation: isolate;
+}
+
+.prose * {
+  position: relative !important;
+  z-index: auto !important;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6,
+.prose p,
+.prose ul,
+.prose ol,
+.prose li,
+.prose strong,
+.prose em {
+  position: relative !important;
+  z-index: auto !important;
+}
+
 
