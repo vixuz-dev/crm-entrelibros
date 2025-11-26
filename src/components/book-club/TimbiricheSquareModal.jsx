@@ -47,7 +47,8 @@ const TimbiricheSquareModal = ({
       squareNumber,
       unlockDay: formData.unlockDay || defaultUnlockDay,
       type: selectedType,
-      bookInfo: {
+      // Usar bookInfo completo del formulario si está disponible, sino construir uno básico
+      bookInfo: formData.bookInfo || {
         bookId: formData.bookId || null
       },
       cardContent: formData.cardContent || {}

@@ -10,7 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: { 
         clientsClaim: true, 
-        skipWaiting: true 
+        skipWaiting: true,
+        // Configurar globIgnores para evitar warnings cuando no encuentra archivos
+        globIgnores: ['**/node_modules/**/*', 'sw.js', 'workbox-*.js']
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
@@ -47,7 +49,9 @@ export default defineConfig({
         dir: 'ltr'
       },
       devOptions: {
-        enabled: true
+        enabled: true,
+        type: 'module',
+        navigateFallback: 'index.html'
       }
     })
   ],

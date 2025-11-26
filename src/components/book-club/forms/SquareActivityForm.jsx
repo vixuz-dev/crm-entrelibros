@@ -349,9 +349,21 @@ const SquareActivityForm = ({ squareData, squareNumber, defaultUnlockDay, defaul
       activities: cleanedActivities
     };
 
+    // Construir bookInfo con título e imagen si están disponibles
+    const bookInfo = {
+      bookId: bookId || null
+    };
+    
+    // Si tenemos el libro seleccionado, agregar título e imagen
+    if (selectedBook) {
+      bookInfo.title = selectedBook.product_name || null;
+      bookInfo.imageUrl = selectedBook.main_image_url || null;
+    }
+
       onSave({
         unlockDay,
         bookId,
+        bookInfo,
         cardContent
       });
     } catch (error) {
@@ -369,13 +381,22 @@ const SquareActivityForm = ({ squareData, squareNumber, defaultUnlockDay, defaul
       actions: (activity.actions || []).map(({ contentType, ...action }) => action)
     }));
 
+    // Construir bookInfo con título e imagen si están disponibles
+    const bookInfo = {
+      bookId: bookId || null
+    };
+    
+    // Si tenemos el libro seleccionado, agregar título e imagen
+    if (selectedBook) {
+      bookInfo.title = selectedBook.product_name || null;
+      bookInfo.imageUrl = selectedBook.main_image_url || null;
+    }
+
     const previewData = {
       squareNumber: squareNumber || 2,
       unlockDay,
       type: 'activity',
-      bookInfo: {
-        bookId: bookId
-      },
+      bookInfo: bookInfo,
       cardContent: {
         title,
         subtitle,
