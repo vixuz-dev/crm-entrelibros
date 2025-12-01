@@ -289,3 +289,52 @@ export const getBookClub = async (targetMonth) => {
   }
 };
 
+/**
+ * Update an existing book club
+ * @param {number} bookClubId - ID of the book club to update
+ * @param {Object} bookClubObject - The complete book club configuration object
+ * @returns {Promise} Promise that resolves to the response data
+ */
+export const updateBookClub = async (bookClubId, bookClubObject) => {
+  try {
+    // Validar que todas las secciones estén completas (reutilizar la misma validación de creación)
+    const validation = validateBookClub(bookClubObject);
+
+    if (!validation.isValid) {
+      const errorMessage = `Por favor, completa todas las secciones antes de actualizar:\n${validation.errors.join('\n')}`;
+      showDataLoadError('Book Club', errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    const response = await axios.post(
+      `${API_BASE_URL}/book-club/update-book-club`,
+      {
+        book_club_id: bookClubId,
+        book_club_object: bookClubObject
+      }
+    );
+
+    if (response.status === 200 && response.data.status === true) {
+      showDataLoadSuccess('Book Club', 'Book Club actualizado exitosamente');
+      return response.data;
+    } else {
+      const errorMessage = response.data?.status_Message || 'Error al actualizar el Book Club';
+      showDataLoadError('Book Club', errorMessage);
+      throw new Error(errorMessage);
+    }
+  } catch (error) {
+    console.error('Error updating book club:', error);
+
+    // Si ya se mostró el error en la validación, no mostrar otro
+    if (error.message && error.message.includes('Por favor, completa todas las secciones')) {
+      throw error;
+    }
+
+    const errorMessage =
+      error.response?.data?.status_Message || error.message || 'Error al actualizar el Book Club';
+    showDataLoadError('Book Club', errorMessage);
+    throw error;
+  }
+};
+
+

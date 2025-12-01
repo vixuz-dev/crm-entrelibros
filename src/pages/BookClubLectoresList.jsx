@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiCalendar, FiBook, FiLoader, FiPlus, FiEdit, FiX } from 'react-icons/fi';
 import { MONTH_OPTIONS } from '../constants/bookClub';
-import { getBookClub } from '../api/bookClubApi';
+import { getBookClub, updateBookClub } from '../api/bookClubApi';
 import { showDataLoadError } from '../utils/notifications';
 import { useBookClubStore } from '../store/useBookClubStore';
 import { ROUTES } from '../utils/routes';
@@ -13,6 +13,7 @@ import WelcomeAudioSection from '../components/book-club/WelcomeAudioSection';
 import CourseSectionsSection from '../components/book-club/CourseSectionsSection';
 import TimbiricheSection from '../components/book-club/TimbiricheSection';
 import NextReleasesSection from '../components/book-club/NextReleasesSection';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const BookClubLectoresList = () => {
   const navigate = useNavigate();
@@ -22,6 +23,19 @@ const BookClubLectoresList = () => {
   const [error, setError] = useState(null);
   const [isBookClubAvailable, setIsBookClubAvailable] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSavingChanges, setIsSavingChanges] = useState(false);
+  const [initialBookClubConfig, setInitialBookClubConfig] = useState(null);
+  const [showConfirmUpdateModal, setShowConfirmUpdateModal] = useState(false);
+
+  // Estado de bloqueo por sección (similar a la pantalla de creación)
+  const [sectionLocked, setSectionLocked] = useState({
+    'main-config': true,
+    'hero-section': true,
+    'books': true,
+    'welcome-audio': true,
+    'course-sections': true,
+    'next-releases': true
+  });
 
   // Obtener estado y acciones del store
   const {
@@ -43,6 +57,10 @@ const BookClubLectoresList = () => {
     nextReleasesMonth,
     nextReleasesTheme,
     nextReleasesDescription,
+    metadata,
+    heroSection,
+    sections,
+    timbiriche,
     setMonth,
     setTheme,
     setDescription,
@@ -61,7 +79,8 @@ const BookClubLectoresList = () => {
     setNextReleasesMonth,
     setNextReleasesTheme,
     setNextReleasesDescription,
-    updateSquare
+    updateSquare,
+    getFullConfiguration
   } = useBookClubStore();
 
   // Función para obtener el índice del mes actual
@@ -69,6 +88,59 @@ const BookClubLectoresList = () => {
     const currentDate = new Date();
     const currentMonthIndex = currentDate.getMonth(); // 0-11 (Enero = 0, Diciembre = 11)
     return currentMonthIndex;
+  };
+
+  const performUpdateBookClub = async () => {
+    if (!bookClubData) {
+      showDataLoadError('Book Club', 'No hay datos de Book Club cargados para actualizar.');
+      return;
+    }
+
+    // Intentar obtener el ID del book club desde la respuesta del API
+    const bookClubId = bookClubData.book_club_id || bookClubData.id;
+
+    if (!bookClubId) {
+      showDataLoadError(
+        'Book Club',
+        'No se encontró el ID del Book Club a actualizar. Verifica la respuesta del API.'
+      );
+      return;
+    }
+
+    try {
+      setIsSavingChanges(true);
+
+      // Asegurarse de que los objetos derivados estén actualizados antes de construir el objeto final
+      const store = useBookClubStore.getState();
+      if (store.updateMetadata) store.updateMetadata();
+      if (store.updateHeroSection) store.updateHeroSection();
+      if (store.updateWelcomeAudioSection) store.updateWelcomeAudioSection();
+      if (store.updateMonthlyActivitySection) store.updateMonthlyActivitySection();
+
+      const bookClubObject = store.getFullConfiguration
+        ? store.getFullConfiguration()
+        : null;
+
+      if (!bookClubObject) {
+        showDataLoadError('Book Club', 'No se pudo construir el objeto de configuración del Book Club.');
+        return;
+      }
+
+      await updateBookClub(bookClubId, bookClubObject);
+
+      // Actualizar la configuración inicial para que deje de marcar cambios pendientes
+      setInitialBookClubConfig(bookClubObject);
+    } catch (err) {
+      // El error ya se muestra en updateBookClub
+      console.error('Error al actualizar Book Club:', err);
+    } finally {
+      setIsSavingChanges(false);
+    }
+  };
+
+  const handleUpdateClick = () => {
+    if (!hasUnsavedChanges || isSavingChanges) return;
+    setShowConfirmUpdateModal(true);
   };
 
   // Función para obtener el índice del mes "Septiembre"
@@ -89,6 +161,44 @@ const BookClubLectoresList = () => {
     
     return months;
   }, []);
+
+  // Detectar si hay cambios sin guardar comparando contra la configuración inicial cargada
+  const hasUnsavedChanges = useMemo(() => {
+    if (!initialBookClubConfig || !getFullConfiguration) return false;
+    const currentConfig = getFullConfiguration();
+    try {
+      return JSON.stringify(currentConfig) !== JSON.stringify(initialBookClubConfig);
+    } catch {
+      return false;
+    }
+  }, [
+    initialBookClubConfig,
+    metadata,
+    heroSection,
+    sections,
+    books,
+    timbiriche,
+    nextReleasesMonth,
+    nextReleasesTheme,
+    nextReleasesDescription,
+    getFullConfiguration
+  ]);
+
+  // Handlers para bloqueo por sección (solo afectan el UI de cada sección)
+  const handleSectionSaved = (sectionId) => {
+    setSectionLocked((prev) => ({
+      ...prev,
+      [sectionId]: true
+    }));
+  };
+
+  const handleEditSection = (sectionId) => {
+    setIsEditing(true);
+    setSectionLocked((prev) => ({
+      ...prev,
+      [sectionId]: false
+    }));
+  };
 
   // Cargar book club cuando se selecciona un mes
   useEffect(() => {
@@ -127,9 +237,25 @@ const BookClubLectoresList = () => {
           return;
         }
         
-        // Si el Book Club está disponible, poblar los datos
+        // Si el Book Club está disponible, reiniciar el store y poblar los datos
+        const { reset } = useBookClubStore.getState();
+        if (reset) {
+          reset();
+        }
+
         setIsBookClubAvailable(true);
         setBookClubData(response);
+        setInitialBookClubConfig(bookClub);
+
+        // Inicializar bloqueo por sección (todas bloqueadas al cargar)
+        setSectionLocked({
+          'main-config': true,
+          'hero-section': true,
+          'books': true,
+          'welcome-audio': true,
+          'course-sections': true,
+          'next-releases': true
+        });
         
         // Metadata (Configuración Principal)
         if (bookClub.metadata) {
@@ -266,31 +392,52 @@ const BookClubLectoresList = () => {
       {/* Área de visualización del Book Club */}
       {selectedMonth && (
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm px-2 py-3 mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-cabin-bold text-gray-800">
               Book Club - {MONTH_OPTIONS.find(m => m.value === selectedMonth)?.label}
             </h2>
             {isBookClubAvailable && !loading && (
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors font-cabin-medium ${
-                  isEditing
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : 'bg-amber-500 text-white hover:bg-amber-600'
-                }`}
-              >
-                {isEditing ? (
-                  <>
-                    <FiX className="w-5 h-5 mr-2" />
-                    Cancelar edición
-                  </>
-                ) : (
-                  <>
-                    <FiEdit className="w-5 h-5 mr-2" />
-                    Editar contenido
-                  </>
+              <div className="flex items-center space-x-3">
+                {isEditing && (
+                  <button
+                    onClick={handleUpdateClick}
+                    disabled={isSavingChanges || !hasUnsavedChanges}
+                    className="inline-flex items-center px-4 py-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors font-cabin-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isSavingChanges ? (
+                      <>
+                        <FiLoader className="w-5 h-5 mr-2 animate-spin" />
+                        Actualizando...
+                      </>
+                    ) : (
+                      <>
+                        <FiEdit className="w-5 h-5 mr-2" />
+                        Actualizar Book Club
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors font-cabin-medium ${
+                    isEditing
+                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                  }`}
+                >
+                  {isEditing ? (
+                    <>
+                      <FiX className="w-5 h-5 mr-2" />
+                      Cancelar edición
+                    </>
+                  ) : (
+                    <>
+                      <FiEdit className="w-5 h-5 mr-2" />
+                      Editar Book Club
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
 
@@ -336,9 +483,9 @@ const BookClubLectoresList = () => {
                 description={description}
                 setDescription={setDescription}
                 monthOptions={MONTH_OPTIONS}
-                isLocked={!isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
+                isLocked={!isEditing || sectionLocked['main-config']}
+                onEdit={() => handleEditSection('main-config')}
+                onSave={() => handleSectionSaved('main-config')}
                 showEditButton={isEditing}
               />
 
@@ -350,9 +497,9 @@ const BookClubLectoresList = () => {
                 setSubtitle={setSubtitle}
                 fileUrl={fileUrl}
                 setFileUrl={setFileUrl}
-                isLocked={!isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
+                isLocked={!isEditing || sectionLocked['hero-section']}
+                onEdit={() => handleEditSection('hero-section')}
+                onSave={() => handleSectionSaved('hero-section')}
                 showEditButton={isEditing}
               />
 
@@ -360,9 +507,9 @@ const BookClubLectoresList = () => {
               <BooksSection
                 books={books}
                 setBooks={setBooks}
-                isLocked={!isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
+                isLocked={!isEditing || sectionLocked['books']}
+                onEdit={() => handleEditSection('books')}
+                onSave={() => handleSectionSaved('books')}
                 showEditButton={isEditing}
               />
 
@@ -374,9 +521,9 @@ const BookClubLectoresList = () => {
                 setWelcomeAudioSubtitle={setWelcomeAudioSubtitle}
                 welcomeAudioFileUrl={welcomeAudioFileUrl}
                 setWelcomeAudioFileUrl={setWelcomeAudioFileUrl}
-                isLocked={!isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
+                isLocked={!isEditing || sectionLocked['welcome-audio']}
+                onEdit={() => handleEditSection('welcome-audio')}
+                onSave={() => handleSectionSaved('welcome-audio')}
                 showEditButton={isEditing}
               />
 
@@ -392,9 +539,9 @@ const BookClubLectoresList = () => {
                 setActivityName={setActivityName}
                 activityDescription={activityDescription}
                 setActivityDescription={setActivityDescription}
-                isLocked={!isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
+                isLocked={!isEditing || sectionLocked['course-sections']}
+                onEdit={() => handleEditSection('course-sections')}
+                onSave={() => handleSectionSaved('course-sections')}
                 showEditButton={isEditing}
               />
 
@@ -402,7 +549,7 @@ const BookClubLectoresList = () => {
               <TimbiricheSection
                 isLocked={!isEditing}
                 onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
+                onSave={() => {}}
                 showEditButton={isEditing}
               />
 
@@ -414,11 +561,12 @@ const BookClubLectoresList = () => {
                 setTheme={setNextReleasesTheme}
                 description={nextReleasesDescription}
                 setDescription={setNextReleasesDescription}
-                isLocked={!isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
+                isLocked={!isEditing || sectionLocked['next-releases']}
+                onEdit={() => handleEditSection('next-releases')}
+                onSave={() => handleSectionSaved('next-releases')}
                 showEditButton={isEditing}
               />
+
             </div>
           )}
         </div>
@@ -431,6 +579,21 @@ const BookClubLectoresList = () => {
           </p>
         </div>
       )}
+
+      {/* Modal de confirmación para actualizar el Book Club */}
+      <ConfirmationModal
+        isOpen={showConfirmUpdateModal}
+        title="¿Actualizar Book Club?"
+        description="Se enviarán todos los cambios realizados en este Book Club al servidor. ¿Deseas continuar?"
+        onCancel={() => setShowConfirmUpdateModal(false)}
+        onAccept={async () => {
+          setShowConfirmUpdateModal(false);
+          await performUpdateBookClub();
+        }}
+        cancelText="Cancelar"
+        acceptText="Sí, actualizar"
+        type="warning"
+      />
     </div>
   );
 };
