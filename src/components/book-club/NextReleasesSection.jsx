@@ -21,6 +21,18 @@ const NextReleasesSection = ({
   const [localDescription, setLocalDescription] = useState(description || '');
   const [errors, setErrors] = useState({});
 
+  React.useEffect(() => {
+    setLocalMonth(month || '');
+  }, [month]);
+
+  React.useEffect(() => {
+    setLocalTheme(theme || '');
+  }, [theme]);
+
+  React.useEffect(() => {
+    setLocalDescription(description || '');
+  }, [description]);
+
   const handleSave = (e) => {
     e.preventDefault();
     

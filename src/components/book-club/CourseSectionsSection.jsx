@@ -22,8 +22,9 @@ const CourseSectionsSection = ({
   onSave,
   showEditButton = true
 }) => {
-  // Estado local para los campos del formulario
-  const [localTitle, setLocalTitle] = useState(monthlyActivityTitle || '');
+  const DEFAULT_TITLE = 'Actividad del mes';
+  
+  const [localTitle, setLocalTitle] = useState(monthlyActivityTitle || DEFAULT_TITLE);
   const [localSubtitle, setLocalSubtitle] = useState(monthlyActivitySubtitle || '');
   const [localFileUrl, setLocalFileUrl] = useState(monthlyActivityFileUrl || '');
   const [localActivityName, setLocalActivityName] = useState(activityName || '');
@@ -33,9 +34,8 @@ const CourseSectionsSection = ({
   const [selectedFile, setSelectedFile] = useState(null); // Archivo seleccionado (para subir después)
   const [selectedFileBase64, setSelectedFileBase64] = useState(null); // Base64 del archivo seleccionado
 
-  // Sincronizar estado local cuando cambian los props
   useEffect(() => {
-    setLocalTitle(monthlyActivityTitle || '');
+    setLocalTitle(monthlyActivityTitle || DEFAULT_TITLE);
   }, [monthlyActivityTitle]);
 
   useEffect(() => {
@@ -58,11 +58,7 @@ const CourseSectionsSection = ({
   const handleSave = async (e) => {
     e.preventDefault();
     
-    // Validar campos obligatorios
     const newErrors = {};
-    if (!localTitle || localTitle.trim() === '') {
-      newErrors.title = 'El título es obligatorio';
-    }
     if (!localSubtitle || localSubtitle.trim() === '') {
       newErrors.subtitle = 'El subtítulo es obligatorio';
     }
@@ -117,8 +113,7 @@ const CourseSectionsSection = ({
         }
       }
 
-      // Guardar en el store
-      setMonthlyActivityTitle(localTitle);
+      setMonthlyActivityTitle(localTitle || DEFAULT_TITLE);
       setMonthlyActivitySubtitle(localSubtitle);
       setMonthlyActivityFileUrl(finalFileUrl);
       setActivityName(localActivityName);
@@ -128,8 +123,13 @@ const CourseSectionsSection = ({
       setSelectedFile(null);
       setSelectedFileBase64(null);
 
-      // Mostrar mensaje de éxito
       showSuccess('Actividad del Mes guardada exitosamente');
+      
+      const button = document.activeElement;
+      if (button && button.type === 'submit') {
+        button.classList.add('animate-pulse');
+        setTimeout(() => button.classList.remove('animate-pulse'), 1000);
+      }
 
       // Bloquear la sección después de guardar
       if (onSave) {
@@ -175,7 +175,7 @@ const CourseSectionsSection = ({
           <h2 className="text-2xl font-cabin-bold text-gray-800 mb-2">
             Actividad del Mes
           </h2>
-          <p className="text-gray-600 font-cabin-regular">
+          <p className="text-gray-700 font-cabin-regular">
             Configura la actividad especial para disfrutar en familia
           </p>
         </div>
@@ -183,7 +183,8 @@ const CourseSectionsSection = ({
           <button
             type="button"
             onClick={onEdit}
-            className="flex items-center space-x-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium"
+            aria-label="Editar actividad del mes"
+            className="flex items-center space-x-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 font-cabin-medium transform hover:scale-105 active:scale-95"
           >
             <FiEdit className="w-4 h-4" />
             <span>Editar</span>
@@ -351,10 +352,11 @@ const CourseSectionsSection = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className={`px-6 py-3 bg-amber-500 text-white rounded-lg transition-colors font-cabin-medium flex items-center space-x-2 ${
+                  aria-label="Guardar actividad del mes"
+                  className={`px-6 py-3 bg-amber-500 text-white rounded-lg transition-all duration-200 font-cabin-medium flex items-center space-x-2 transform ${
                     isSaving 
                       ? 'opacity-75 cursor-not-allowed' 
-                      : 'hover:bg-amber-600'
+                      : 'hover:bg-amber-600 hover:shadow-lg hover:scale-105 active:scale-95'
                   }`}
                 >
                   {isSaving ? (

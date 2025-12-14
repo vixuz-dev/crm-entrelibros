@@ -16,8 +16,9 @@ const WelcomeAudioSection = ({
   onSave,
   showEditButton = true
 }) => {
-  // Estado local para los campos del formulario
-  const [localTitle, setLocalTitle] = useState(welcomeAudioTitle || '');
+  const DEFAULT_TITLE = 'Audio de bienvenida';
+  
+  const [localTitle, setLocalTitle] = useState(welcomeAudioTitle || DEFAULT_TITLE);
   const [localSubtitle, setLocalSubtitle] = useState(welcomeAudioSubtitle || '');
   const [localFileUrl, setLocalFileUrl] = useState(welcomeAudioFileUrl || '');
   const [errors, setErrors] = useState({});
@@ -25,9 +26,8 @@ const WelcomeAudioSection = ({
   const [selectedFile, setSelectedFile] = useState(null); // Archivo seleccionado (para subir después)
   const [selectedFileBase64, setSelectedFileBase64] = useState(null); // Base64 del archivo seleccionado
 
-  // Sincronizar estado local cuando cambian los props
   useEffect(() => {
-    setLocalTitle(welcomeAudioTitle || '');
+    setLocalTitle(welcomeAudioTitle || DEFAULT_TITLE);
   }, [welcomeAudioTitle]);
 
   useEffect(() => {
@@ -95,8 +95,7 @@ const WelcomeAudioSection = ({
         }
       }
 
-      // Guardar en el store (título puede estar vacío)
-      setWelcomeAudioTitle(localTitle || '');
+      setWelcomeAudioTitle(localTitle || DEFAULT_TITLE);
       setWelcomeAudioSubtitle(localSubtitle);
       setWelcomeAudioFileUrl(finalFileUrl);
 
@@ -104,8 +103,13 @@ const WelcomeAudioSection = ({
       setSelectedFile(null);
       setSelectedFileBase64(null);
 
-      // Mostrar mensaje de éxito
       showSuccess('Audio de Bienvenida guardado exitosamente');
+      
+      const button = document.activeElement;
+      if (button && button.type === 'submit') {
+        button.classList.add('animate-pulse');
+        setTimeout(() => button.classList.remove('animate-pulse'), 1000);
+      }
 
       // Bloquear la sección después de guardar
       if (onSave) {
@@ -151,7 +155,7 @@ const WelcomeAudioSection = ({
           <h2 className="text-2xl font-cabin-bold text-gray-800 mb-2">
             Audio de Bienvenida
           </h2>
-          <p className="text-gray-600 font-cabin-regular">
+          <p className="text-gray-700 font-cabin-regular">
             Configura el audio de bienvenida del curso
           </p>
         </div>
@@ -159,7 +163,8 @@ const WelcomeAudioSection = ({
           <button
             type="button"
             onClick={onEdit}
-            className="flex items-center space-x-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium"
+            aria-label="Editar audio de bienvenida"
+            className="flex items-center space-x-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 font-cabin-medium transform hover:scale-105 active:scale-95"
           >
             <FiEdit className="w-4 h-4" />
             <span>Editar</span>
@@ -277,10 +282,11 @@ const WelcomeAudioSection = ({
             <button
               type="submit"
               disabled={isSaving}
-              className={`px-6 py-3 bg-amber-500 text-white rounded-lg transition-colors font-cabin-medium flex items-center space-x-2 ${
+              aria-label="Guardar audio de bienvenida"
+              className={`px-6 py-3 bg-amber-500 text-white rounded-lg transition-all duration-200 font-cabin-medium flex items-center space-x-2 transform ${
                 isSaving 
                   ? 'opacity-75 cursor-not-allowed' 
-                  : 'hover:bg-amber-600'
+                  : 'hover:bg-amber-600 hover:shadow-lg hover:scale-105 active:scale-95'
               }`}
             >
               {isSaving ? (

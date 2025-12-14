@@ -50,13 +50,21 @@ const SquareBookForm = ({ squareData, squareNumber, defaultUnlockDay, defaultTyp
 
   const [noteSection, setNoteSection] = useState({
     title: squareData?.cardContent?.sections?.noteSection?.title || 'Nota',
-    subtitle: squareData?.cardContent?.sections?.noteSection?.subtitle || ''
+    subtitle: squareData?.cardContent?.sections?.noteSection?.subtitle || '<p>Las preguntas para antes de leer y durante la lectura solo son funcionales para la primera lectura que haces con tu hijo, así que te recomiendo no saltártelas porque perderías una oportunidad muy valiosa de desarrollar habilidades lectoras. Por su parte, las preguntas para después de leer las puedes hacer cuando sea.</p>'
   });
 
   // Actions (botones de descarga/enlaces)
   // Inicializar actions con contentType inferido desde kind
   const initializeActions = (actionsData) => {
-    if (!actionsData || actionsData.length === 0) return [];
+    // Si no hay acciones, crear una por defecto con "Descargar ficha"
+    if (!actionsData || actionsData.length === 0) {
+      return [{
+        contentType: 'download',
+        labelTitle: 'Descargar ficha',
+        kind: 'download',
+        url: ''
+      }];
+    }
     
     return actionsData.map(action => {
       // Mapear kind a contentType para el formulario

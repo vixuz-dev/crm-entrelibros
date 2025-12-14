@@ -61,8 +61,13 @@ const MainConfigurationSection = ({
     setTheme(localTheme);
     setDescription(localDescription);
 
-    // Mostrar mensaje de éxito
     showSuccess('Configuración Principal guardada exitosamente');
+    
+    const button = document.activeElement;
+    if (button && button.type === 'submit') {
+      button.classList.add('animate-pulse');
+      setTimeout(() => button.classList.remove('animate-pulse'), 1000);
+    }
 
     // Bloquear la sección después de guardar
     if (onSave) {
@@ -74,10 +79,10 @@ const MainConfigurationSection = ({
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-cabin-bold text-gray-800 mb-2">
+          <h2 className="text-2xl font-cabin-bold text-gray-900 mb-2">
             Configuración Principal de la Membresía
           </h2>
-          <p className="text-gray-600 font-cabin-regular">
+          <p className="text-gray-700 font-cabin-regular">
             Configura los datos principales de la membresía del Book Club Lectores
           </p>
         </div>
@@ -85,7 +90,8 @@ const MainConfigurationSection = ({
           <button
             type="button"
             onClick={onEdit}
-            className="flex items-center space-x-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium"
+            aria-label="Editar configuración principal"
+            className="flex items-center space-x-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 font-cabin-medium transform hover:scale-105 active:scale-95"
           >
             <FiEdit className="w-4 h-4" />
             <span>Editar</span>
@@ -189,7 +195,8 @@ const MainConfigurationSection = ({
           <div className="flex items-center justify-end pt-4 border-t border-gray-200">
             <button
               type="submit"
-              className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium flex items-center space-x-2"
+              aria-label="Guardar configuración principal"
+              className="px-6 py-3 bg-amber-500 text-white rounded-lg transition-all duration-200 font-cabin-medium flex items-center space-x-2 transform hover:bg-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
             >
               <FiSave className="w-5 h-5" />
               <span>Guardar Configuración</span>

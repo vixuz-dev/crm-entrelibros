@@ -11,6 +11,7 @@ import WelcomeAudioSection from '../components/book-club/WelcomeAudioSection';
 import CourseSectionsSection from '../components/book-club/CourseSectionsSection';
 import TimbiricheSection from '../components/book-club/TimbiricheSection';
 import NextReleasesSection from '../components/book-club/NextReleasesSection';
+import ChildrenSection from '../components/book-club/ChildrenSection';
 import SectionStatusSidebar from '../components/book-club/SectionStatusSidebar';
 import { MONTH_OPTIONS } from '../constants/bookClub';
 import { useBookClubStore } from '../store/useBookClubStore';
@@ -45,6 +46,7 @@ const BookClubLectores = () => {
     nextReleasesMonth,
     nextReleasesTheme,
     nextReleasesDescription,
+    childrenSectionStories,
     setMonth,
     setTheme,
     setDescription,
@@ -65,6 +67,9 @@ const BookClubLectores = () => {
     setNextReleasesMonth,
     setNextReleasesTheme,
     setNextReleasesDescription,
+    addChildrenSectionStory,
+    updateChildrenSectionStory,
+    removeChildrenSectionStory,
     initializeWithAdmin,
     getFullConfiguration,
     reset
@@ -73,8 +78,8 @@ const BookClubLectores = () => {
   // Estado para copiar al portapapeles
   const [copied, setCopied] = React.useState(false);
   
-  // Estado para guardar book club
   const [isSavingBookClub, setIsSavingBookClub] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   // Estado para el modal de confirmación
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -109,11 +114,17 @@ const BookClubLectores = () => {
                          !!(activityDescription && activityDescription.trim() !== ''),
       'next-releases': !!(nextReleasesMonth && nextReleasesMonth.trim() !== '') &&
                        !!(nextReleasesTheme && nextReleasesTheme.trim() !== '') &&
-                       !!(nextReleasesDescription && nextReleasesDescription.trim() !== '')
+                       !!(nextReleasesDescription && nextReleasesDescription.trim() !== ''),
+      'children-section': childrenSectionStories && childrenSectionStories.length > 0 &&
+                         childrenSectionStories.some(story => 
+                           story.title && story.title.trim() !== '' && 
+                           story.videoUrl && story.videoUrl.trim() !== ''
+                         )
     };
   }, [month, theme, title, subtitle, fileUrl, books, welcomeAudioSubtitle, welcomeAudioFileUrl, 
       monthlyActivityTitle, monthlyActivitySubtitle, monthlyActivityFileUrl, activityName, activityDescription,
-      nextReleasesMonth, nextReleasesTheme, nextReleasesDescription]);
+      nextReleasesMonth, nextReleasesTheme, nextReleasesDescription,
+      childrenSectionStories]);
 
   // Estado de bloqueo/editando para cada sección
   // Hero Section siempre inicia bloqueada porque tiene valores por defecto
@@ -125,19 +136,34 @@ const BookClubLectores = () => {
       'books': false,
       'welcome-audio': false,
       'course-sections': false,
-      'next-releases': false
+      'next-releases': false,
+      'children-section': false
     };
   });
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Inicializar estado de bloqueo solo una vez al cargar, basado en datos existentes
   useEffect(() => {
     if (!isInitialized) {
-      const hasData = checkSectionHasData;
-      // Asegurar que hero-section siempre esté bloqueada (tiene valores por defecto)
+      const timer = setTimeout(() => {
+        const hasData = { ...checkSectionHasData };
+        hasData['hero-section'] = true;
+        setSectionLocked(hasData);
+        setIsInitialized(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    } else {
+      const hasData = { ...checkSectionHasData };
       hasData['hero-section'] = true;
-      setSectionLocked(hasData);
-      setIsInitialized(true);
+      setSectionLocked(prev => {
+        const updated = { ...prev };
+        Object.keys(hasData).forEach(key => {
+          if (hasData[key] && !prev[key]) {
+            updated[key] = true;
+          }
+        });
+        return updated;
+      });
     }
   }, [checkSectionHasData, isInitialized]);
 
@@ -159,21 +185,17 @@ const BookClubLectores = () => {
 
   // Manejar confirmación de salir
   const handleConfirmExit = () => {
-    // Marcar que estamos navegando para evitar loops
     isNavigatingAwayRef.current = true;
     
-    // Resetear el store a valores iniciales
     reset();
     
-    // Reinicializar con admin info
     if (adminInfo) {
       initializeWithAdmin(adminInfo);
     }
 
-    // Actualizar estado inicial después del reset
     setTimeout(() => {
       initialStateRef.current = {
-        month: [],
+        month: ['Enero'],
         theme: '',
         description: '',
         title: 'Book Club',
@@ -196,6 +218,7 @@ const BookClubLectores = () => {
         nextReleasesMonth: '',
         nextReleasesTheme: '',
         nextReleasesDescription: '',
+        childrenSectionStories: [],
         timbiriche: {
           square1: null,
           square2: null,
@@ -236,7 +259,7 @@ const BookClubLectores = () => {
           const fullConfigurationJSON = useMemo(() => {
             const config = getFullConfiguration();
             return JSON.stringify(config, null, 2);
-          }, [metadata, heroSection, sections, books, timbiriche, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription, getFullConfiguration]);
+          }, [metadata, heroSection, sections, books, timbiriche, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription, getFullConfiguration, childrenSectionStories]);
 
   // Función para copiar al portapapeles
   const handleCopyToClipboard = async () => {
@@ -261,14 +284,16 @@ const BookClubLectores = () => {
       if (store.updateHeroSection) store.updateHeroSection();
       if (store.updateWelcomeAudioSection) store.updateWelcomeAudioSection();
       if (store.updateMonthlyActivitySection) store.updateMonthlyActivitySection();
+      if (store.updateChildrenSection) store.updateChildrenSection();
       
       // Obtener la configuración completa después de actualizar
       const bookClubObject = getFullConfiguration();
       
-      // Llamar al API para guardar
       await addBookClub(bookClubObject);
       
-      // Actualizar el estado inicial después de guardar exitosamente
+      setShowSuccessAnimation(true);
+      setTimeout(() => setShowSuccessAnimation(false), 2000);
+      
       initialStateRef.current = {
         month: [...(month || [])],
         theme: theme || '',
@@ -288,27 +313,35 @@ const BookClubLectores = () => {
         nextReleasesMonth: nextReleasesMonth || '',
         nextReleasesTheme: nextReleasesTheme || '',
         nextReleasesDescription: nextReleasesDescription || '',
+        childrenSectionStories: JSON.parse(JSON.stringify(childrenSectionStories || [])),
         timbiriche: JSON.parse(JSON.stringify(timbiriche || {}))
       };
       
     } catch (error) {
       console.error('Error al guardar book club:', error);
-      // El error ya se muestra en addBookClub
     } finally {
       setIsSavingBookClub(false);
     }
   };
 
-  // Resetear el store al montar el componente para asegurar valores iniciales limpios
   useEffect(() => {
-    // Resetear el store a valores iniciales
+    setSectionLocked({
+      'main-config': false,
+      'hero-section': true,
+      'books': false,
+      'welcome-audio': false,
+      'course-sections': false,
+      'next-releases': false,
+      'children-section': false
+    });
+    setIsInitialized(false);
+    
     reset();
     
-    // Reinicializar con admin info después del reset
     if (adminInfo) {
       initializeWithAdmin(adminInfo);
     }
-  }, []); // Solo ejecutar una vez al montar
+  }, []);
 
   // Guardar estado inicial después de la inicialización
   useEffect(() => {
@@ -391,11 +424,14 @@ const BookClubLectores = () => {
       current.nextReleasesMonth !== initial.nextReleasesMonth ||
       current.nextReleasesTheme !== initial.nextReleasesTheme ||
       current.nextReleasesDescription !== initial.nextReleasesDescription ||
+      JSON.stringify(current.childrenSectionStories) !== JSON.stringify(initial.childrenSectionStories) ||
       JSON.stringify(current.timbiriche) !== JSON.stringify(initial.timbiriche)
     );
   }, [month, theme, description, title, subtitle, fileUrl, welcomeAudioTitle, welcomeAudioSubtitle, welcomeAudioFileUrl,
       monthlyActivityTitle, monthlyActivitySubtitle, monthlyActivityFileUrl, activityName, activityDescription,
-      books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription, timbiriche]);
+      books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription, 
+      childrenSectionStories,
+      timbiriche]);
 
   // Interceptar navegación cuando hay cambios sin guardar
   useEffect(() => {
@@ -470,44 +506,52 @@ const BookClubLectores = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-cabin-bold text-gray-800 mb-2">
-            Book Club Lectores
-          </h1>
-          <p className="text-gray-600 font-cabin-regular">
-            Gestión del contenido del Book Club Lectores
-          </p>
-        </div>
-        <button
-          onClick={handleSaveBookClub}
-          disabled={isSavingBookClub}
-          className={`px-6 py-3 bg-amber-500 text-white rounded-lg transition-colors font-cabin-medium flex items-center space-x-2 ${
-            isSavingBookClub 
-              ? 'opacity-75 cursor-not-allowed' 
-              : 'hover:bg-amber-600'
-          }`}
-        >
-          {isSavingBookClub ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              <span>Guardando...</span>
-            </>
-          ) : (
-            <>
-              <FiSave className="w-5 h-5" />
-              <span>Guardar Book Club</span>
-            </>
-          )}
-        </button>
-      </div>
-
       {/* Layout de dos columnas */}
       <div className="flex gap-6 items-start">
         {/* Columna principal con las secciones */}
         <div className="flex-1 space-y-6">
+          <div className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-white rounded-xl shadow-lg transition-all duration-300 border-b-2 border-transparent hover:border-amber-200">
+            <div>
+              <h1 className="text-3xl font-cabin-bold text-gray-900 mb-2">
+                Book Club Lectores
+              </h1>
+              <p className="text-gray-700 font-cabin-regular">
+                Gestión del contenido del Book Club Lectores
+              </p>
+            </div>
+            <button
+              onClick={handleSaveBookClub}
+              disabled={isSavingBookClub}
+              aria-label="Guardar Book Club completo"
+              className={`px-6 py-3 rounded-lg transition-all duration-200 font-cabin-medium flex items-center space-x-2 transform ${
+                showSuccessAnimation
+                  ? 'bg-green-500 text-white scale-105 shadow-lg'
+                  : isSavingBookClub
+                    ? 'bg-amber-500 text-white opacity-75 cursor-not-allowed'
+                    : 'bg-amber-500 text-white hover:bg-amber-600 hover:shadow-lg hover:scale-105 active:scale-95'
+              }`}
+            >
+              {showSuccessAnimation ? (
+                <>
+                  <FiCheck className="w-5 h-5" />
+                  <span>¡Guardado!</span>
+                </>
+              ) : isSavingBookClub ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <FiSave className="w-5 h-5" />
+                  <span>Guardar Book Club</span>
+                </>
+              )}
+            </button>
+          </div>
           {/* Sección de Configuración Principal */}
-          <MainConfigurationSection
+          <div id="section-main-config">
+            <MainConfigurationSection
             month={month}
             setMonth={setMonth}
             theme={theme}
@@ -519,9 +563,11 @@ const BookClubLectores = () => {
             onEdit={() => handleEditSection('main-config')}
             onSave={() => handleSectionSaved('main-config')}
           />
+          </div>
 
           {/* Sección Hero Section */}
-          <HeroSectionSection
+          <div id="section-hero-section">
+            <HeroSectionSection
             title={title}
             setTitle={setTitle}
             subtitle={subtitle}
@@ -532,18 +578,35 @@ const BookClubLectores = () => {
             onEdit={() => handleEditSection('hero-section')}
             onSave={() => handleSectionSaved('hero-section')}
           />
+          </div>
 
           {/* Sección Libros de la Membresía */}
-          <BooksSection
+          <div id="section-books">
+            <BooksSection
             books={books}
             setBooks={setBooks}
             isLocked={sectionLocked['books']}
             onEdit={() => handleEditSection('books')}
             onSave={() => handleSectionSaved('books')}
           />
+          </div>
+
+          {/* Sección para niños */}
+          <div id="section-children-section">
+            <ChildrenSection
+            childrenSectionStories={childrenSectionStories}
+            addChildrenSectionStory={addChildrenSectionStory}
+            updateChildrenSectionStory={updateChildrenSectionStory}
+            removeChildrenSectionStory={removeChildrenSectionStory}
+            isLocked={sectionLocked['children-section']}
+            onEdit={() => handleEditSection('children-section')}
+            onSave={() => handleSectionSaved('children-section')}
+          />
+          </div>
 
           {/* Sección Audio de Bienvenida */}
-          <WelcomeAudioSection
+          <div id="section-welcome-audio">
+            <WelcomeAudioSection
             welcomeAudioTitle={welcomeAudioTitle}
             setWelcomeAudioTitle={setWelcomeAudioTitle}
             welcomeAudioSubtitle={welcomeAudioSubtitle}
@@ -554,9 +617,11 @@ const BookClubLectores = () => {
             onEdit={() => handleEditSection('welcome-audio')}
             onSave={() => handleSectionSaved('welcome-audio')}
           />
+          </div>
 
           {/* Sección Course Sections */}
-          <CourseSectionsSection
+          <div id="section-course-sections">
+            <CourseSectionsSection
             monthlyActivityTitle={monthlyActivityTitle}
             setMonthlyActivityTitle={setMonthlyActivityTitle}
             monthlyActivitySubtitle={monthlyActivitySubtitle}
@@ -571,12 +636,16 @@ const BookClubLectores = () => {
             onEdit={() => handleEditSection('course-sections')}
             onSave={() => handleSectionSaved('course-sections')}
           />
+          </div>
 
           {/* Sección Timbiriche */}
-          <TimbiricheSection />
+          <div id="section-timbiriche">
+            <TimbiricheSection />
+          </div>
 
           {/* Sección Next Releases */}
-          <NextReleasesSection
+          <div id="section-next-releases">
+            <NextReleasesSection
             month={nextReleasesMonth}
             setMonth={setNextReleasesMonth}
             theme={nextReleasesTheme}
@@ -586,48 +655,14 @@ const BookClubLectores = () => {
             isLocked={sectionLocked['next-releases']}
             onEdit={() => handleEditSection('next-releases')}
             onSave={() => handleSectionSaved('next-releases')}
+            showEditButton={true}
           />
-
-          {/* Viewer de JSON completo */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-cabin-bold text-gray-800 mb-2">
-              Vista Previa de la Configuración Completa
-            </h2>
-            <p className="text-gray-600 font-cabin-regular">
-              JSON completo con todas las secciones configuradas
-            </p>
           </div>
-          <button
-            onClick={handleCopyToClipboard}
-            className="flex items-center space-x-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium text-sm"
-          >
-            {copied ? (
-              <>
-                <FiCheck className="w-4 h-4" />
-                <span>Copiado</span>
-              </>
-            ) : (
-              <>
-                <FiCopy className="w-4 h-4" />
-                <span>Copiar JSON</span>
-              </>
-            )}
-          </button>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 max-h-96 overflow-auto">
-          <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap break-words">
-            {fullConfigurationJSON}
-          </pre>
-          </div>
-        </div>
         </div>
 
         {/* Sidebar de estado de secciones */}
         <SectionStatusSidebar
-          sectionStatuses={sectionLocked}
-          onEditSection={handleEditSection}
+          sectionStatuses={checkSectionHasData}
         />
       </div>
 

@@ -13,6 +13,7 @@ import WelcomeAudioSection from '../components/book-club/WelcomeAudioSection';
 import CourseSectionsSection from '../components/book-club/CourseSectionsSection';
 import TimbiricheSection from '../components/book-club/TimbiricheSection';
 import NextReleasesSection from '../components/book-club/NextReleasesSection';
+import ChildrenSection from '../components/book-club/ChildrenSection';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const BookClubLectoresList = () => {
@@ -34,7 +35,8 @@ const BookClubLectoresList = () => {
     'books': true,
     'welcome-audio': true,
     'course-sections': true,
-    'next-releases': true
+    'next-releases': true,
+    'children-section': true
   });
 
   // Obtener estado y acciones del store
@@ -57,6 +59,7 @@ const BookClubLectoresList = () => {
     nextReleasesMonth,
     nextReleasesTheme,
     nextReleasesDescription,
+    childrenSectionStories,
     metadata,
     heroSection,
     sections,
@@ -79,6 +82,10 @@ const BookClubLectoresList = () => {
     setNextReleasesMonth,
     setNextReleasesTheme,
     setNextReleasesDescription,
+    addChildrenSectionStory,
+    updateChildrenSectionStory,
+    removeChildrenSectionStory,
+    setChildrenSectionStories,
     updateSquare,
     getFullConfiguration
   } = useBookClubStore();
@@ -116,6 +123,7 @@ const BookClubLectoresList = () => {
       if (store.updateHeroSection) store.updateHeroSection();
       if (store.updateWelcomeAudioSection) store.updateWelcomeAudioSection();
       if (store.updateMonthlyActivitySection) store.updateMonthlyActivitySection();
+      if (store.updateChildrenSection) store.updateChildrenSection();
 
       const bookClubObject = store.getFullConfiguration
         ? store.getFullConfiguration()
@@ -149,6 +157,7 @@ const BookClubLectoresList = () => {
   };
 
   // Generar lista de meses disponibles (desde Septiembre hasta el mes actual, incluyendo el actual)
+  // Temporal: Incluir Enero también
   const availableMonths = useMemo(() => {
     const currentMonthIndex = getCurrentMonthIndex();
     const septemberIndex = getSeptemberIndex();
@@ -157,6 +166,12 @@ const BookClubLectoresList = () => {
     const months = [];
     for (let i = septemberIndex; i <= currentMonthIndex; i++) {
       months.push(MONTH_OPTIONS[i]);
+    }
+    
+    // Temporal: Agregar Enero si no está ya incluido
+    const eneroOption = MONTH_OPTIONS.find(m => m.value === 'Enero');
+    if (eneroOption && !months.find(m => m.value === 'Enero')) {
+      months.unshift(eneroOption); // Agregar al inicio
     }
     
     return months;
@@ -181,6 +196,7 @@ const BookClubLectoresList = () => {
     nextReleasesMonth,
     nextReleasesTheme,
     nextReleasesDescription,
+    childrenSectionStories,
     getFullConfiguration
   ]);
 
@@ -318,6 +334,20 @@ const BookClubLectoresList = () => {
           setNextReleasesMonth(bookClub.nextReleases.month || '');
           setNextReleasesTheme(bookClub.nextReleases.theme || '');
           setNextReleasesDescription(bookClub.nextReleases.description || '');
+        }
+        
+        // Children Section - Puede ser un array o un objeto único (retrocompatibilidad)
+        if (bookClub.sections?.childrenSection) {
+          const childrenSection = bookClub.sections.childrenSection;
+          // Si es un array, usarlo directamente
+          if (Array.isArray(childrenSection)) {
+            setChildrenSectionStories(childrenSection);
+          } else {
+            // Si es un objeto único (formato antiguo), convertirlo a array
+            setChildrenSectionStories([childrenSection]);
+          }
+        } else {
+          setChildrenSectionStories([]);
         }
       }
     } catch (err) {
@@ -510,6 +540,18 @@ const BookClubLectoresList = () => {
                 isLocked={!isEditing || sectionLocked['books']}
                 onEdit={() => handleEditSection('books')}
                 onSave={() => handleSectionSaved('books')}
+                showEditButton={isEditing}
+              />
+
+              {/* Sección para niños */}
+              <ChildrenSection
+                childrenSectionStories={childrenSectionStories}
+                addChildrenSectionStory={addChildrenSectionStory}
+                updateChildrenSectionStory={updateChildrenSectionStory}
+                removeChildrenSectionStory={removeChildrenSectionStory}
+                isLocked={!isEditing || sectionLocked['children-section']}
+                onEdit={() => handleEditSection('children-section')}
+                onSave={() => handleSectionSaved('children-section')}
                 showEditButton={isEditing}
               />
 

@@ -9,7 +9,7 @@ export const useBookClubStore = create(
   persist(
     (set, get) => ({
       // Estados para inputs del usuario - Metadata
-      month: [],
+      month: ['Enero'], // Temporal: Enero por defecto
       theme: '',
       description: '',
 
@@ -19,13 +19,11 @@ export const useBookClubStore = create(
       subtitle: 'Lectores',
       fileUrl: 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg',
 
-      // Estados para inputs del usuario - Welcome Audio Section
-      welcomeAudioTitle: '',
+      welcomeAudioTitle: 'Audio de bienvenida',
       welcomeAudioSubtitle: '',
       welcomeAudioFileUrl: '',
 
-      // Estados para inputs del usuario - Monthly Activity Section
-      monthlyActivityTitle: '',
+      monthlyActivityTitle: 'Actividad del mes',
       monthlyActivitySubtitle: '',
       monthlyActivityFileUrl: '',
       activityName: '',
@@ -57,6 +55,9 @@ export const useBookClubStore = create(
       nextReleasesMonth: '',
       nextReleasesTheme: '',
       nextReleasesDescription: '',
+
+      // Estados para Children Section (Sección para niños) - Array de cuentos
+      childrenSectionStories: [], // Array de objetos { id, title, thumbnail, videoUrl, description, category, author, publishedDate }
 
       // Objetos completos generados automáticamente
       metadata: {
@@ -94,7 +95,8 @@ export const useBookClubStore = create(
             name: '',
             description: ''
           }
-        }
+        },
+        childrenSection: null
       },
 
       // Acciones para Metadata
@@ -321,6 +323,25 @@ export const useBookClubStore = create(
         }));
       },
 
+      // Función para actualizar childrenSection automáticamente
+      updateChildrenSection: () => {
+        const { childrenSectionStories } = get();
+        
+        // Filtrar solo los cuentos que tienen título y video URL válidos
+        const validStories = childrenSectionStories.filter(story => 
+          story.title && story.title.trim() !== '' && 
+          story.videoUrl && story.videoUrl.trim() !== ''
+        );
+        
+        // Si hay cuentos válidos, crear el array, sino null
+        set((state) => ({
+          sections: {
+            ...state.sections,
+            childrenSection: validStories.length > 0 ? validStories : null
+          }
+        }));
+      },
+
       // Inicializar con información del admin
       initializeWithAdmin: (adminInfo) => {
         const createdBy = adminInfo?.name || adminInfo?.email || 'admin';
@@ -339,6 +360,54 @@ export const useBookClubStore = create(
       setNextReleasesTheme: (theme) => set({ nextReleasesTheme: theme }),
       setNextReleasesDescription: (description) => set({ nextReleasesDescription: description }),
 
+      // Acciones para Children Section (Array de cuentos)
+      addChildrenSectionStory: () => {
+        const { childrenSectionStories } = get();
+        const newId = childrenSectionStories.length > 0 
+          ? Math.max(...childrenSectionStories.map(s => s.id || 0)) + 1 
+          : 1;
+        const getTodayDate = () => {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        const newStory = {
+          id: newId,
+          title: '',
+          thumbnail: '',
+          videoUrl: '',
+          description: '',
+          category: 'Cuento',
+          author: 'Rocío Fernandez',
+          publishedDate: getTodayDate()
+        };
+        set({ childrenSectionStories: [...childrenSectionStories, newStory] });
+        get().updateChildrenSection();
+      },
+      updateChildrenSectionStory: (index, storyData) => {
+        set((state) => {
+          const newStories = [...state.childrenSectionStories];
+          if (newStories[index]) {
+            newStories[index] = { ...newStories[index], ...storyData };
+          }
+          return { childrenSectionStories: newStories };
+        });
+        get().updateChildrenSection();
+      },
+      removeChildrenSectionStory: (index) => {
+        set((state) => {
+          const newStories = state.childrenSectionStories.filter((_, i) => i !== index);
+          return { childrenSectionStories: newStories };
+        });
+        get().updateChildrenSection();
+      },
+      setChildrenSectionStories: (stories) => {
+        set({ childrenSectionStories: stories });
+        get().updateChildrenSection();
+      },
+
       // Acciones para Timbiriche
       updateSquare: (squareNumber, squareData) => {
         set((state) => {
@@ -354,21 +423,22 @@ export const useBookClubStore = create(
 
       reset: () => {
         set({
-          month: [],
+          month: ['Enero'], // Temporal: Enero por defecto
           theme: '',
           description: '',
           // Valores por defecto para Hero Section
           title: 'Book Club',
           subtitle: 'Lectores',
           fileUrl: 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg',
-          welcomeAudioTitle: '',
+          welcomeAudioTitle: 'Audio de bienvenida',
           welcomeAudioSubtitle: '',
           welcomeAudioFileUrl: '',
-          monthlyActivityTitle: '',
+          monthlyActivityTitle: 'Actividad del mes',
           monthlyActivitySubtitle: '',
           monthlyActivityFileUrl: '',
           activityName: '',
           activityDescription: '',
+          childrenSectionStories: [],
           books: [
             { order: 1, bookId: null, ownerDescription: '' },
             { order: 2, bookId: null, ownerDescription: '' },
@@ -420,7 +490,8 @@ export const useBookClubStore = create(
                 name: '',
                 description: ''
               }
-            }
+            },
+            childrenSection: null
           }
         });
       },
@@ -444,10 +515,16 @@ export const useBookClubStore = create(
           description: nextReleasesDescription
         } : null;
         
+        // Construir sections sin childrenSection si es null
+        const sectionsToInclude = { ...sections };
+        if (!sectionsToInclude.childrenSection) {
+          delete sectionsToInclude.childrenSection;
+        }
+        
         const config = {
           metadata,
           heroSection,
-          sections,
+          sections: sectionsToInclude,
           books: validBooks,
           timbiriche: validTimbiriche
         };
@@ -477,6 +554,7 @@ export const useBookClubStore = create(
         monthlyActivityFileUrl: state.monthlyActivityFileUrl,
         activityName: state.activityName,
         activityDescription: state.activityDescription,
+        childrenSectionStories: state.childrenSectionStories,
           books: state.books,
           metadata: state.metadata,
           heroSection: state.heroSection,
