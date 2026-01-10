@@ -10,6 +10,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 
@@ -22,7 +23,8 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const MembershipChart = ({ data, type = 'line', title, description }) => {

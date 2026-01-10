@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FiBook, FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiRefreshCw, FiPackage, FiX } from 'react-icons/fi';
+import { FiBook, FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiRefreshCw, FiPackage, FiX, FiXCircle, FiCheckCircle } from 'react-icons/fi';
 import { useDebounce } from '../hooks/useDebounce';
 import BooksCard from '../components/books/BooksCard';
 import BookInformation from '../components/modals/BookInformation';
@@ -8,8 +8,10 @@ import StockUpdateModal from '../components/modals/StockUpdateModal';
 import StockIndicator from '../components/ui/StockIndicator';
 import Pagination from '../components/ui/Pagination';
 import { useProductsInformation } from '../store/useProductsInformation';
-import { getProductDetail } from '../api/products';
+import { getProductDetail, deactivateProduct } from '../api/products';
 import { ROUTES } from '../utils/routes';
+import { showSuccess, showError } from '../utils/notifications';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 import placeholderImage from '../assets/images/placeholder.jpg';
 
 const Libros = () => {
@@ -24,6 +26,8 @@ const Libros = () => {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
   const [selectedProductForStock, setSelectedProductForStock] = useState(null);
+  const [isStatusConfirmModalOpen, setIsStatusConfirmModalOpen] = useState(false);
+  const [productToToggle, setProductToToggle] = useState(null);
 
   // Store de productos
   const {
@@ -139,6 +143,34 @@ const Libros = () => {
   const handleCloseStockModal = () => {
     setShowStockModal(false);
     setSelectedProductForStock(null);
+  };
+
+  const handleToggleStatus = (product) => {
+    setProductToToggle(product);
+    setIsStatusConfirmModalOpen(true);
+  };
+
+  const confirmToggleStatus = async () => {
+    if (!productToToggle) return;
+    
+    setIsStatusConfirmModalOpen(false);
+    
+    try {
+      await deactivateProduct(productToToggle.product_id);
+      const currentStatus = productToToggle.status;
+      showSuccess(`Libro ${currentStatus ? 'desactivado' : 'activado'} correctamente`);
+      await refreshProducts(debouncedSearchTerm);
+    } catch (error) {
+      console.error('Error toggling product status:', error);
+      showError(error.message || 'Error al cambiar el estado del libro');
+    } finally {
+      setProductToToggle(null);
+    }
+  };
+
+  const cancelToggleStatus = () => {
+    setIsStatusConfirmModalOpen(false);
+    setProductToToggle(null);
   };
 
   // Función para formatear fecha
@@ -441,6 +473,17 @@ const Libros = () => {
                             <FiEdit className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => handleToggleStatus(product)}
+                            className={`p-1 ${product.status ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
+                            title={product.status ? 'Desactivar' : 'Activar'}
+                          >
+                            {product.status ? (
+                              <FiXCircle className="w-4 h-4" />
+                            ) : (
+                              <FiCheckCircle className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
                             onClick={() => handleDeleteProduct(product)}
                             className="text-red-600 hover:text-red-900 p-1 hidden"
                             title="Eliminar"
@@ -491,6 +534,24 @@ const Libros = () => {
           onClose={handleCloseStockModal}
           onStockUpdated={handleStockUpdated}
           currentStock={selectedProductForStock.stock || 0}
+        />
+      )}
+
+      {/* Modal de Confirmación para Activar/Desactivar */}
+      {productToToggle && (
+        <ConfirmationModal
+          isOpen={isStatusConfirmModalOpen}
+          title={productToToggle.status ? 'Desactivar Libro' : 'Activar Libro'}
+          description={
+            productToToggle.status
+              ? `¿Estás seguro de que quieres desactivar el libro "${productToToggle.product_name}"?`
+              : `¿Estás seguro de que quieres activar el libro "${productToToggle.product_name}"?`
+          }
+          onCancel={cancelToggleStatus}
+          onAccept={confirmToggleStatus}
+          cancelText="Cancelar"
+          acceptText={productToToggle.status ? 'Desactivar' : 'Activar'}
+          type={productToToggle.status ? 'danger' : 'info'}
         />
       )}
     </div>

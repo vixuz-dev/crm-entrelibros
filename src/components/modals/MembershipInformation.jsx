@@ -59,16 +59,18 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
 
   useEffect(() => {
     if (membership) {
-      // Mapear la estructura real de la API a la estructura esperada por el modal
       const mappedBooks = membership.products ? membership.products.map(product => ({
         product_id: product.product_id,
         product_name: product.product_name,
         product_type: product.product_type,
         main_image_url: product.main_image_url,
-        // Agregar campos por defecto para compatibilidad
         author_list: [],
         price: 0
       })) : [];
+
+      const membershipStatus = membership.status !== undefined
+        ? (typeof membership.status === 'number' ? membership.status === 1 : membership.status === true)
+        : true;
 
       setFormData({
         membership_name: membership.membership_name || '',
@@ -76,7 +78,7 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
         benefits: membership.benefits || [''],
         price: membership.price || 0,
         selectedBooks: mappedBooks,
-        status: membership.status !== undefined ? membership.status : true
+        status: membershipStatus
       });
     } else {
       setFormData({
@@ -180,21 +182,22 @@ const MembershipInformation = ({ membership, isOpen, onClose, mode = 'view', onS
     try {
       setIsSaving(true);
       
-      // Filtrar beneficios vacíos
       const cleanBenefits = formData.benefits.filter(benefit => benefit.trim() !== '');
       
-      // Preparar datos para la API
+      const statusBoolean = typeof formData.status === 'number' 
+        ? formData.status === 1 
+        : formData.status === true;
+
       const membershipData = {
         membership_name: formData.membership_name.trim(),
         description: formData.description?.trim() || '',
         benefits: cleanBenefits,
         price: parseFloat(formData.price) || 0,
-        status: formData.status,
+        status: statusBoolean,
         product_id_list: formData.selectedBooks.map(book => book.product_id)
       };
 
       if (mode === 'create') {
-        // Crear nueva membresía
         const response = await addMembership(membershipData);
         if (response.status === true) {
           showSuccess('Membresía creada correctamente');

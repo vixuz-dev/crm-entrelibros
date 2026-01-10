@@ -9,8 +9,6 @@ const SubscribersList = ({ membership, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const { getSubscriptionsByMembershipId, getActiveSubscriptionsByMembershipId } = useMembershipsStore();
-
   useEffect(() => {
     loadSubscriptions();
   }, [membership]);
@@ -18,8 +16,16 @@ const SubscribersList = ({ membership, onClose }) => {
   const loadSubscriptions = async () => {
     try {
       setIsLoading(true);
-      const subs = getSubscriptionsByMembershipId(membership.membership_id);
-      setSubscriptions(subs);
+      // Usar las suscripciones que vienen directamente del membership
+      // Si no vienen, intentar obtenerlas del store como fallback
+      if (membership.subscriptions && membership.subscriptions.length > 0) {
+        setSubscriptions(membership.subscriptions);
+      } else {
+        // Fallback: intentar obtener del store si está disponible
+        const { getSubscriptionsByMembershipId } = useMembershipsStore.getState();
+        const subs = getSubscriptionsByMembershipId(membership.membership_id);
+        setSubscriptions(subs);
+      }
     } catch (error) {
       console.error('Error loading subscriptions:', error);
     } finally {

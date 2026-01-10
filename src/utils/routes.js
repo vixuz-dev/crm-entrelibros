@@ -45,7 +45,7 @@ export const ROUTES = {
   MEMBERSHIPS_CREATE: "/membresias/crear",
   MEMBERSHIPS_EDIT: "/membresias/editar/:id",
   MEMBERSHIPS_VIEW: "/membresias/ver/:id",
-  MEMBERSHIPS_DETAIL: "/membresias/detalle/:id",
+  MEMBERSHIPS_DETAIL: "/membresias/detalle",
   MEMBERSHIPS_PLANS: "/membresias/planes",
   
   // Rutas de Book Club Lectores

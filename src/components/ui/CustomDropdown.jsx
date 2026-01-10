@@ -91,13 +91,20 @@ const CustomDropdown = ({
                   className="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 text-sm rounded-full"
                 >
                   {option.label}
-                  <button
-                    type="button"
+                  <span
+                    role="button"
+                    tabIndex={0}
                     onClick={(e) => removeOption(option.value, e)}
-                    className="ml-1 hover:text-amber-600"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        removeOption(option.value, e);
+                      }
+                    }}
+                    className="ml-1 hover:text-amber-600 cursor-pointer focus:outline-none focus:ring-1 focus:ring-amber-500 rounded"
                   >
                     <FiX className="w-3 h-3" />
-                  </button>
+                  </span>
                 </span>
               ))}
             </div>

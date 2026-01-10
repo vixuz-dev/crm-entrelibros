@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { getMemberships } from '../api/memberships';
-import { getSubscriptions } from '../api/subscriptions';
+import { getMembershipsResume } from '../api/memberships';
 
 const useMembershipsStore = create((set, get) => ({
   memberships: [],
@@ -13,9 +12,8 @@ const useMembershipsStore = create((set, get) => ({
   totalSubscriptions: 0,
   activeSubscriptions: 0,
 
-  // Cargar membresías con suscripciones
+  // Cargar membresías con resumen de suscripciones
   loadMemberships: async () => {
-    // Evitar llamadas duplicadas si ya está cargando
     const currentState = get();
     const now = Date.now();
     
@@ -23,7 +21,6 @@ const useMembershipsStore = create((set, get) => ({
       return;
     }
     
-    // Evitar llamadas muy cercanas (menos de 100ms)
     if (now - currentState.lastLoadTime < 100) {
       return;
     }
@@ -31,71 +28,44 @@ const useMembershipsStore = create((set, get) => ({
     set({ isLoading: true, error: null, lastLoadTime: now });
     
     try {
-      // Cargar membresías básicas
-      const membershipsResponse = await getMemberships();
+      const response = await getMembershipsResume();
       
-      if (membershipsResponse.status === true) {
-        const basicMemberships = membershipsResponse.membership_list || [];
+      if (response.status === true) {
+        const membershipsData = response.memberships || [];
         
-        // Cargar suscripciones para enriquecer las membresías
-        try {
-          const subscriptionsResponse = await getSubscriptions();
-          
-          if (subscriptionsResponse.status === true) {
-            const membershipsWithSubscriptions = basicMemberships.map(basicMembership => {
-              // Buscar si hay suscripciones para esta membresía
-              const membershipWithSubs = subscriptionsResponse.memberships?.find(
-                m => m.membership_id === basicMembership.membership_id
-              );
-              
-              // Combinar información básica con suscripciones
-              return {
-                ...basicMembership,
-                subscriptions: membershipWithSubs?.subscriptions || []
-              };
-            });
-            
-            // Calcular métricas totales
-            const totalSubscriptions = membershipsWithSubscriptions.reduce((total, membership) => {
-              return total + (membership.subscriptions?.length || 0);
-            }, 0);
-            
-            const activeSubscriptions = membershipsWithSubscriptions.reduce((total, membership) => {
-              const activeSubs = membership.subscriptions?.filter(sub => sub.status === 'active') || [];
-              return total + activeSubs.length;
-            }, 0);
-            
-            set({
-              memberships: membershipsWithSubscriptions,
-              totalSubscriptions,
-              activeSubscriptions,
-              isLoading: false,
-              isInitialized: true,
-              error: null
-            });
-          } else {
-            // Si falla la carga de suscripciones, usar solo membresías básicas
-            set({
-              memberships: basicMemberships,
-              totalSubscriptions: 0,
-              activeSubscriptions: 0,
-              isLoading: false,
-              isInitialized: true,
-              error: null
-            });
-          }
-        } catch (subscriptionsError) {
-          console.warn('Error loading subscriptions, using basic memberships:', subscriptionsError);
-          // Si falla la carga de suscripciones, usar solo membresías básicas
-          set({
-            memberships: basicMemberships,
-            totalSubscriptions: 0,
-            activeSubscriptions: 0,
-            isLoading: false,
-            isInitialized: true,
-            error: null
-          });
-        }
+        // Mapear los datos del nuevo endpoint al formato esperado por la UI
+        const mappedMemberships = membershipsData.map((membership, index) => ({
+          membership_id: membership.membership_id || index + 1,
+          membership_name: membership.membership_name,
+          description: membership.description || '',
+          price: membership.price,
+          status: membership.membership_status === 'active',
+          active_subscribers_count: membership.active_subscribers_count,
+          subscriptions: Array(membership.active_subscribers_count || 0).fill(null).map((_, i) => ({
+            subscription_id: `temp-${index}-${i}`,
+            status: 'active'
+          }))
+        }));
+        
+        // Calcular métricas totales
+        const totalSubscriptions = membershipsData.reduce((total, membership) => {
+          return total + (membership.active_subscribers_count || 0);
+        }, 0);
+        
+        const activeSubscriptions = membershipsData
+          .filter(m => m.membership_status === 'active')
+          .reduce((total, membership) => {
+            return total + (membership.active_subscribers_count || 0);
+          }, 0);
+        
+        set({
+          memberships: mappedMemberships,
+          totalSubscriptions,
+          activeSubscriptions,
+          isLoading: false,
+          isInitialized: true,
+          error: null
+        });
       } else {
         set({
           memberships: [],
@@ -103,11 +73,11 @@ const useMembershipsStore = create((set, get) => ({
           activeSubscriptions: 0,
           isLoading: false,
           isInitialized: true,
-          error: membershipsResponse.status_Message || 'Error al cargar membresías'
+          error: response.status_Message || 'Error al cargar membresías'
         });
       }
     } catch (error) {
-      console.error('Error loading memberships:', error);
+      console.error('Error loading memberships resume:', error);
       set({
         memberships: [],
         totalSubscriptions: 0,
@@ -119,46 +89,50 @@ const useMembershipsStore = create((set, get) => ({
     }
   },
 
-  // Recargar solo las suscripciones (sin recargar membresías básicas)
+  // Recargar el resumen de membresías
   refreshSubscriptions: async () => {
     try {
-      const subscriptionsResponse = await getSubscriptions();
+      const response = await getMembershipsResume();
       
-      if (subscriptionsResponse.status === true) {
-        const currentState = get();
-        const updatedMemberships = currentState.memberships.map(basicMembership => {
-          // Buscar si hay suscripciones para esta membresía
-          const membershipWithSubs = subscriptionsResponse.memberships?.find(
-            m => m.membership_id === basicMembership.membership_id
-          );
-          
-          // Combinar información básica con suscripciones
-          return {
-            ...basicMembership,
-            subscriptions: membershipWithSubs?.subscriptions || []
-          };
-        });
+      if (response.status === true) {
+        const membershipsData = response.memberships || [];
+        
+        // Mapear los datos del nuevo endpoint al formato esperado por la UI
+        const mappedMemberships = membershipsData.map((membership, index) => ({
+          membership_id: membership.membership_id || index + 1,
+          membership_name: membership.membership_name,
+          description: membership.description || '',
+          price: membership.price,
+          status: membership.membership_status === 'active',
+          active_subscribers_count: membership.active_subscribers_count,
+          subscriptions: Array(membership.active_subscribers_count || 0).fill(null).map((_, i) => ({
+            subscription_id: `temp-${index}-${i}`,
+            status: 'active'
+          }))
+        }));
         
         // Calcular métricas totales
-        const totalSubscriptions = updatedMemberships.reduce((total, membership) => {
-          return total + (membership.subscriptions?.length || 0);
+        const totalSubscriptions = membershipsData.reduce((total, membership) => {
+          return total + (membership.active_subscribers_count || 0);
         }, 0);
         
-        const activeSubscriptions = updatedMemberships.reduce((total, membership) => {
-          const activeSubs = membership.subscriptions?.filter(sub => sub.status === 'active') || [];
-          return total + activeSubs.length;
-        }, 0);
+        const activeSubscriptions = membershipsData
+          .filter(m => m.membership_status === 'active')
+          .reduce((total, membership) => {
+            return total + (membership.active_subscribers_count || 0);
+          }, 0);
         
         set({
-          memberships: updatedMemberships,
+          memberships: mappedMemberships,
           totalSubscriptions,
           activeSubscriptions
         });
         
         return true;
       }
+      return false;
     } catch (error) {
-      console.error('Error refreshing subscriptions:', error);
+      console.error('Error refreshing memberships resume:', error);
       return false;
     }
   },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FiCreditCard, FiPlus, FiSearch, FiFilter, FiEdit, FiEye, FiTrendingUp, FiExternalLink, FiXCircle, FiCheckCircle, FiUsers, FiRefreshCw, FiDollarSign, FiX } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiCreditCard, FiPlus, FiSearch, FiFilter, FiTrendingUp, FiUsers, FiRefreshCw, FiDollarSign, FiX } from 'react-icons/fi';
 import MembershipChart from '../components/charts/MembershipChart';
 import MembershipInformation from '../components/modals/MembershipInformation';
 import SubscribersList from '../components/subscriptions/SubscribersList';
@@ -9,6 +9,7 @@ import useMembershipsStore from '../store/useMembershipsStore';
 import { showSuccess, showError } from '../utils/notifications';
 
 const Membresias = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState(['all']);
   const [selectedMembership, setSelectedMembership] = useState(null);
@@ -88,7 +89,11 @@ const Membresias = () => {
     labels: memberships.map(m => m.membership_name).slice(0, 4) || ['Sin datos'],
     datasets: [
       {
-        data: memberships.slice(0, 4).map(m => m.subscriptions?.length || 0) || [0],
+        data: memberships.slice(0, 4).map(m => 
+          m.active_subscribers_count !== undefined 
+            ? m.active_subscribers_count 
+            : (m.subscriptions?.length || 0)
+        ) || [0],
         backgroundColor: [
           'rgba(59, 130, 246, 0.8)',
           'rgba(16, 185, 129, 0.8)',
@@ -115,6 +120,10 @@ const Membresias = () => {
 
   const formatPrice = (price) => {
     return `$${price.toFixed(2)}`;
+  };
+
+  const handleRowClick = (membershipId) => {
+    navigate(`/membresias/detalle?id=${membershipId}`);
   };
 
   const handleViewMembership = (membership) => {
@@ -372,14 +381,15 @@ const Membresias = () => {
                       <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
                         Estado
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
-                        Acciones
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredMemberships.map((membership) => (
-                      <tr key={membership.membership_id} className="hover:bg-gray-50">
+                      <tr 
+                        key={membership.membership_id} 
+                        onClick={() => handleRowClick(membership.membership_id)}
+                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -406,13 +416,20 @@ const Membresias = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             <div className="text-sm font-cabin-semibold text-gray-800">
-                              {membership.subscriptions?.length || 0}
+                              {membership.active_subscribers_count !== undefined 
+                                ? membership.active_subscribers_count 
+                                : (membership.subscriptions?.length || 0)}
                             </div>
                             <div className="text-xs text-gray-500 font-cabin-regular">
                               suscriptores
                             </div>
                           </div>
-                          {membership.subscriptions && membership.subscriptions.length > 0 && (
+                          {membership.active_subscribers_count !== undefined && membership.active_subscribers_count > 0 && (
+                            <div className="text-xs text-green-600 font-cabin-medium">
+                              {membership.active_subscribers_count} activos
+                            </div>
+                          )}
+                          {membership.active_subscribers_count === undefined && membership.subscriptions && membership.subscriptions.length > 0 && (
                             <div className="text-xs text-green-600 font-cabin-medium">
                               {membership.subscriptions.filter(s => s.status === 'active').length} activos
                             </div>
@@ -422,59 +439,6 @@ const Membresias = () => {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(membership.status)}`}>
                             {membership.status ? 'Activa' : 'Inactiva'}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-cabin-medium">
-                          <div className="flex items-center space-x-2">
-                            <Link
-                              to={`/membresias/detalle/${membership.membership_id}`}
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                              title="Ver detalle completo en nueva página"
-                            >
-                              <FiExternalLink className="w-4 h-4" />
-                            </Link>
-                            
-                            <button
-                              onClick={() => handleViewMembership(membership)}
-                              className="text-amber-600 hover:text-amber-900 p-1 rounded"
-                              title="Ver información rápida"
-                            >
-                              <FiEye className="w-4 h-4" />
-                            </button>
-                            
-                            <button
-                              onClick={() => handleEditMembership(membership)}
-                              className="text-green-600 hover:text-green-900 p-1 rounded"
-                              title="Editar"
-                            >
-                              <FiEdit className="w-4 h-4" />
-                            </button>
-                            
-                            {membership.subscriptions && membership.subscriptions.length > 0 && (
-                              <button
-                                onClick={() => handleViewSubscribers(membership)}
-                                className="text-purple-600 hover:text-purple-900 p-1 rounded"
-                                title="Ver suscriptores"
-                              >
-                                <FiUsers className="w-4 h-4" />
-                              </button>
-                            )}
-                            
-                            <button
-                              onClick={() => handleToggleStatus(membership)}
-                              className={`p-1 rounded ${
-                                membership.status 
-                                  ? 'text-red-600 hover:text-red-900' 
-                                  : 'text-green-600 hover:text-green-900'
-                              }`}
-                              title={membership.status ? 'Desactivar' : 'Activar'}
-                            >
-                              {membership.status ? (
-                                <FiXCircle className="w-4 h-4" />
-                            ) : (
-                                <FiCheckCircle className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     ))}

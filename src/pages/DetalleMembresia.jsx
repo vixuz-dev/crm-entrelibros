@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   FiArrowLeft, 
   FiUsers, 
@@ -10,15 +10,23 @@ import {
   FiTrendingUp,
   FiPhone,
   FiMail,
-  FiMapPin
+  FiMapPin,
+  FiEdit,
+  FiXCircle,
+  FiCheckCircle,
+  FiX
 } from 'react-icons/fi';
-import useMembershipsStore from '../store/useMembershipsStore';
-import { showError } from '../utils/notifications';
+import { getMembershipDetail, updateMembership } from '../api/memberships';
+import { showError, showSuccess } from '../utils/notifications';
 import { ROUTES } from '../utils/routes';
+import MembershipInformation from '../components/modals/MembershipInformation';
+import SubscribersList from '../components/subscriptions/SubscribersList';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const DetalleMembresia = () => {
-  const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const membershipId = searchParams.get('id');
   
   // Estados
   const [membership, setMembership] = useState(null);
@@ -26,75 +34,52 @@ const DetalleMembresia = () => {
   const [showBenefits, setShowBenefits] = useState(false);
   const [showSubscribers, setShowSubscribers] = useState(false);
   const [expandedUsers, setExpandedUsers] = useState({});
-
-  // Store de membresías (ahora incluye suscripciones)
-  const { 
-    memberships, 
-    isInitialized, 
-    loadMemberships,
-    refreshSubscriptions
-  } = useMembershipsStore();
+  
+  // Estados para modales y acciones
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSubscribersModalOpen, setIsSubscribersModalOpen] = useState(false);
+  const [isStatusConfirmModalOpen, setIsStatusConfirmModalOpen] = useState(false);
 
   // Cargar datos al montar el componente
   useEffect(() => {
-    if (isInitialized) {
+    if (membershipId) {
       loadMembershipData();
     } else {
-      loadMemberships();
+      showError('ID de membresía no proporcionado');
+      navigate(ROUTES.MEMBRESIAS);
     }
-  }, [isInitialized, id]);
-
-  // Recargar datos cuando cambien las membresías
-  useEffect(() => {
-    if (memberships.length > 0) {
-      const foundMembership = memberships.find(m => m.membership_id == id);
-      if (foundMembership) {
-        setMembership(foundMembership);
-      }
-    }
-  }, [memberships, id]);
+  }, [membershipId]);
 
   const loadMembershipData = async () => {
+    if (!membershipId) {
+      showError('ID de membresía no proporcionado');
+      navigate(ROUTES.MEMBRESIAS);
+      return;
+    }
+
     try {
       setIsLoading(true);
       
-      // Cargar membresías si no están inicializadas
-      if (!isInitialized) {
-        await loadMemberships();
-      }
+      const response = await getMembershipDetail(membershipId);
       
-      // Buscar la membresía específica
-      const foundMembership = memberships.find(m => m.membership_id == id);
-      
-      if (!foundMembership) {
+      if (response.status === true && response.membership) {
+        setMembership(response.membership);
+      } else {
         showError('Membresía no encontrada');
         navigate(ROUTES.MEMBRESIAS);
-        return;
-      }
-      
-      // Si no tiene suscripciones, intentar refrescarlas
-      if (!foundMembership.subscriptions || foundMembership.subscriptions.length === 0) {
-        await refreshSubscriptions();
-      }
-      
-      // Buscar la membresía actualizada
-      const updatedMembership = memberships.find(m => m.membership_id == id);
-      if (updatedMembership) {
-        setMembership(updatedMembership);
-      } else {
-        setMembership(foundMembership);
       }
       
     } catch (error) {
       console.error('Error loading membership data:', error);
       showError('Error al cargar los datos de la membresía');
+      navigate(ROUTES.MEMBRESIAS);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoBack = () => {
-    navigate(ROUTES.MEMBRESIAS);
+    navigate('/membresias', { replace: false });
   };
 
   // Funciones de utilidad
@@ -108,6 +93,90 @@ const DetalleMembresia = () => {
 
   const getStatusText = (status) => {
     return status ? 'Activo' : 'Inactivo';
+  };
+
+  // Handlers para acciones
+  const handleEditMembership = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleSaveMembership = async (membershipData) => {
+    try {
+      const response = await updateMembership(membershipData);
+      if (response.status === true) {
+        showSuccess('Membresía actualizada correctamente');
+        // Recargar los datos de la membresía
+        await loadMembershipData();
+        setIsEditModalOpen(false);
+      } else {
+        showError(response.status_Message || 'Error al actualizar la membresía');
+      }
+    } catch (error) {
+      console.error('Error updating membership:', error);
+      showError('Error al actualizar la membresía');
+    }
+  };
+
+  const handleViewSubscribers = () => {
+    setIsSubscribersModalOpen(true);
+  };
+
+  const handleCloseSubscribersModal = () => {
+    setIsSubscribersModalOpen(false);
+  };
+
+  const handleToggleStatus = () => {
+    if (!membership) return;
+    setIsStatusConfirmModalOpen(true);
+  };
+
+  const confirmToggleStatus = async () => {
+    if (!membership) return;
+    
+    setIsStatusConfirmModalOpen(false);
+    
+    try {
+      const currentStatus = typeof membership.status === 'number' 
+        ? membership.status === 1 
+        : membership.status === true;
+      const newStatus = !currentStatus;
+      
+      let productIdList = [];
+      if (membership.product_id_list && Array.isArray(membership.product_id_list)) {
+        productIdList = membership.product_id_list;
+      } else if (membership.products && Array.isArray(membership.products)) {
+        productIdList = membership.products.map(p => p.product_id || p.id).filter(Boolean);
+      }
+      
+      const membershipData = {
+        membership_id: membership.membership_id,
+        membership_name: membership.membership_name || '',
+        description: membership.description || '',
+        benefits: membership.benefits || [],
+        price: membership.price || 0,
+        status: newStatus,
+        product_id_list: productIdList
+      };
+      
+      const response = await updateMembership(membershipData);
+      if (response.status === true) {
+        showSuccess(`Membresía ${newStatus ? 'activada' : 'desactivada'} correctamente`);
+        await loadMembershipData();
+      } else {
+        showError(response.status_Message || 'Error al cambiar el estado de la membresía');
+      }
+    } catch (error) {
+      console.error('Error toggling membership status:', error);
+      showError(error.message || 'Error al cambiar el estado de la membresía');
+    }
+  };
+
+  const cancelToggleStatus = () => {
+    setIsStatusConfirmModalOpen(false);
   };
 
   // Loading state
@@ -166,6 +235,58 @@ const DetalleMembresia = () => {
                 {getStatusText(membership.status)}
               </span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Acciones */}
+      <div className="bg-gray-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center space-x-3">
+            {/* Botón Editar */}
+            <button
+              onClick={handleEditMembership}
+              className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 hover:border-gray-400 transition-colors font-cabin-medium shadow-sm"
+              title="Editar membresía"
+            >
+              <FiEdit className="w-4 h-4" />
+              <span>Editar</span>
+            </button>
+
+            {/* Botón Ver Suscriptores */}
+            {membership.subscriptions && membership.subscriptions.length > 0 && (
+              <button
+                onClick={handleViewSubscribers}
+                className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 hover:border-gray-400 transition-colors font-cabin-medium shadow-sm"
+                title="Ver suscriptores"
+              >
+                <FiUsers className="w-4 h-4" />
+                <span>Ver Suscriptores</span>
+              </button>
+            )}
+
+            {/* Botón Activar/Desactivar */}
+            <button
+              onClick={handleToggleStatus}
+              className={`flex items-center space-x-2 px-4 py-2 bg-white border rounded transition-colors font-cabin-medium shadow-sm ${
+                membership.status
+                  ? 'border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300'
+                  : 'border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300'
+              }`}
+              title={membership.status ? 'Desactivar membresía' : 'Activar membresía'}
+            >
+              {membership.status ? (
+                <>
+                  <FiXCircle className="w-4 h-4" />
+                  <span>Desactivar</span>
+                </>
+              ) : (
+                <>
+                  <FiCheckCircle className="w-4 h-4" />
+                  <span>Activar</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -239,7 +360,7 @@ const DetalleMembresia = () => {
                 <FiUsers className="w-6 h-6 text-blue-600" />
               </div>
               <div className="text-2xl font-cabin-bold text-gray-800 mb-1">
-                {membership.subscriptions?.length || 0}
+                {membership.active_subscribers_count || membership.subscriptions?.length || 0}
               </div>
               <div className="text-sm text-gray-600 font-cabin-regular">
                 Total Suscriptores
@@ -251,7 +372,7 @@ const DetalleMembresia = () => {
                 <FiUsers className="w-6 h-6 text-green-600" />
               </div>
               <div className="text-2xl font-cabin-bold text-gray-800 mb-1">
-                {membership.subscriptions?.filter(s => s.status === 'active').length || 0}
+                {membership.subscriptions_counters?.active || membership.subscriptions?.filter(s => s.status === 'active').length || 0}
               </div>
               <div className="text-sm text-gray-600 font-cabin-regular">
                 Suscripciones Activas
@@ -275,7 +396,7 @@ const DetalleMembresia = () => {
                 <FiTrendingUp className="w-6 h-6 text-purple-600" />
               </div>
               <div className="text-2xl font-cabin-bold text-gray-800 mb-1">
-                {formatPrice((membership.subscriptions?.filter(s => s.status === 'active').length || 0) * (membership.price || 0))}
+                {formatPrice((membership.subscriptions_counters?.active || membership.subscriptions?.filter(s => s.status === 'active').length || 0) * (membership.price || 0))}
               </div>
               <div className="text-sm text-gray-600 font-cabin-regular">
                 Ingresos Mensuales
@@ -394,7 +515,7 @@ const DetalleMembresia = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div className="bg-blue-50 rounded-lg p-4 text-center">
                       <div className="text-2xl font-cabin-bold text-blue-600">
-                        {membership.subscriptions.length}
+                        {membership.active_subscribers_count || membership.subscriptions?.length || 0}
                       </div>
                       <div className="text-sm text-blue-700 font-cabin-medium">
                         Total Suscriptores
@@ -402,7 +523,7 @@ const DetalleMembresia = () => {
                     </div>
                     <div className="bg-green-50 rounded-lg p-4 text-center">
                       <div className="text-2xl font-cabin-bold text-green-600">
-                        {membership.subscriptions.filter(s => s.status === 'active').length}
+                        {membership.subscriptions_counters?.active || membership.subscriptions?.filter(s => s.status === 'active').length || 0}
                       </div>
                       <div className="text-sm text-green-700 font-cabin-medium">
                         Suscripciones Activas
@@ -410,7 +531,7 @@ const DetalleMembresia = () => {
                     </div>
                     <div className="bg-amber-50 rounded-lg p-4 text-center">
                       <div className="text-2xl font-cabin-bold text-amber-600">
-                        {formatPrice((membership.subscriptions.filter(s => s.status === 'active').length || 0) * (membership.price || 0))}
+                        {formatPrice((membership.subscriptions_counters?.active || membership.subscriptions?.filter(s => s.status === 'active').length || 0) * (membership.price || 0))}
                       </div>
                       <div className="text-sm text-amber-700 font-cabin-medium">
                         Ingresos Mensuales
@@ -585,6 +706,80 @@ const DetalleMembresia = () => {
         </div>
         </div>
       </div>
+
+      {/* Modal de Edición */}
+      <MembershipInformation
+        membership={membership}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        mode="edit"
+        onSave={handleSaveMembership}
+      />
+
+      {/* Modal de Suscriptores */}
+      {isSubscribersModalOpen && membership && (
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={handleCloseSubscribersModal}
+          />
+          
+          {/* Modal */}
+          <div className="flex items-center justify-center min-h-screen p-4 relative z-[10000]">
+            <div className="bg-white rounded-t-xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col relative">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <FiUsers className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-cabin-bold text-gray-800">
+                      Usuarios Suscritos
+                    </h2>
+                    <p className="text-gray-600 font-cabin-regular">
+                      {membership.membership_name} - {membership.description}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCloseSubscribersModal}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <FiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <SubscribersList 
+                  membership={membership}
+                  onClose={handleCloseSubscribersModal}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación para Activar/Desactivar */}
+      {membership && (
+        <ConfirmationModal
+          isOpen={isStatusConfirmModalOpen}
+          title={membership.status ? 'Desactivar Membresía' : 'Activar Membresía'}
+          description={
+            membership.status
+              ? `¿Estás seguro de que quieres desactivar la membresía "${membership.membership_name}"? Los usuarios no podrán suscribirse hasta que se reactive.`
+              : `¿Estás seguro de que quieres activar la membresía "${membership.membership_name}"? Los usuarios podrán suscribirse nuevamente.`
+          }
+          onCancel={cancelToggleStatus}
+          onAccept={confirmToggleStatus}
+          cancelText="Cancelar"
+          acceptText={membership.status ? 'Desactivar' : 'Activar'}
+          type={membership.status ? 'danger' : 'info'}
+        />
+      )}
     </div>
   );
 };

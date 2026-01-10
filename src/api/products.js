@@ -1,6 +1,7 @@
 import axios from "axios";
 import { showDataLoadError, showDataLoadSuccess } from "../utils/notifications";
 import { prepareSearchTerm } from "../utils/searchUtils";
+import { getSessionToken } from "../utils/sessionCookie";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Helper function para construir URLs sin barras duplicadas
@@ -220,6 +221,33 @@ export const addProduct = async (productData) => {
   } catch (error) {
     console.error('Error creating product:', error);
     const errorMessage = error.response?.data?.status_Message || 'Error al crear producto';
+    throw new Error(errorMessage);
+  }
+};
+
+export const deactivateProduct = async (productId) => {
+  try {
+    const token = getSessionToken();
+    const response = await axiosConfig.put(
+      `${API_BASE_URL}/products/deactivate-product`,
+      { product_id: productId },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'token': token
+        }
+      }
+    );
+
+    if (response.data.status === true || response.data.status === 'true') {
+      return response.data;
+    } else {
+      console.error('Error deactivating product:', response.data.status_Message);
+      throw new Error(response.data.status_Message || 'Error al cambiar el estado del producto');
+    }
+  } catch (error) {
+    console.error('Error deactivating product:', error);
+    const errorMessage = error.response?.data?.status_Message || 'Error al cambiar el estado del producto';
     throw new Error(errorMessage);
   }
 };
