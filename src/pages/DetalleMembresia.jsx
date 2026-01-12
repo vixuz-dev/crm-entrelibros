@@ -95,6 +95,18 @@ const DetalleMembresia = () => {
     return status ? 'Activo' : 'Inactivo';
   };
 
+  const parseMetadataField = (field) => {
+    if (!field) return null;
+    if (typeof field === 'string') {
+      try {
+        return JSON.parse(field);
+      } catch (e) {
+        return null;
+      }
+    }
+    return field;
+  };
+
   // Handlers para acciones
   const handleEditMembership = () => {
     setIsEditModalOpen(true);
@@ -541,7 +553,11 @@ const DetalleMembresia = () => {
 
                   {/* Lista de usuarios */}
                   <div className="space-y-3">
-                    {membership.subscriptions.map((subscription, index) => (
+                    {membership.subscriptions.map((subscription, index) => {
+                      const contactInfo = parseMetadataField(subscription.metadata?.contact_information);
+                      const addressInfo = parseMetadataField(subscription.metadata?.address_information);
+                      
+                      return (
                       <div key={subscription.subscription_id} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
                         {/* Header del card - Siempre visible */}
                         <button
@@ -559,10 +575,10 @@ const DetalleMembresia = () => {
                               </div>
                               <div>
                                 <div className="font-cabin-semibold text-gray-800">
-                                  {subscription.metadata?.contact_information?.fullname || 'Usuario sin nombre'}
+                                  {contactInfo?.fullname || 'Usuario sin nombre'}
                                 </div>
                                 <div className="text-sm text-gray-600 font-cabin-regular">
-                                  {subscription.metadata?.contact_information?.email || 'Sin email'}
+                                  {contactInfo?.email || 'Sin email'}
                                 </div>
                                 <div className="text-xs text-gray-500 font-cabin-regular">
                                   ID: {subscription.metadata?.user_id || 'N/A'}
@@ -601,17 +617,17 @@ const DetalleMembresia = () => {
                                     Información de Contacto
                                   </h4>
                                   
-                                  {subscription.metadata?.contact_information?.phone && (
+                                  {contactInfo?.phone && (
                                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                                       <FiPhone className="w-4 h-4 text-gray-400" />
-                                      <span>{subscription.metadata.contact_information.phone}</span>
+                                      <span>{contactInfo.phone}</span>
                                     </div>
                                   )}
                                   
-                                  {subscription.metadata?.contact_information?.email && (
+                                  {contactInfo?.email && (
                                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                                       <FiMail className="w-4 h-4 text-gray-400" />
-                                      <span>{subscription.metadata.contact_information.email}</span>
+                                      <span>{contactInfo.email}</span>
                                     </div>
                                   )}
                                 </div>
@@ -649,7 +665,7 @@ const DetalleMembresia = () => {
                               </div>
 
                               {/* Información de dirección */}
-                              {subscription.metadata?.address_information && (
+                              {addressInfo && (
                                 <div className="border-t border-gray-200 pt-4">
                                   <h4 className="font-cabin-semibold text-gray-700 text-sm uppercase tracking-wide mb-3">
                                     Dirección de Envío
@@ -659,14 +675,14 @@ const DetalleMembresia = () => {
                                       <FiMapPin className="w-4 h-4 text-gray-400 mt-0.5" />
                                       <div className="text-sm text-gray-600">
                                         <div className="font-cabin-medium">
-                                          {subscription.metadata.address_information.street} {subscription.metadata.address_information.external_number}
-                                          {subscription.metadata.address_information.internal_number && ` Int. ${subscription.metadata.address_information.internal_number}`}
+                                          {addressInfo.street} {addressInfo.external_number}
+                                          {addressInfo.internal_number && ` Int. ${addressInfo.internal_number}`}
                                         </div>
                                         <div>
-                                          {subscription.metadata.address_information.neighborhood}, {subscription.metadata.address_information.city}
+                                          {addressInfo.neighborhood}, {addressInfo.city}
                                         </div>
                                         <div>
-                                          {subscription.metadata.address_information.state} {subscription.metadata.address_information.postal_code}
+                                          {addressInfo.state} {addressInfo.postal_code}
                                         </div>
                                       </div>
                                     </div>
@@ -677,7 +693,8 @@ const DetalleMembresia = () => {
                           </div>
                         )}
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               ) : (
