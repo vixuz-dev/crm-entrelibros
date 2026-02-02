@@ -251,7 +251,14 @@ const HeroSectionSection = ({
 
         {/* Botones de acción - Solo mostrar si no está bloqueado */}
         {!isLocked && (
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-start gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="submit"
+              className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium flex items-center space-x-2"
+            >
+              <FiSave className="w-5 h-5" />
+              <span>Guardar sección</span>
+            </button>
             <button
               type="button"
               onClick={handleReset}
@@ -264,13 +271,6 @@ const HeroSectionSection = ({
             >
               <FiRotateCcw className="w-4 h-4" />
               <span>Reestablecer valores por defecto</span>
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium flex items-center space-x-2"
-            >
-              <FiSave className="w-5 h-5" />
-              <span>Guardar Configuración</span>
             </button>
           </div>
         )}

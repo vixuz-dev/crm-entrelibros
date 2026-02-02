@@ -13,6 +13,7 @@ import Membresias from './pages/Membresias';
 import DetalleMembresia from './pages/DetalleMembresia';
 import BookClubLectores from './pages/BookClubLectores';
 import BookClubLectoresList from './pages/BookClubLectoresList';
+import BookClubPreguntas from './pages/BookClubPreguntas';
 import Pedidos from './pages/Pedidos';
 import InformacionPedido from './pages/InformacionPedido';
 import Login from './pages/Login';
@@ -68,6 +69,7 @@ function App() {
                 <Route path={ROUTES.BOOK_CLUB_LECTORES} element={<Navigate to={ROUTES.BOOK_CLUB_LECTORES_CREATE} replace />} />
                 <Route path={ROUTES.BOOK_CLUB_LECTORES_CREATE} element={<BookClubLectores />} />
                 <Route path={ROUTES.BOOK_CLUB_LECTORES_LIST} element={<BookClubLectoresList />} />
+                <Route path={ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS} element={<BookClubPreguntas />} />
                 <Route path={ROUTES.ORDERS} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_CREATE} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_INFORMATION} element={<InformacionPedido />} />

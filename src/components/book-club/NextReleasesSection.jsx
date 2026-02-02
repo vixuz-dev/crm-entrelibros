@@ -192,13 +192,13 @@ const NextReleasesSection = ({
 
         {/* Botón de guardar - Solo mostrar si no está bloqueado */}
         {!isLocked && (
-          <div className="flex items-center justify-end pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-start pt-4 border-t border-gray-200">
             <button
               type="submit"
               className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-cabin-medium flex items-center space-x-2"
             >
               <FiSave className="w-5 h-5" />
-              <span>Guardar Configuración</span>
+              <span>Guardar sección</span>
             </button>
           </div>
         )}

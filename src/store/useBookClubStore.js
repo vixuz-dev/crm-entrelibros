@@ -19,22 +19,24 @@ export const useBookClubStore = create(
       subtitle: 'Lectores',
       fileUrl: 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg',
 
-      welcomeAudioTitle: 'Audio de bienvenida',
-      welcomeAudioSubtitle: '',
-      welcomeAudioFileUrl: '',
+      weeklyAudioTitle: 'Audio de bienvenida',
+      weeklyAudioDescription: '',
+      weeklyAudioFileUrl: '',
 
-      monthlyActivityTitle: 'Actividad del mes',
-      monthlyActivitySubtitle: '',
-      monthlyActivityFileUrl: '',
-      activityName: '',
-      activityDescription: '',
+      practicalSheetTitle: '',
+      practicalSheetDescription: '',
+      practicalSheetFileUrl: '',
+
+      questionsForAnyBookTitle: '',
+      questionsForAnyBookDescription: '',
+      questionsForAnyBookFileUrl: '',
 
       // Estados para libros (siempre 4)
       books: [
-        { order: 1, bookId: null, ownerDescription: '' },
-        { order: 2, bookId: null, ownerDescription: '' },
-        { order: 3, bookId: null, ownerDescription: '' },
-        { order: 4, bookId: null, ownerDescription: '' }
+        { order: 1, bookId: null, guideUrl: '', guideFileType: '' },
+        { order: 2, bookId: null, guideUrl: '', guideFileType: '' },
+        { order: 3, bookId: null, guideUrl: '', guideFileType: '' },
+        { order: 4, bookId: null, guideUrl: '', guideFileType: '' }
       ],
 
       // Estados para Timbiriche (10 squares)
@@ -78,23 +80,23 @@ export const useBookClubStore = create(
       },
 
       sections: {
-        welcomeAudioSection: {
+        weeklyAudio: {
           title: '',
-          subtitle: '',
+          description: '',
           fileUrl: '',
-          fileType: 'video',
-          sectionNumber: 2
+          fileType: 'audio'
         },
-        monthlyActivitySection: {
+        practicalSheet: {
           title: '',
-          subtitle: '',
+          description: '',
           fileUrl: '',
-          fileType: 'pdf',
-          sectionNumber: 3,
-          activity: {
-            name: '',
-            description: ''
-          }
+          fileType: 'pdf'
+        },
+        questionsForAnyBook: {
+          title: '',
+          description: '',
+          fileUrl: '',
+          fileType: 'pdf'
         },
         childrenSection: null
       },
@@ -131,68 +133,69 @@ export const useBookClubStore = create(
         get().updateHeroSection();
       },
 
-      // Acciones para Welcome Audio Section
-      setWelcomeAudioTitle: (title) => {
-        set({ welcomeAudioTitle: title });
-        get().updateWelcomeAudioSection();
+      setWeeklyAudioTitle: (title) => {
+        set({ weeklyAudioTitle: title });
+        get().updateWeeklyAudioSection();
       },
 
-      setWelcomeAudioSubtitle: (subtitle) => {
-        set({ welcomeAudioSubtitle: subtitle });
-        get().updateWelcomeAudioSection();
+      setWeeklyAudioDescription: (description) => {
+        set({ weeklyAudioDescription: description });
+        get().updateWeeklyAudioSection();
       },
 
-      setWelcomeAudioFileUrl: (fileUrl) => {
-        set({ welcomeAudioFileUrl: fileUrl });
-        get().updateWelcomeAudioSection();
+      setWeeklyAudioFileUrl: (fileUrl) => {
+        set({ weeklyAudioFileUrl: fileUrl });
+        get().updateWeeklyAudioSection();
       },
 
-      // Acciones para Monthly Activity Section
-      setMonthlyActivityTitle: (title) => {
-        set({ monthlyActivityTitle: title });
-        get().updateMonthlyActivitySection();
+      setPracticalSheetTitle: (title) => {
+        set({ practicalSheetTitle: title });
+        get().updatePracticalSheetSection();
       },
 
-      setMonthlyActivitySubtitle: (subtitle) => {
-        set({ monthlyActivitySubtitle: subtitle });
-        get().updateMonthlyActivitySection();
+      setPracticalSheetDescription: (description) => {
+        set({ practicalSheetDescription: description });
+        get().updatePracticalSheetSection();
       },
 
-      setMonthlyActivityFileUrl: (fileUrl) => {
-        set({ monthlyActivityFileUrl: fileUrl });
-        get().updateMonthlyActivitySection();
+      setPracticalSheetFileUrl: (fileUrl) => {
+        set({ practicalSheetFileUrl: fileUrl });
+        get().updatePracticalSheetSection();
       },
 
-      setActivityName: (name) => {
-        set({ activityName: name });
-        get().updateMonthlyActivitySection();
+      setQuestionsForAnyBookTitle: (title) => {
+        set({ questionsForAnyBookTitle: title });
+        get().updateQuestionsForAnyBookSection();
       },
-
-      setActivityDescription: (description) => {
-        set({ activityDescription: description });
-        get().updateMonthlyActivitySection();
+      setQuestionsForAnyBookDescription: (description) => {
+        set({ questionsForAnyBookDescription: description });
+        get().updateQuestionsForAnyBookSection();
+      },
+      setQuestionsForAnyBookFileUrl: (fileUrl) => {
+        set({ questionsForAnyBookFileUrl: fileUrl });
+        get().updateQuestionsForAnyBookSection();
       },
 
       // Acciones para Books
       addBook: (bookData) => {
         set((state) => {
           const newBooks = [...state.books];
-          // Buscar si ya existe un libro con ese order y reemplazarlo, o agregar uno nuevo
           const existingIndex = newBooks.findIndex(book => book.order === bookData.order);
           if (existingIndex !== -1) {
             newBooks[existingIndex] = {
               order: bookData.order,
               bookId: bookData.bookId,
-              ownerDescription: bookData.ownerDescription || ''
+              guideUrl: bookData.guideUrl || '',
+              guideFileType: bookData.guideFileType || ''
             };
           } else {
-            // Buscar el primer slot vacío
             const emptyIndex = newBooks.findIndex(book => !book.bookId);
             if (emptyIndex !== -1) {
               newBooks[emptyIndex] = {
                 order: bookData.order,
                 bookId: bookData.bookId,
-                ownerDescription: bookData.ownerDescription || ''
+                guideUrl: bookData.guideUrl || '',
+                guideFileType: bookData.guideFileType || ''
               };
             }
           }
@@ -204,7 +207,7 @@ export const useBookClubStore = create(
         set((state) => {
           const newBooks = state.books.map(book => {
             if (book.bookId === bookId) {
-              return { order: book.order, bookId: null, ownerDescription: '' };
+              return { order: book.order, bookId: null, guideUrl: '', guideFileType: '' };
             }
             return book;
           });
@@ -220,25 +223,27 @@ export const useBookClubStore = create(
         set((state) => {
           const newBooks = [...state.books];
           if (bookData === null) {
-            newBooks[index] = { order: index + 1, bookId: null, ownerDescription: '' };
+            newBooks[index] = { order: index + 1, bookId: null, guideUrl: '', guideFileType: '' };
           } else {
             newBooks[index] = {
               order: index + 1,
               bookId: bookData.bookId,
-              ownerDescription: bookData.ownerDescription || ''
+              guideUrl: bookData.guideUrl || '',
+              guideFileType: bookData.guideFileType || ''
             };
           }
           return { books: newBooks };
         });
       },
 
-      setBookDescription: (index, description) => {
+      setBookGuide: (index, guideUrl, guideFileType) => {
         set((state) => {
           const newBooks = [...state.books];
           if (newBooks[index]) {
             newBooks[index] = {
               ...newBooks[index],
-              ownerDescription: description
+              guideUrl: guideUrl || '',
+              guideFileType: guideFileType || ''
             };
           }
           return { books: newBooks };
@@ -285,39 +290,46 @@ export const useBookClubStore = create(
         });
       },
 
-      // Función para actualizar welcomeAudioSection automáticamente
-      updateWelcomeAudioSection: () => {
-        const { welcomeAudioTitle, welcomeAudioSubtitle, welcomeAudioFileUrl } = get();
+      updateWeeklyAudioSection: () => {
+        const { weeklyAudioTitle, weeklyAudioDescription, weeklyAudioFileUrl } = get();
         set((state) => ({
           sections: {
             ...state.sections,
-            welcomeAudioSection: {
-              title: welcomeAudioTitle,
-              subtitle: welcomeAudioSubtitle,
-              fileUrl: welcomeAudioFileUrl,
-              fileType: 'video',
-              sectionNumber: 2
+            weeklyAudio: {
+              title: weeklyAudioTitle,
+              description: weeklyAudioDescription,
+              fileUrl: weeklyAudioFileUrl,
+              fileType: 'audio'
             }
           }
         }));
       },
 
-      // Función para actualizar monthlyActivitySection automáticamente
-      updateMonthlyActivitySection: () => {
-        const { monthlyActivityTitle, monthlyActivitySubtitle, monthlyActivityFileUrl, activityName, activityDescription } = get();
+      updatePracticalSheetSection: () => {
+        const { practicalSheetTitle, practicalSheetDescription, practicalSheetFileUrl } = get();
         set((state) => ({
           sections: {
             ...state.sections,
-            monthlyActivitySection: {
-              title: monthlyActivityTitle,
-              subtitle: monthlyActivitySubtitle,
-              fileUrl: monthlyActivityFileUrl,
-              fileType: 'pdf',
-              sectionNumber: 3,
-              activity: {
-                name: activityName,
-                description: activityDescription
-              }
+            practicalSheet: {
+              title: practicalSheetTitle,
+              description: practicalSheetDescription,
+              fileUrl: practicalSheetFileUrl,
+              fileType: 'pdf'
+            }
+          }
+        }));
+      },
+
+      updateQuestionsForAnyBookSection: () => {
+        const { questionsForAnyBookTitle, questionsForAnyBookDescription, questionsForAnyBookFileUrl } = get();
+        set((state) => ({
+          sections: {
+            ...state.sections,
+            questionsForAnyBook: {
+              title: questionsForAnyBookTitle,
+              description: questionsForAnyBookDescription,
+              fileUrl: questionsForAnyBookFileUrl,
+              fileType: 'pdf'
             }
           }
         }));
@@ -430,20 +442,21 @@ export const useBookClubStore = create(
           title: 'Book Club',
           subtitle: 'Lectores',
           fileUrl: 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg',
-          welcomeAudioTitle: 'Audio de bienvenida',
-          welcomeAudioSubtitle: '',
-          welcomeAudioFileUrl: '',
-          monthlyActivityTitle: 'Actividad del mes',
-          monthlyActivitySubtitle: '',
-          monthlyActivityFileUrl: '',
-          activityName: '',
-          activityDescription: '',
+          weeklyAudioTitle: 'Audio de bienvenida',
+          weeklyAudioDescription: '',
+          weeklyAudioFileUrl: '',
+          practicalSheetTitle: '',
+          practicalSheetDescription: '',
+          practicalSheetFileUrl: '',
+          questionsForAnyBookTitle: '',
+          questionsForAnyBookDescription: '',
+          questionsForAnyBookFileUrl: '',
           childrenSectionStories: [],
           books: [
-            { order: 1, bookId: null, ownerDescription: '' },
-            { order: 2, bookId: null, ownerDescription: '' },
-            { order: 3, bookId: null, ownerDescription: '' },
-            { order: 4, bookId: null, ownerDescription: '' }
+            { order: 1, bookId: null, guideUrl: '', guideFileType: '' },
+            { order: 2, bookId: null, guideUrl: '', guideFileType: '' },
+            { order: 3, bookId: null, guideUrl: '', guideFileType: '' },
+            { order: 4, bookId: null, guideUrl: '', guideFileType: '' }
           ],
           timbiriche: {
             square1: null,
@@ -473,23 +486,23 @@ export const useBookClubStore = create(
             sectionNumber: 1
           },
           sections: {
-            welcomeAudioSection: {
+            weeklyAudio: {
               title: '',
-              subtitle: '',
+              description: '',
               fileUrl: '',
-              fileType: 'video',
-              sectionNumber: 2
+              fileType: 'audio'
             },
-            monthlyActivitySection: {
+            practicalSheet: {
               title: '',
-              subtitle: '',
+              description: '',
               fileUrl: '',
-              fileType: 'pdf',
-              sectionNumber: 3,
-              activity: {
-                name: '',
-                description: ''
-              }
+              fileType: 'pdf'
+            },
+            questionsForAnyBook: {
+              title: '',
+              description: '',
+              fileUrl: '',
+              fileType: 'pdf'
             },
             childrenSection: null
           }
@@ -498,41 +511,24 @@ export const useBookClubStore = create(
 
       // Obtener el JSON completo de la configuración
       getFullConfiguration: () => {
-        const { metadata, heroSection, sections, books, timbiriche, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription } = get();
-        // Filtrar solo los libros que tienen bookId
+        const { metadata, sections, books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription } = get();
         const validBooks = books.filter(book => book.bookId !== null);
-        // Filtrar solo los squares que tienen datos
-        const validTimbiriche = Object.entries(timbiriche).reduce((acc, [key, value]) => {
-          if (value !== null) {
-            acc[key] = value;
-          }
-          return acc;
-        }, {});
-        // Construir nextReleases solo si tiene datos
         const nextReleases = (nextReleasesMonth || nextReleasesTheme || nextReleasesDescription) ? {
           month: nextReleasesMonth,
           theme: nextReleasesTheme,
           description: nextReleasesDescription
         } : null;
-        
-        // Construir sections sin childrenSection si es null
         const sectionsToInclude = { ...sections };
-        if (!sectionsToInclude.childrenSection) {
-          delete sectionsToInclude.childrenSection;
-        }
-        
+        delete sectionsToInclude.childrenSection;
+        delete sectionsToInclude.monthlyActivitySection;
         const config = {
           metadata,
-          heroSection,
           sections: sectionsToInclude,
-          books: validBooks,
-          timbiriche: validTimbiriche
+          books: validBooks
         };
-        
         if (nextReleases) {
           config.nextReleases = nextReleases;
         }
-        
         return config;
       }
     }),
@@ -546,14 +542,15 @@ export const useBookClubStore = create(
         title: state.title,
         subtitle: state.subtitle,
         fileUrl: state.fileUrl,
-        welcomeAudioTitle: state.welcomeAudioTitle,
-        welcomeAudioSubtitle: state.welcomeAudioSubtitle,
-        welcomeAudioFileUrl: state.welcomeAudioFileUrl,
-        monthlyActivityTitle: state.monthlyActivityTitle,
-        monthlyActivitySubtitle: state.monthlyActivitySubtitle,
-        monthlyActivityFileUrl: state.monthlyActivityFileUrl,
-        activityName: state.activityName,
-        activityDescription: state.activityDescription,
+        weeklyAudioTitle: state.weeklyAudioTitle,
+        weeklyAudioDescription: state.weeklyAudioDescription,
+        weeklyAudioFileUrl: state.weeklyAudioFileUrl,
+        practicalSheetTitle: state.practicalSheetTitle,
+        practicalSheetDescription: state.practicalSheetDescription,
+        practicalSheetFileUrl: state.practicalSheetFileUrl,
+        questionsForAnyBookTitle: state.questionsForAnyBookTitle,
+        questionsForAnyBookDescription: state.questionsForAnyBookDescription,
+        questionsForAnyBookFileUrl: state.questionsForAnyBookFileUrl,
         childrenSectionStories: state.childrenSectionStories,
           books: state.books,
           metadata: state.metadata,

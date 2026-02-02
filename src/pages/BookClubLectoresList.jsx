@@ -7,13 +7,12 @@ import { showDataLoadError } from '../utils/notifications';
 import { useBookClubStore } from '../store/useBookClubStore';
 import { ROUTES } from '../utils/routes';
 import MainConfigurationSection from '../components/book-club/MainConfigurationSection';
-import HeroSectionSection from '../components/book-club/HeroSectionSection';
 import BooksSection from '../components/book-club/BooksSection';
 import WelcomeAudioSection from '../components/book-club/WelcomeAudioSection';
-import CourseSectionsSection from '../components/book-club/CourseSectionsSection';
-import TimbiricheSection from '../components/book-club/TimbiricheSection';
+import PracticalSheetSection from '../components/book-club/PracticalSheetSection';
+import QuestionsForAnyBookSection from '../components/book-club/QuestionsForAnyBookSection';
 import NextReleasesSection from '../components/book-club/NextReleasesSection';
-import ChildrenSection from '../components/book-club/ChildrenSection';
+import SectionStatusSidebar from '../components/book-club/SectionStatusSidebar';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const BookClubLectoresList = () => {
@@ -28,18 +27,18 @@ const BookClubLectoresList = () => {
   const [initialBookClubConfig, setInitialBookClubConfig] = useState(null);
   const [showConfirmUpdateModal, setShowConfirmUpdateModal] = useState(false);
 
-  // Estado de bloqueo por sección (similar a la pantalla de creación)
+  // Estado de bloqueo por sección (misma estructura que pantalla de creación)
   const [sectionLocked, setSectionLocked] = useState({
     'main-config': true,
-    'hero-section': true,
     'books': true,
-    'welcome-audio': true,
-    'course-sections': true,
-    'next-releases': true,
-    'children-section': true
+    'weekly-audio': true,
+    'practical-sheet': true,
+    'questions-for-any-book': true,
+    'next-releases': true
   });
 
-  // Obtener estado y acciones del store
+  // Obtener estado y acciones del store (una sola lectura para evitar TDZ)
+  const storeState = useBookClubStore();
   const {
     month,
     theme,
@@ -47,14 +46,15 @@ const BookClubLectoresList = () => {
     title,
     subtitle,
     fileUrl,
-    welcomeAudioTitle,
-    welcomeAudioSubtitle,
-    welcomeAudioFileUrl,
-    monthlyActivityTitle,
-    monthlyActivitySubtitle,
-    monthlyActivityFileUrl,
-    activityName,
-    activityDescription,
+    weeklyAudioTitle,
+    weeklyAudioDescription,
+    weeklyAudioFileUrl,
+    practicalSheetTitle,
+    practicalSheetDescription,
+    practicalSheetFileUrl,
+    questionsForAnyBookTitle,
+    questionsForAnyBookDescription,
+    questionsForAnyBookFileUrl,
     books,
     nextReleasesMonth,
     nextReleasesTheme,
@@ -70,14 +70,15 @@ const BookClubLectoresList = () => {
     setTitle,
     setSubtitle,
     setFileUrl,
-    setWelcomeAudioTitle,
-    setWelcomeAudioSubtitle,
-    setWelcomeAudioFileUrl,
-    setMonthlyActivityTitle,
-    setMonthlyActivitySubtitle,
-    setMonthlyActivityFileUrl,
-    setActivityName,
-    setActivityDescription,
+    setWeeklyAudioTitle,
+    setWeeklyAudioDescription,
+    setWeeklyAudioFileUrl,
+    setPracticalSheetTitle,
+    setPracticalSheetDescription,
+    setPracticalSheetFileUrl,
+    setQuestionsForAnyBookTitle,
+    setQuestionsForAnyBookDescription,
+    setQuestionsForAnyBookFileUrl,
     setBooks,
     setNextReleasesMonth,
     setNextReleasesTheme,
@@ -88,7 +89,25 @@ const BookClubLectoresList = () => {
     setChildrenSectionStories,
     updateSquare,
     getFullConfiguration
-  } = useBookClubStore();
+  } = storeState;
+
+  // Estado de secciones completadas (mismo criterio que en creación, para el sidebar)
+  const sectionStatuses = useMemo(() => ({
+    'main-config': !!(storeState.month && storeState.month.length > 0 && storeState.theme && storeState.theme.trim() !== ''),
+    'books': storeState.books && storeState.books.some(book => book && book.bookId && book.guideUrl && book.guideUrl.trim() !== ''),
+    'weekly-audio': !!(storeState.weeklyAudioTitle && storeState.weeklyAudioTitle.trim() !== '') &&
+      !!(storeState.weeklyAudioDescription && storeState.weeklyAudioDescription.trim() !== '') &&
+      !!(storeState.weeklyAudioFileUrl && storeState.weeklyAudioFileUrl.trim() !== ''),
+    'practical-sheet': !!(storeState.practicalSheetTitle && storeState.practicalSheetTitle.trim() !== '') &&
+      !!(storeState.practicalSheetDescription && storeState.practicalSheetDescription.trim() !== '') &&
+      !!(storeState.practicalSheetFileUrl && storeState.practicalSheetFileUrl.trim() !== ''),
+    'questions-for-any-book': !!(storeState.questionsForAnyBookTitle && storeState.questionsForAnyBookTitle.trim() !== '') &&
+      !!(storeState.questionsForAnyBookDescription && storeState.questionsForAnyBookDescription.trim() !== '') &&
+      !!(storeState.questionsForAnyBookFileUrl && storeState.questionsForAnyBookFileUrl.trim() !== ''),
+    'next-releases': !!(storeState.nextReleasesMonth && storeState.nextReleasesMonth.trim() !== '') &&
+      !!(storeState.nextReleasesTheme && storeState.nextReleasesTheme.trim() !== '') &&
+      !!(storeState.nextReleasesDescription && storeState.nextReleasesDescription.trim() !== '')
+  }), [storeState]);
 
   // Función para obtener el índice del mes actual
   const getCurrentMonthIndex = () => {
@@ -121,7 +140,8 @@ const BookClubLectoresList = () => {
       const store = useBookClubStore.getState();
       if (store.updateMetadata) store.updateMetadata();
       if (store.updateHeroSection) store.updateHeroSection();
-      if (store.updateWelcomeAudioSection) store.updateWelcomeAudioSection();
+      if (store.updateWeeklyAudioSection) store.updateWeeklyAudioSection();
+      if (store.updatePracticalSheetSection) store.updatePracticalSheetSection();
       if (store.updateMonthlyActivitySection) store.updateMonthlyActivitySection();
       if (store.updateChildrenSection) store.updateChildrenSection();
 
@@ -153,11 +173,11 @@ const BookClubLectoresList = () => {
 
   // Función para obtener el índice del mes "Septiembre"
   const getSeptemberIndex = () => {
-    return MONTH_OPTIONS.findIndex(month => month.value === 'Septiembre');
+    return MONTH_OPTIONS.findIndex(m => m.value === 'Septiembre');
   };
 
   // Generar lista de meses disponibles (desde Septiembre hasta el mes actual, incluyendo el actual)
-  // Temporal: Incluir Enero también
+  // Temporal: Incluir Enero y Febrero también como ejemplo
   const availableMonths = useMemo(() => {
     const currentMonthIndex = getCurrentMonthIndex();
     const septemberIndex = getSeptemberIndex();
@@ -168,10 +188,15 @@ const BookClubLectoresList = () => {
       months.push(MONTH_OPTIONS[i]);
     }
     
+    // Temporal: Agregar Febrero si no está ya incluido
+    const febreroOption = MONTH_OPTIONS.find(m => m.value === 'Febrero');
+    if (febreroOption && !months.find(m => m.value === 'Febrero')) {
+      months.unshift(febreroOption);
+    }
     // Temporal: Agregar Enero si no está ya incluido
     const eneroOption = MONTH_OPTIONS.find(m => m.value === 'Enero');
     if (eneroOption && !months.find(m => m.value === 'Enero')) {
-      months.unshift(eneroOption); // Agregar al inicio
+      months.unshift(eneroOption);
     }
     
     return months;
@@ -263,13 +288,13 @@ const BookClubLectoresList = () => {
         setBookClubData(response);
         setInitialBookClubConfig(bookClub);
 
-        // Inicializar bloqueo por sección (todas bloqueadas al cargar)
+        // Inicializar bloqueo por sección (misma estructura que creación)
         setSectionLocked({
           'main-config': true,
-          'hero-section': true,
           'books': true,
-          'welcome-audio': true,
-          'course-sections': true,
+          'weekly-audio': true,
+          'practical-sheet': true,
+          'questions-for-any-book': true,
           'next-releases': true
         });
         
@@ -287,36 +312,36 @@ const BookClubLectoresList = () => {
           setFileUrl(bookClub.heroSection.fileUrl || '');
         }
         
-        // Welcome Audio Section
-        if (bookClub.sections?.welcomeAudioSection) {
-          const welcomeAudio = bookClub.sections.welcomeAudioSection;
-          setWelcomeAudioTitle(welcomeAudio.title || '');
-          setWelcomeAudioSubtitle(welcomeAudio.subtitle || '');
-          setWelcomeAudioFileUrl(welcomeAudio.fileUrl || '');
-        } else {
-          // Si no está en sections, intentar directamente
-          if (bookClub.welcomeAudioSection) {
-            const welcomeAudio = bookClub.welcomeAudioSection;
-            setWelcomeAudioTitle(welcomeAudio.title || '');
-            setWelcomeAudioSubtitle(welcomeAudio.subtitle || '');
-            setWelcomeAudioFileUrl(welcomeAudio.fileUrl || '');
-          }
+        if (bookClub.sections?.weeklyAudio) {
+          const weeklyAudio = bookClub.sections.weeklyAudio;
+          setWeeklyAudioTitle(weeklyAudio.title || '');
+          setWeeklyAudioDescription(weeklyAudio.description ?? weeklyAudio.subtitle ?? '');
+          setWeeklyAudioFileUrl(weeklyAudio.fileUrl || '');
+        }
+
+        if (bookClub.sections?.practicalSheet) {
+          const practicalSheet = bookClub.sections.practicalSheet;
+          setPracticalSheetTitle(practicalSheet.title || '');
+          setPracticalSheetDescription(practicalSheet.description || '');
+          setPracticalSheetFileUrl(practicalSheet.fileUrl || '');
         }
         
-        // Monthly Activity Section
-        if (bookClub.sections?.monthlyActivitySection) {
-          setMonthlyActivityTitle(bookClub.sections.monthlyActivitySection.title || '');
-          setMonthlyActivitySubtitle(bookClub.sections.monthlyActivitySection.subtitle || '');
-          setMonthlyActivityFileUrl(bookClub.sections.monthlyActivitySection.fileUrl || '');
-          if (bookClub.sections.monthlyActivitySection.activity) {
-            setActivityName(bookClub.sections.monthlyActivitySection.activity.name || '');
-            setActivityDescription(bookClub.sections.monthlyActivitySection.activity.description || '');
-          }
+        // Preguntas para cualquier libro
+        if (bookClub.sections?.questionsForAnyBook) {
+          const q = bookClub.sections.questionsForAnyBook;
+          setQuestionsForAnyBookTitle(q.title || '');
+          setQuestionsForAnyBookDescription(q.description || '');
+          setQuestionsForAnyBookFileUrl(q.fileUrl || '');
         }
         
-        // Books
         if (bookClub.books && Array.isArray(bookClub.books)) {
-          setBooks(bookClub.books);
+          const normalized = [1, 2, 3, 4].map((i) => {
+            const b = bookClub.books.find((x) => x.order === i) || bookClub.books[i - 1];
+            return b
+              ? { order: b.order ?? i, bookId: b.bookId ?? null, guideUrl: b.guideUrl ?? '', guideFileType: b.guideFileType ?? '' }
+              : { order: i, bookId: null, guideUrl: '', guideFileType: '' };
+          });
+          setBooks(normalized);
         }
         
         // Timbiriche
@@ -503,112 +528,101 @@ const BookClubLectoresList = () => {
           )}
 
           {isBookClubAvailable && bookClubData && !loading && (
-            <div className="space-y-6">
-              {/* Sección de Configuración Principal */}
-              <MainConfigurationSection
-                month={month}
-                setMonth={setMonth}
-                theme={theme}
-                setTheme={setTheme}
-                description={description}
-                setDescription={setDescription}
-                monthOptions={MONTH_OPTIONS}
-                isLocked={!isEditing || sectionLocked['main-config']}
-                onEdit={() => handleEditSection('main-config')}
-                onSave={() => handleSectionSaved('main-config')}
-                showEditButton={isEditing}
-              />
+            <div className="flex gap-6 items-start">
+              {/* Columna principal: misma estructura que pantalla de creación */}
+              <div className="flex-1 space-y-6">
+                <div id="section-main-config">
+                  <MainConfigurationSection
+                    month={month}
+                    setMonth={setMonth}
+                    theme={theme}
+                    setTheme={setTheme}
+                    description={description}
+                    setDescription={setDescription}
+                    monthOptions={MONTH_OPTIONS}
+                    isLocked={!isEditing || sectionLocked['main-config']}
+                    onEdit={() => handleEditSection('main-config')}
+                    onSave={() => handleSectionSaved('main-config')}
+                    showEditButton={isEditing}
+                  />
+                </div>
 
-              {/* Sección Hero Section */}
-              <HeroSectionSection
-                title={title}
-                setTitle={setTitle}
-                subtitle={subtitle}
-                setSubtitle={setSubtitle}
-                fileUrl={fileUrl}
-                setFileUrl={setFileUrl}
-                isLocked={!isEditing || sectionLocked['hero-section']}
-                onEdit={() => handleEditSection('hero-section')}
-                onSave={() => handleSectionSaved('hero-section')}
-                showEditButton={isEditing}
-              />
+                <div id="section-books">
+                  <BooksSection
+                    books={books}
+                    setBooks={setBooks}
+                    isLocked={!isEditing || sectionLocked['books']}
+                    onEdit={() => handleEditSection('books')}
+                    onSave={() => handleSectionSaved('books')}
+                    showEditButton={isEditing}
+                  />
+                </div>
 
-              {/* Sección Libros de la Membresía */}
-              <BooksSection
-                books={books}
-                setBooks={setBooks}
-                isLocked={!isEditing || sectionLocked['books']}
-                onEdit={() => handleEditSection('books')}
-                onSave={() => handleSectionSaved('books')}
-                showEditButton={isEditing}
-              />
+                {/* Audio del mes + Ficha práctica en una misma línea */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div id="section-weekly-audio">
+                    <WelcomeAudioSection
+                      weeklyAudioTitle={weeklyAudioTitle}
+                      setWeeklyAudioTitle={setWeeklyAudioTitle}
+                      weeklyAudioDescription={weeklyAudioDescription}
+                      setWeeklyAudioDescription={setWeeklyAudioDescription}
+                      weeklyAudioFileUrl={weeklyAudioFileUrl}
+                      setWeeklyAudioFileUrl={setWeeklyAudioFileUrl}
+                      isLocked={!isEditing || sectionLocked['weekly-audio']}
+                      onEdit={() => handleEditSection('weekly-audio')}
+                      onSave={() => handleSectionSaved('weekly-audio')}
+                      showEditButton={isEditing}
+                    />
+                  </div>
+                  <div id="section-practical-sheet">
+                    <PracticalSheetSection
+                      practicalSheetTitle={practicalSheetTitle}
+                      setPracticalSheetTitle={setPracticalSheetTitle}
+                      practicalSheetDescription={practicalSheetDescription}
+                      setPracticalSheetDescription={setPracticalSheetDescription}
+                      practicalSheetFileUrl={practicalSheetFileUrl}
+                      setPracticalSheetFileUrl={setPracticalSheetFileUrl}
+                      isLocked={!isEditing || sectionLocked['practical-sheet']}
+                      onEdit={() => handleEditSection('practical-sheet')}
+                      onSave={() => handleSectionSaved('practical-sheet')}
+                      showEditButton={isEditing}
+                    />
+                  </div>
+                </div>
 
-              {/* Sección para niños */}
-              <ChildrenSection
-                childrenSectionStories={childrenSectionStories}
-                addChildrenSectionStory={addChildrenSectionStory}
-                updateChildrenSectionStory={updateChildrenSectionStory}
-                removeChildrenSectionStory={removeChildrenSectionStory}
-                isLocked={!isEditing || sectionLocked['children-section']}
-                onEdit={() => handleEditSection('children-section')}
-                onSave={() => handleSectionSaved('children-section')}
-                showEditButton={isEditing}
-              />
+                <div id="section-questions-for-any-book">
+                  <QuestionsForAnyBookSection
+                    questionsForAnyBookTitle={questionsForAnyBookTitle}
+                    setQuestionsForAnyBookTitle={setQuestionsForAnyBookTitle}
+                    questionsForAnyBookDescription={questionsForAnyBookDescription}
+                    setQuestionsForAnyBookDescription={setQuestionsForAnyBookDescription}
+                    questionsForAnyBookFileUrl={questionsForAnyBookFileUrl}
+                    setQuestionsForAnyBookFileUrl={setQuestionsForAnyBookFileUrl}
+                    isLocked={!isEditing || sectionLocked['questions-for-any-book']}
+                    onEdit={() => handleEditSection('questions-for-any-book')}
+                    onSave={() => handleSectionSaved('questions-for-any-book')}
+                    showEditButton={isEditing}
+                  />
+                </div>
 
-              {/* Sección Audio de Bienvenida */}
-              <WelcomeAudioSection
-                welcomeAudioTitle={welcomeAudioTitle}
-                setWelcomeAudioTitle={setWelcomeAudioTitle}
-                welcomeAudioSubtitle={welcomeAudioSubtitle}
-                setWelcomeAudioSubtitle={setWelcomeAudioSubtitle}
-                welcomeAudioFileUrl={welcomeAudioFileUrl}
-                setWelcomeAudioFileUrl={setWelcomeAudioFileUrl}
-                isLocked={!isEditing || sectionLocked['welcome-audio']}
-                onEdit={() => handleEditSection('welcome-audio')}
-                onSave={() => handleSectionSaved('welcome-audio')}
-                showEditButton={isEditing}
-              />
+                <div id="section-next-releases">
+                  <NextReleasesSection
+                    month={nextReleasesMonth}
+                    setMonth={setNextReleasesMonth}
+                    theme={nextReleasesTheme}
+                    setTheme={setNextReleasesTheme}
+                    description={nextReleasesDescription}
+                    setDescription={setNextReleasesDescription}
+                    isLocked={!isEditing || sectionLocked['next-releases']}
+                    onEdit={() => handleEditSection('next-releases')}
+                    onSave={() => handleSectionSaved('next-releases')}
+                    showEditButton={isEditing}
+                  />
+                </div>
+              </div>
 
-              {/* Sección Actividad del Mes */}
-              <CourseSectionsSection
-                monthlyActivityTitle={monthlyActivityTitle}
-                setMonthlyActivityTitle={setMonthlyActivityTitle}
-                monthlyActivitySubtitle={monthlyActivitySubtitle}
-                setMonthlyActivitySubtitle={setMonthlyActivitySubtitle}
-                monthlyActivityFileUrl={monthlyActivityFileUrl}
-                setMonthlyActivityFileUrl={setMonthlyActivityFileUrl}
-                activityName={activityName}
-                setActivityName={setActivityName}
-                activityDescription={activityDescription}
-                setActivityDescription={setActivityDescription}
-                isLocked={!isEditing || sectionLocked['course-sections']}
-                onEdit={() => handleEditSection('course-sections')}
-                onSave={() => handleSectionSaved('course-sections')}
-                showEditButton={isEditing}
-              />
-
-              {/* Sección Timbiriche */}
-              <TimbiricheSection
-                isLocked={!isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={() => {}}
-                showEditButton={isEditing}
-              />
-
-              {/* Sección Próximos Lanzamientos */}
-              <NextReleasesSection
-                month={nextReleasesMonth}
-                setMonth={setNextReleasesMonth}
-                theme={nextReleasesTheme}
-                setTheme={setNextReleasesTheme}
-                description={nextReleasesDescription}
-                setDescription={setNextReleasesDescription}
-                isLocked={!isEditing || sectionLocked['next-releases']}
-                onEdit={() => handleEditSection('next-releases')}
-                onSave={() => handleSectionSaved('next-releases')}
-                showEditButton={isEditing}
-              />
-
+              {/* Sidebar de estado de secciones (igual que en creación) */}
+              <SectionStatusSidebar sectionStatuses={sectionStatuses} />
             </div>
           )}
         </div>

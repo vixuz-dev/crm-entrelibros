@@ -21,7 +21,8 @@ import {
   FiChevronDown,
   FiChevronRight,
   FiAward,
-  FiPlus
+  FiPlus,
+  FiMessageCircle
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { logout as logoutService } from '../../api/auth';
@@ -112,6 +113,13 @@ const Sidebar = ({ onClose }) => {
           icon: FiList,
           route: ROUTES.BOOK_CLUB_LECTORES_LIST,
           active: location.pathname === ROUTES.BOOK_CLUB_LECTORES_LIST
+        },
+        {
+          id: 'preguntas-book-club',
+          label: 'Preguntas',
+          icon: FiMessageCircle,
+          route: ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS,
+          active: location.pathname === ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS
         }
       ]
     },

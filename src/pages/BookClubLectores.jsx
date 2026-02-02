@@ -2,16 +2,14 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FiCode, FiCopy, FiCheck, FiSave } from 'react-icons/fi';
-import { saveBookClubFile, addBookClub } from '../api/bookClubApi';
+import { addBookClub } from '../api/bookClubApi';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import MainConfigurationSection from '../components/book-club/MainConfigurationSection';
-import HeroSectionSection from '../components/book-club/HeroSectionSection';
 import BooksSection from '../components/book-club/BooksSection';
 import WelcomeAudioSection from '../components/book-club/WelcomeAudioSection';
-import CourseSectionsSection from '../components/book-club/CourseSectionsSection';
-import TimbiricheSection from '../components/book-club/TimbiricheSection';
+import PracticalSheetSection from '../components/book-club/PracticalSheetSection';
+import QuestionsForAnyBookSection from '../components/book-club/QuestionsForAnyBookSection';
 import NextReleasesSection from '../components/book-club/NextReleasesSection';
-import ChildrenSection from '../components/book-club/ChildrenSection';
 import SectionStatusSidebar from '../components/book-club/SectionStatusSidebar';
 import { MONTH_OPTIONS } from '../constants/bookClub';
 import { useBookClubStore } from '../store/useBookClubStore';
@@ -27,49 +25,39 @@ const BookClubLectores = () => {
     month,
     theme,
     description,
-    title,
-    subtitle,
-    fileUrl,
-    welcomeAudioTitle,
-    welcomeAudioSubtitle,
-    welcomeAudioFileUrl,
-    monthlyActivityTitle,
-    monthlyActivitySubtitle,
-    monthlyActivityFileUrl,
-    activityName,
-    activityDescription,
+    weeklyAudioTitle,
+    weeklyAudioDescription,
+    weeklyAudioFileUrl,
+    practicalSheetTitle,
+    practicalSheetDescription,
+    practicalSheetFileUrl,
+    questionsForAnyBookTitle,
+    questionsForAnyBookDescription,
+    questionsForAnyBookFileUrl,
     books,
     metadata,
-    heroSection,
     sections,
-    timbiriche,
     nextReleasesMonth,
     nextReleasesTheme,
     nextReleasesDescription,
-    childrenSectionStories,
     setMonth,
     setTheme,
     setDescription,
-    setTitle,
-    setSubtitle,
-    setFileUrl,
-    setWelcomeAudioTitle,
-    setWelcomeAudioSubtitle,
-    setWelcomeAudioFileUrl,
-    setMonthlyActivityTitle,
-    setMonthlyActivitySubtitle,
-    setMonthlyActivityFileUrl,
-    setActivityName,
-    setActivityDescription,
+    setWeeklyAudioTitle,
+    setWeeklyAudioDescription,
+    setWeeklyAudioFileUrl,
+    setPracticalSheetTitle,
+    setPracticalSheetDescription,
+    setPracticalSheetFileUrl,
+    setQuestionsForAnyBookTitle,
+    setQuestionsForAnyBookDescription,
+    setQuestionsForAnyBookFileUrl,
     addBook,
     removeBook,
     setBooks,
     setNextReleasesMonth,
     setNextReleasesTheme,
     setNextReleasesDescription,
-    addChildrenSectionStory,
-    updateChildrenSectionStory,
-    removeChildrenSectionStory,
     initializeWithAdmin,
     getFullConfiguration,
     reset
@@ -89,76 +77,53 @@ const BookClubLectores = () => {
   const initialStateRef = useRef(null);
   const isInitialMount = useRef(true);
 
-  // Valores por defecto para Hero Section
-  const DEFAULT_TITLE = 'Book Club';
-  const DEFAULT_SUBTITLE = 'Lectores';
-  const DEFAULT_FILE_URL = 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg';
-
-  // Función para verificar si una sección tiene datos configurados
   const checkSectionHasData = useMemo(() => {
-    // Hero Section siempre está "guardada" porque tiene valores por defecto
-    // Se considera guardada si tiene título, subtítulo y fileUrl (ya sean los defaults o valores personalizados)
-    const heroSectionHasData = !!(title && title.trim() !== '') && 
-                               !!(subtitle && subtitle.trim() !== '') && 
-                               !!(fileUrl && fileUrl.trim() !== '');
-
     return {
       'main-config': !!(month && month.length > 0 && theme && theme.trim() !== ''),
-      'hero-section': heroSectionHasData, // Siempre true si tiene los valores (defaults o personalizados)
-      'books': books && books.some(book => book && book.bookId && book.ownerDescription && book.ownerDescription.trim() !== ''),
-      'welcome-audio': !!(welcomeAudioSubtitle && welcomeAudioSubtitle.trim() !== '' && welcomeAudioFileUrl && welcomeAudioFileUrl.trim() !== ''),
-      'course-sections': !!(monthlyActivityTitle && monthlyActivityTitle.trim() !== '') &&
-                         !!(monthlyActivitySubtitle && monthlyActivitySubtitle.trim() !== '') &&
-                         !!(monthlyActivityFileUrl && monthlyActivityFileUrl.trim() !== '') &&
-                         !!(activityName && activityName.trim() !== '') &&
-                         !!(activityDescription && activityDescription.trim() !== ''),
+      'books': books && books.some(book => book && book.bookId && book.guideUrl && book.guideUrl.trim() !== ''),
+      'weekly-audio': !!(weeklyAudioTitle && weeklyAudioTitle.trim() !== '') &&
+                        !!(weeklyAudioDescription && weeklyAudioDescription.trim() !== '') &&
+                        !!(weeklyAudioFileUrl && weeklyAudioFileUrl.trim() !== ''),
+      'practical-sheet': !!(practicalSheetTitle && practicalSheetTitle.trim() !== '') &&
+                        !!(practicalSheetDescription && practicalSheetDescription.trim() !== '') &&
+                        !!(practicalSheetFileUrl && practicalSheetFileUrl.trim() !== ''),
+      'questions-for-any-book': !!(questionsForAnyBookTitle && questionsForAnyBookTitle.trim() !== '') &&
+                        !!(questionsForAnyBookDescription && questionsForAnyBookDescription.trim() !== '') &&
+                        !!(questionsForAnyBookFileUrl && questionsForAnyBookFileUrl.trim() !== ''),
       'next-releases': !!(nextReleasesMonth && nextReleasesMonth.trim() !== '') &&
                        !!(nextReleasesTheme && nextReleasesTheme.trim() !== '') &&
-                       !!(nextReleasesDescription && nextReleasesDescription.trim() !== ''),
-      'children-section': childrenSectionStories && childrenSectionStories.length > 0 &&
-                         childrenSectionStories.some(story => 
-                           story.title && story.title.trim() !== '' && 
-                           story.videoUrl && story.videoUrl.trim() !== ''
-                         )
+                       !!(nextReleasesDescription && nextReleasesDescription.trim() !== '')
     };
-  }, [month, theme, title, subtitle, fileUrl, books, welcomeAudioSubtitle, welcomeAudioFileUrl, 
-      monthlyActivityTitle, monthlyActivitySubtitle, monthlyActivityFileUrl, activityName, activityDescription,
-      nextReleasesMonth, nextReleasesTheme, nextReleasesDescription,
-      childrenSectionStories]);
+  }, [month, theme, books, weeklyAudioTitle, weeklyAudioDescription, weeklyAudioFileUrl,
+      practicalSheetTitle, practicalSheetDescription, practicalSheetFileUrl,
+      questionsForAnyBookTitle, questionsForAnyBookDescription, questionsForAnyBookFileUrl,
+      nextReleasesMonth, nextReleasesTheme, nextReleasesDescription]);
 
   // Estado de bloqueo/editando para cada sección
   // Hero Section siempre inicia bloqueada porque tiene valores por defecto
-  const [sectionLocked, setSectionLocked] = useState(() => {
-    // Inicializar con hero-section bloqueada por defecto (tiene valores por defecto)
-    return {
-      'main-config': false,
-      'hero-section': true, // Siempre bloqueada desde el inicio (valores por defecto)
-      'books': false,
-      'welcome-audio': false,
-      'course-sections': false,
-      'next-releases': false,
-      'children-section': false
-    };
-  });
+  const [sectionLocked, setSectionLocked] = useState(() => ({
+    'main-config': false,
+    'books': false,
+    'weekly-audio': false,
+    'practical-sheet': false,
+    'questions-for-any-book': false,
+    'next-releases': false
+  }));
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (!isInitialized) {
       const timer = setTimeout(() => {
-        const hasData = { ...checkSectionHasData };
-        hasData['hero-section'] = true;
-        setSectionLocked(hasData);
+        setSectionLocked({ ...checkSectionHasData });
         setIsInitialized(true);
       }, 100);
       
       return () => clearTimeout(timer);
     } else {
-      const hasData = { ...checkSectionHasData };
-      hasData['hero-section'] = true;
       setSectionLocked(prev => {
         const updated = { ...prev };
-        Object.keys(hasData).forEach(key => {
-          if (hasData[key] && !prev[key]) {
+        Object.keys(checkSectionHasData).forEach(key => {
+          if (checkSectionHasData[key] && !prev[key]) {
             updated[key] = true;
           }
         });
@@ -201,14 +166,9 @@ const BookClubLectores = () => {
         title: 'Book Club',
         subtitle: 'Lectores',
         fileUrl: 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg',
-        welcomeAudioTitle: '',
-        welcomeAudioSubtitle: '',
-        welcomeAudioFileUrl: '',
-        monthlyActivityTitle: '',
-        monthlyActivitySubtitle: '',
-        monthlyActivityFileUrl: '',
-        activityName: '',
-        activityDescription: '',
+        weeklyAudioTitle: '',
+        weeklyAudioDescription: '',
+        weeklyAudioFileUrl: '',
         books: [
           { order: 1, bookId: null, ownerDescription: '' },
           { order: 2, bookId: null, ownerDescription: '' },
@@ -259,7 +219,7 @@ const BookClubLectores = () => {
           const fullConfigurationJSON = useMemo(() => {
             const config = getFullConfiguration();
             return JSON.stringify(config, null, 2);
-          }, [metadata, heroSection, sections, books, timbiriche, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription, getFullConfiguration, childrenSectionStories]);
+          }, [metadata, sections, books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription, getFullConfiguration]);
 
   // Función para copiar al portapapeles
   const handleCopyToClipboard = async () => {
@@ -281,10 +241,9 @@ const BookClubLectores = () => {
       // Esto garantiza que metadata, heroSection y sections tengan los valores más recientes
       const store = useBookClubStore.getState();
       if (store.updateMetadata) store.updateMetadata();
-      if (store.updateHeroSection) store.updateHeroSection();
-      if (store.updateWelcomeAudioSection) store.updateWelcomeAudioSection();
+      if (store.updateWeeklyAudioSection) store.updateWeeklyAudioSection();
+      if (store.updatePracticalSheetSection) store.updatePracticalSheetSection();
       if (store.updateMonthlyActivitySection) store.updateMonthlyActivitySection();
-      if (store.updateChildrenSection) store.updateChildrenSection();
       
       // Obtener la configuración completa después de actualizar
       const bookClubObject = getFullConfiguration();
@@ -298,23 +257,19 @@ const BookClubLectores = () => {
         month: [...(month || [])],
         theme: theme || '',
         description: description || '',
-        title: title || 'Book Club',
-        subtitle: subtitle || 'Lectores',
-        fileUrl: fileUrl || 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg',
-        welcomeAudioTitle: welcomeAudioTitle || '',
-        welcomeAudioSubtitle: welcomeAudioSubtitle || '',
-        welcomeAudioFileUrl: welcomeAudioFileUrl || '',
-        monthlyActivityTitle: monthlyActivityTitle || '',
-        monthlyActivitySubtitle: monthlyActivitySubtitle || '',
-        monthlyActivityFileUrl: monthlyActivityFileUrl || '',
-        activityName: activityName || '',
-        activityDescription: activityDescription || '',
+        weeklyAudioTitle: weeklyAudioTitle || '',
+        weeklyAudioDescription: weeklyAudioDescription || '',
+        weeklyAudioFileUrl: weeklyAudioFileUrl || '',
+        practicalSheetTitle: practicalSheetTitle || '',
+        practicalSheetDescription: practicalSheetDescription || '',
+        practicalSheetFileUrl: practicalSheetFileUrl || '',
+        questionsForAnyBookTitle: questionsForAnyBookTitle || '',
+        questionsForAnyBookDescription: questionsForAnyBookDescription || '',
+        questionsForAnyBookFileUrl: questionsForAnyBookFileUrl || '',
         books: JSON.parse(JSON.stringify(books || [])),
         nextReleasesMonth: nextReleasesMonth || '',
         nextReleasesTheme: nextReleasesTheme || '',
-        nextReleasesDescription: nextReleasesDescription || '',
-        childrenSectionStories: JSON.parse(JSON.stringify(childrenSectionStories || [])),
-        timbiriche: JSON.parse(JSON.stringify(timbiriche || {}))
+        nextReleasesDescription: nextReleasesDescription || ''
       };
       
     } catch (error) {
@@ -327,12 +282,11 @@ const BookClubLectores = () => {
   useEffect(() => {
     setSectionLocked({
       'main-config': false,
-      'hero-section': true,
       'books': false,
-      'welcome-audio': false,
-      'course-sections': false,
-      'next-releases': false,
-      'children-section': false
+      'weekly-audio': false,
+      'practical-sheet': false,
+      'questions-for-any-book': false,
+      'next-releases': false
     });
     setIsInitialized(false);
     
@@ -352,29 +306,27 @@ const BookClubLectores = () => {
           month: [...(month || [])],
           theme: theme || '',
           description: description || '',
-          title: title || 'Book Club',
-          subtitle: subtitle || 'Lectores',
-          fileUrl: fileUrl || 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg',
-          welcomeAudioTitle: welcomeAudioTitle || '',
-          welcomeAudioSubtitle: welcomeAudioSubtitle || '',
-          welcomeAudioFileUrl: welcomeAudioFileUrl || '',
-          monthlyActivityTitle: monthlyActivityTitle || '',
-          monthlyActivitySubtitle: monthlyActivitySubtitle || '',
-          monthlyActivityFileUrl: monthlyActivityFileUrl || '',
-          activityName: activityName || '',
-          activityDescription: activityDescription || '',
-          books: JSON.parse(JSON.stringify(books || [])),
-          nextReleasesMonth: nextReleasesMonth || '',
+          weeklyAudioTitle: weeklyAudioTitle || '',
+          weeklyAudioDescription: weeklyAudioDescription || '',
+          weeklyAudioFileUrl: weeklyAudioFileUrl || '',
+practicalSheetTitle: practicalSheetTitle || '',
+        practicalSheetDescription: practicalSheetDescription || '',
+        practicalSheetFileUrl: practicalSheetFileUrl || '',
+        questionsForAnyBookTitle: questionsForAnyBookTitle || '',
+        questionsForAnyBookDescription: questionsForAnyBookDescription || '',
+        questionsForAnyBookFileUrl: questionsForAnyBookFileUrl || '',
+        books: JSON.parse(JSON.stringify(books || [])),
+        nextReleasesMonth: nextReleasesMonth || '',
           nextReleasesTheme: nextReleasesTheme || '',
-          nextReleasesDescription: nextReleasesDescription || '',
-          timbiriche: JSON.parse(JSON.stringify(timbiriche || {}))
+          nextReleasesDescription: nextReleasesDescription || ''
         };
         isInitialMount.current = false;
-      }, 200); // Aumentar el timeout para dar tiempo al reset
+      }, 200);
     }
-  }, [month, theme, description, title, subtitle, fileUrl, welcomeAudioTitle, welcomeAudioSubtitle, welcomeAudioFileUrl,
-      monthlyActivityTitle, monthlyActivitySubtitle, monthlyActivityFileUrl, activityName, activityDescription,
-      books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription, timbiriche]);
+  }, [month, theme, description, weeklyAudioTitle, weeklyAudioDescription, weeklyAudioFileUrl,
+      practicalSheetTitle, practicalSheetDescription, practicalSheetFileUrl,
+      questionsForAnyBookTitle, questionsForAnyBookDescription, questionsForAnyBookFileUrl,
+      books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription]);
 
   // Función para detectar si hay cambios sin guardar
   const hasUnsavedChanges = useMemo(() => {
@@ -384,54 +336,45 @@ const BookClubLectores = () => {
       month: [...(month || [])],
       theme: theme || '',
       description: description || '',
-      title: title || 'Book Club',
-      subtitle: subtitle || 'Lectores',
-      fileUrl: fileUrl || 'https://el-book-club.s3.mx-central-1.amazonaws.com/book-club-lectores/assets/heroSectionBg.jpg',
-      welcomeAudioTitle: welcomeAudioTitle || '',
-      welcomeAudioSubtitle: welcomeAudioSubtitle || '',
-      welcomeAudioFileUrl: welcomeAudioFileUrl || '',
-      monthlyActivityTitle: monthlyActivityTitle || '',
-      monthlyActivitySubtitle: monthlyActivitySubtitle || '',
-      monthlyActivityFileUrl: monthlyActivityFileUrl || '',
-      activityName: activityName || '',
-      activityDescription: activityDescription || '',
+      weeklyAudioTitle: weeklyAudioTitle || '',
+      weeklyAudioDescription: weeklyAudioDescription || '',
+      weeklyAudioFileUrl: weeklyAudioFileUrl || '',
+practicalSheetTitle: practicalSheetTitle || '',
+        practicalSheetDescription: practicalSheetDescription || '',
+        practicalSheetFileUrl: practicalSheetFileUrl || '',
+        questionsForAnyBookTitle: questionsForAnyBookTitle || '',
+      questionsForAnyBookDescription: questionsForAnyBookDescription || '',
+      questionsForAnyBookFileUrl: questionsForAnyBookFileUrl || '',
       books: JSON.parse(JSON.stringify(books || [])),
       nextReleasesMonth: nextReleasesMonth || '',
       nextReleasesTheme: nextReleasesTheme || '',
-      nextReleasesDescription: nextReleasesDescription || '',
-      timbiriche: JSON.parse(JSON.stringify(timbiriche || {}))
+      nextReleasesDescription: nextReleasesDescription || ''
     };
 
     const initial = initialStateRef.current;
 
-    // Comparar cada campo
     return (
       JSON.stringify(current.month) !== JSON.stringify(initial.month) ||
       current.theme !== initial.theme ||
       current.description !== initial.description ||
-      current.title !== initial.title ||
-      current.subtitle !== initial.subtitle ||
-      current.fileUrl !== initial.fileUrl ||
-      current.welcomeAudioTitle !== initial.welcomeAudioTitle ||
-      current.welcomeAudioSubtitle !== initial.welcomeAudioSubtitle ||
-      current.welcomeAudioFileUrl !== initial.welcomeAudioFileUrl ||
-      current.monthlyActivityTitle !== initial.monthlyActivityTitle ||
-      current.monthlyActivitySubtitle !== initial.monthlyActivitySubtitle ||
-      current.monthlyActivityFileUrl !== initial.monthlyActivityFileUrl ||
-      current.activityName !== initial.activityName ||
-      current.activityDescription !== initial.activityDescription ||
+      current.weeklyAudioTitle !== initial.weeklyAudioTitle ||
+      current.weeklyAudioDescription !== initial.weeklyAudioDescription ||
+      current.weeklyAudioFileUrl !== initial.weeklyAudioFileUrl ||
+      current.practicalSheetTitle !== initial.practicalSheetTitle ||
+      current.practicalSheetDescription !== initial.practicalSheetDescription ||
+      current.practicalSheetFileUrl !== initial.practicalSheetFileUrl ||
+      current.questionsForAnyBookTitle !== initial.questionsForAnyBookTitle ||
+      current.questionsForAnyBookDescription !== initial.questionsForAnyBookDescription ||
+      current.questionsForAnyBookFileUrl !== initial.questionsForAnyBookFileUrl ||
       JSON.stringify(current.books) !== JSON.stringify(initial.books) ||
       current.nextReleasesMonth !== initial.nextReleasesMonth ||
       current.nextReleasesTheme !== initial.nextReleasesTheme ||
-      current.nextReleasesDescription !== initial.nextReleasesDescription ||
-      JSON.stringify(current.childrenSectionStories) !== JSON.stringify(initial.childrenSectionStories) ||
-      JSON.stringify(current.timbiriche) !== JSON.stringify(initial.timbiriche)
+      current.nextReleasesDescription !== initial.nextReleasesDescription
     );
-  }, [month, theme, description, title, subtitle, fileUrl, welcomeAudioTitle, welcomeAudioSubtitle, welcomeAudioFileUrl,
-      monthlyActivityTitle, monthlyActivitySubtitle, monthlyActivityFileUrl, activityName, activityDescription,
-      books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription, 
-      childrenSectionStories,
-      timbiriche]);
+  }, [month, theme, description, weeklyAudioTitle, weeklyAudioDescription, weeklyAudioFileUrl,
+      practicalSheetTitle, practicalSheetDescription, practicalSheetFileUrl,
+      questionsForAnyBookTitle, questionsForAnyBookDescription, questionsForAnyBookFileUrl,
+      books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription]);
 
   // Interceptar navegación cuando hay cambios sin guardar
   useEffect(() => {
@@ -474,36 +417,6 @@ const BookClubLectores = () => {
     isNavigatingAwayRef.current = false;
   }, [location.pathname, hasUnsavedChanges, navigate]);
 
-  // Manejar selección de archivo y subir automáticamente a S3
-  const handleFileSelect = async (file, base64Image) => {
-    if (!file || !base64Image) {
-      setFileUrl('');
-      return;
-    }
-
-    try {
-      // Obtener la extensión del archivo
-      const fileExtension = file.name.split('.').pop().toLowerCase();
-      
-      // Subir el archivo al endpoint
-      const response = await saveBookClubFile(fileExtension, base64Image);
-      
-      // Si la respuesta es exitosa, obtener la URL del archivo
-      if (response.status === true && response.file_url) {
-        setFileUrl(response.file_url);
-      } else {
-        console.error('Error: No se recibió URL del servidor', response);
-        // En caso de que no haya URL, mantener el base64 como fallback
-        setFileUrl(base64Image);
-      }
-    } catch (error) {
-      console.error('Error al subir archivo:', error);
-      // En caso de error, mantener el base64 como fallback
-      setFileUrl(base64Image);
-    }
-  };
-
-
   return (
     <div className="space-y-6">
       {/* Layout de dos columnas */}
@@ -527,8 +440,8 @@ const BookClubLectores = () => {
                 showSuccessAnimation
                   ? 'bg-green-500 text-white scale-105 shadow-lg'
                   : isSavingBookClub
-                    ? 'bg-amber-500 text-white opacity-75 cursor-not-allowed'
-                    : 'bg-amber-500 text-white hover:bg-amber-600 hover:shadow-lg hover:scale-105 active:scale-95'
+                    ? 'bg-primary-600 text-white opacity-75 cursor-not-allowed'
+                    : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg hover:scale-105 active:scale-95'
               }`}
             >
               {showSuccessAnimation ? (
@@ -565,22 +478,6 @@ const BookClubLectores = () => {
           />
           </div>
 
-          {/* Sección Hero Section */}
-          <div id="section-hero-section">
-            <HeroSectionSection
-            title={title}
-            setTitle={setTitle}
-            subtitle={subtitle}
-            setSubtitle={setSubtitle}
-            fileUrl={fileUrl}
-            setFileUrl={setFileUrl}
-            isLocked={sectionLocked['hero-section']}
-            onEdit={() => handleEditSection('hero-section')}
-            onSave={() => handleSectionSaved('hero-section')}
-          />
-          </div>
-
-          {/* Sección Libros de la Membresía */}
           <div id="section-books">
             <BooksSection
             books={books}
@@ -591,59 +488,50 @@ const BookClubLectores = () => {
           />
           </div>
 
-          {/* Sección para niños */}
-          <div id="section-children-section">
-            <ChildrenSection
-            childrenSectionStories={childrenSectionStories}
-            addChildrenSectionStory={addChildrenSectionStory}
-            updateChildrenSectionStory={updateChildrenSectionStory}
-            removeChildrenSectionStory={removeChildrenSectionStory}
-            isLocked={sectionLocked['children-section']}
-            onEdit={() => handleEditSection('children-section')}
-            onSave={() => handleSectionSaved('children-section')}
-          />
+          {/* Audio del mes + Ficha práctica en una misma línea */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div id="section-weekly-audio">
+              <WelcomeAudioSection
+                weeklyAudioTitle={weeklyAudioTitle}
+                setWeeklyAudioTitle={setWeeklyAudioTitle}
+                weeklyAudioDescription={weeklyAudioDescription}
+                setWeeklyAudioDescription={setWeeklyAudioDescription}
+                weeklyAudioFileUrl={weeklyAudioFileUrl}
+                setWeeklyAudioFileUrl={setWeeklyAudioFileUrl}
+                isLocked={sectionLocked['weekly-audio']}
+                onEdit={() => handleEditSection('weekly-audio')}
+                onSave={() => handleSectionSaved('weekly-audio')}
+              />
+            </div>
+            <div id="section-practical-sheet">
+              <PracticalSheetSection
+                practicalSheetTitle={practicalSheetTitle}
+                setPracticalSheetTitle={setPracticalSheetTitle}
+                practicalSheetDescription={practicalSheetDescription}
+                setPracticalSheetDescription={setPracticalSheetDescription}
+                practicalSheetFileUrl={practicalSheetFileUrl}
+                setPracticalSheetFileUrl={setPracticalSheetFileUrl}
+                isLocked={sectionLocked['practical-sheet']}
+                onEdit={() => handleEditSection('practical-sheet')}
+                onSave={() => handleSectionSaved('practical-sheet')}
+              />
+            </div>
           </div>
 
-          {/* Sección Audio de Bienvenida */}
-          <div id="section-welcome-audio">
-            <WelcomeAudioSection
-            welcomeAudioTitle={welcomeAudioTitle}
-            setWelcomeAudioTitle={setWelcomeAudioTitle}
-            welcomeAudioSubtitle={welcomeAudioSubtitle}
-            setWelcomeAudioSubtitle={setWelcomeAudioSubtitle}
-            welcomeAudioFileUrl={welcomeAudioFileUrl}
-            setWelcomeAudioFileUrl={setWelcomeAudioFileUrl}
-            isLocked={sectionLocked['welcome-audio']}
-            onEdit={() => handleEditSection('welcome-audio')}
-            onSave={() => handleSectionSaved('welcome-audio')}
-          />
+          <div id="section-questions-for-any-book">
+            <QuestionsForAnyBookSection
+              questionsForAnyBookTitle={questionsForAnyBookTitle}
+              setQuestionsForAnyBookTitle={setQuestionsForAnyBookTitle}
+              questionsForAnyBookDescription={questionsForAnyBookDescription}
+              setQuestionsForAnyBookDescription={setQuestionsForAnyBookDescription}
+              questionsForAnyBookFileUrl={questionsForAnyBookFileUrl}
+              setQuestionsForAnyBookFileUrl={setQuestionsForAnyBookFileUrl}
+              isLocked={sectionLocked['questions-for-any-book']}
+              onEdit={() => handleEditSection('questions-for-any-book')}
+              onSave={() => handleSectionSaved('questions-for-any-book')}
+            />
           </div>
 
-          {/* Sección Course Sections */}
-          <div id="section-course-sections">
-            <CourseSectionsSection
-            monthlyActivityTitle={monthlyActivityTitle}
-            setMonthlyActivityTitle={setMonthlyActivityTitle}
-            monthlyActivitySubtitle={monthlyActivitySubtitle}
-            setMonthlyActivitySubtitle={setMonthlyActivitySubtitle}
-            monthlyActivityFileUrl={monthlyActivityFileUrl}
-            setMonthlyActivityFileUrl={setMonthlyActivityFileUrl}
-            activityName={activityName}
-            setActivityName={setActivityName}
-            activityDescription={activityDescription}
-            setActivityDescription={setActivityDescription}
-            isLocked={sectionLocked['course-sections']}
-            onEdit={() => handleEditSection('course-sections')}
-            onSave={() => handleSectionSaved('course-sections')}
-          />
-          </div>
-
-          {/* Sección Timbiriche */}
-          <div id="section-timbiriche">
-            <TimbiricheSection />
-          </div>
-
-          {/* Sección Next Releases */}
           <div id="section-next-releases">
             <NextReleasesSection
             month={nextReleasesMonth}

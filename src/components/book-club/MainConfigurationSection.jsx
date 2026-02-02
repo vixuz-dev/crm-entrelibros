@@ -192,14 +192,14 @@ const MainConfigurationSection = ({
 
         {/* Botón de guardar - Solo mostrar si no está bloqueado */}
         {!isLocked && (
-          <div className="flex items-center justify-end pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-start pt-4 border-t border-gray-200">
             <button
               type="submit"
-              aria-label="Guardar configuración principal"
+              aria-label="Guardar sección"
               className="px-6 py-3 bg-amber-500 text-white rounded-lg transition-all duration-200 font-cabin-medium flex items-center space-x-2 transform hover:bg-amber-600 hover:shadow-lg hover:scale-105 active:scale-95"
             >
               <FiSave className="w-5 h-5" />
-              <span>Guardar Configuración</span>
+              <span>Guardar sección</span>
             </button>
           </div>
         )}

@@ -4,37 +4,37 @@ import FileUpload from '../ui/FileUpload';
 import { saveBookClubFile } from '../../api/bookClubApi';
 import { showSuccess } from '../../utils/notifications';
 
-const WelcomeAudioSection = ({
-  weeklyAudioTitle,
-  setWeeklyAudioTitle,
-  weeklyAudioDescription,
-  setWeeklyAudioDescription,
-  weeklyAudioFileUrl,
-  setWeeklyAudioFileUrl,
+const PracticalSheetSection = ({
+  practicalSheetTitle,
+  setPracticalSheetTitle,
+  practicalSheetDescription,
+  setPracticalSheetDescription,
+  practicalSheetFileUrl,
+  setPracticalSheetFileUrl,
   isLocked = false,
   onEdit,
   onSave,
   showEditButton = true
 }) => {
-  const [localTitle, setLocalTitle] = useState(weeklyAudioTitle || '');
-  const [localDescription, setLocalDescription] = useState(weeklyAudioDescription || '');
-  const [localFileUrl, setLocalFileUrl] = useState(weeklyAudioFileUrl || '');
+  const [localTitle, setLocalTitle] = useState(practicalSheetTitle || '');
+  const [localDescription, setLocalDescription] = useState(practicalSheetDescription || '');
+  const [localFileUrl, setLocalFileUrl] = useState(practicalSheetFileUrl || '');
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedFileBase64, setSelectedFileBase64] = useState(null);
 
   useEffect(() => {
-    setLocalTitle(weeklyAudioTitle || '');
-  }, [weeklyAudioTitle]);
+    setLocalTitle(practicalSheetTitle || '');
+  }, [practicalSheetTitle]);
 
   useEffect(() => {
-    setLocalDescription(weeklyAudioDescription || '');
-  }, [weeklyAudioDescription]);
+    setLocalDescription(practicalSheetDescription || '');
+  }, [practicalSheetDescription]);
 
   useEffect(() => {
-    setLocalFileUrl(weeklyAudioFileUrl || '');
-  }, [weeklyAudioFileUrl]);
+    setLocalFileUrl(practicalSheetFileUrl || '');
+  }, [practicalSheetFileUrl]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -46,7 +46,7 @@ const WelcomeAudioSection = ({
       newErrors.description = 'La descripción es obligatoria';
     }
     if (!selectedFile && !selectedFileBase64 && (!localFileUrl || localFileUrl.trim() === '')) {
-      newErrors.fileUrl = 'El archivo de audio es obligatorio';
+      newErrors.fileUrl = 'El archivo descargable es obligatorio';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -54,35 +54,26 @@ const WelcomeAudioSection = ({
       return;
     }
 
-    // Limpiar errores
     setErrors({});
     setIsSaving(true);
 
     try {
       let finalFileUrl = localFileUrl;
 
-      // Si hay un archivo nuevo seleccionado, subirlo a S3
       if (selectedFile && selectedFileBase64) {
         try {
-          // Obtener la extensión del archivo
           const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
-          
-          // Subir el archivo al endpoint de S3 (pasar el objeto File para audio)
-          const response = await saveBookClubFile(fileExtension, selectedFileBase64, selectedFile);
-          
-          // Validar respuesta del API
+          const response = await saveBookClubFile(fileExtension, selectedFileBase64);
+
           if (response.status === true && response.file_url) {
-            // Usar la URL de S3 retornada
             finalFileUrl = response.file_url;
           } else {
-            // Mostrar error del API
             const errorMessage = response.status_Message || 'Error al subir el archivo';
             setErrors({ fileUrl: errorMessage });
             setIsSaving(false);
             return;
           }
         } catch (error) {
-          // Manejar errores del API
           const errorMessage = error.response?.data?.status_Message || error.message || 'Error al subir el archivo';
           setErrors({ fileUrl: errorMessage });
           setIsSaving(false);
@@ -90,20 +81,19 @@ const WelcomeAudioSection = ({
         }
       }
 
-      setWeeklyAudioTitle(localTitle.trim());
-      setWeeklyAudioDescription(localDescription.trim());
-      setWeeklyAudioFileUrl(finalFileUrl);
+      setPracticalSheetTitle(localTitle.trim());
+      setPracticalSheetDescription(localDescription.trim());
+      setPracticalSheetFileUrl(finalFileUrl);
       setSelectedFile(null);
       setSelectedFileBase64(null);
-      showSuccess('Audio del mes guardado exitosamente');
-      
+      showSuccess('Ficha Práctica guardada exitosamente');
+
       const button = document.activeElement;
       if (button && button.type === 'submit') {
         button.classList.add('animate-pulse');
         setTimeout(() => button.classList.remove('animate-pulse'), 1000);
       }
 
-      // Bloquear la sección después de guardar
       if (onSave) {
         onSave();
       }
@@ -115,7 +105,6 @@ const WelcomeAudioSection = ({
     }
   };
 
-  // Manejar cambio de archivo - Solo guardar en estado local, NO subir a S3 todavía
   const handleFileSelect = (file, base64File) => {
     if (!file || !base64File) {
       setLocalFileUrl('');
@@ -127,14 +116,10 @@ const WelcomeAudioSection = ({
       return;
     }
 
-    // Guardar el archivo y su base64 en estado local (se subirá cuando se guarde)
     setSelectedFile(file);
     setSelectedFileBase64(base64File);
-    
-    // Mostrar el archivo seleccionado (usar base64 temporalmente para preview)
     setLocalFileUrl(base64File);
-    
-    // Limpiar errores si había alguno
+
     if (errors.fileUrl) {
       setErrors(prev => ({ ...prev, fileUrl: null }));
     }
@@ -145,17 +130,17 @@ const WelcomeAudioSection = ({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-cabin-bold text-gray-800 mb-2">
-            Audio del mes
+            Ficha Práctica
           </h2>
           <p className="text-gray-700 font-cabin-regular">
-            Título, descripción y archivo de audio
+            Título, descripción y archivo descargable
           </p>
         </div>
         {isLocked && showEditButton && (
           <button
             type="button"
             onClick={onEdit}
-            aria-label="Editar audio del mes"
+            aria-label="Editar Ficha Práctica"
             className="flex items-center space-x-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 font-cabin-medium transform hover:scale-105 active:scale-95"
           >
             <FiEdit className="w-4 h-4" />
@@ -164,10 +149,9 @@ const WelcomeAudioSection = ({
         )}
       </div>
 
-      {/* Formulario - misma estructura que Ficha Práctica */}
       <form onSubmit={handleSave} className="flex flex-col flex-1 space-y-6">
         <div>
-          <label htmlFor="weeklyAudioTitle" className="block text-sm font-cabin-semibold text-gray-700 mb-2">
+          <label htmlFor="practicalSheetTitle" className="block text-sm font-cabin-semibold text-gray-700 mb-2">
             Título *
           </label>
           <div className="relative">
@@ -175,7 +159,7 @@ const WelcomeAudioSection = ({
               <FiType className="h-5 w-5 text-gray-400" />
             </div>
             <input
-              id="weeklyAudioTitle"
+              id="practicalSheetTitle"
               type="text"
               value={localTitle}
               onChange={(e) => {
@@ -186,7 +170,7 @@ const WelcomeAudioSection = ({
                   }
                 }
               }}
-              placeholder="Ej: Audio de bienvenida"
+              placeholder="Ej: Ficha Práctica del mes"
               disabled={isLocked}
               className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-cabin-regular transition-colors hover:border-gray-400 ${
                 errors.title ? 'border-red-500' : 'border-gray-300'
@@ -199,11 +183,11 @@ const WelcomeAudioSection = ({
         </div>
 
         <div>
-          <label htmlFor="weeklyAudioDescription" className="block text-sm font-cabin-semibold text-gray-700 mb-2">
+          <label htmlFor="practicalSheetDescription" className="block text-sm font-cabin-semibold text-gray-700 mb-2">
             Descripción *
           </label>
           <textarea
-            id="weeklyAudioDescription"
+            id="practicalSheetDescription"
             value={localDescription}
             onChange={(e) => {
               if (!isLocked) {
@@ -213,7 +197,7 @@ const WelcomeAudioSection = ({
                 }
               }
             }}
-            placeholder="Describe el contenido del audio..."
+            placeholder="Describe el contenido de la ficha práctica..."
             disabled={isLocked}
             rows={4}
             className={`block w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-cabin-regular transition-colors hover:border-gray-400 ${
@@ -227,7 +211,7 @@ const WelcomeAudioSection = ({
 
         <div>
           <label className="block text-sm font-cabin-semibold text-gray-700 mb-2">
-            Archivo de Audio *
+            Archivo descargable *
           </label>
           <FileUpload
             value={localFileUrl}
@@ -240,10 +224,10 @@ const WelcomeAudioSection = ({
               }
             }}
             onFileSelect={isLocked ? undefined : handleFileSelect}
-            accept="audio/*"
-            allowedExtensions={['mp3', 'mp4', 'wav']}
-            maxSize={100 * 1024 * 1024} // 100MB
-            fileTypeLabel="audio"
+            accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,image/jpg"
+            allowedExtensions={['pdf', 'jpg', 'jpeg', 'png', 'webp']}
+            maxSize={50 * 1024 * 1024}
+            fileTypeLabel="ficha"
             className="w-full"
             disabled={isLocked}
           />
@@ -263,10 +247,10 @@ const WelcomeAudioSection = ({
             <button
               type="submit"
               disabled={isSaving}
-              aria-label="Guardar audio del mes"
+              aria-label="Guardar Ficha Práctica"
               className={`px-6 py-3 bg-amber-500 text-white rounded-lg transition-all duration-200 font-cabin-medium flex items-center space-x-2 transform ${
-                isSaving 
-                  ? 'opacity-75 cursor-not-allowed' 
+                isSaving
+                  ? 'opacity-75 cursor-not-allowed'
                   : 'hover:bg-amber-600 hover:shadow-lg hover:scale-105 active:scale-95'
               }`}
             >
@@ -278,7 +262,7 @@ const WelcomeAudioSection = ({
               ) : (
                 <>
                   <FiSave className="w-5 h-5" />
-                  <span>Guardar sección</span>
+                  <span>Guardar sección.</span>
                 </>
               )}
             </button>
@@ -289,5 +273,4 @@ const WelcomeAudioSection = ({
   );
 };
 
-export default WelcomeAudioSection;
-
+export default PracticalSheetSection;

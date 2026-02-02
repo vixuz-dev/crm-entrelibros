@@ -24,77 +24,72 @@ const validateBookClub = (bookClubObject) => {
     }
   }
 
-  // Validar heroSection (Banner Inicial)
-  if (!bookClubObject.heroSection) {
-    errors.push('Banner Inicial: Falta la sección heroSection');
+  if (!bookClubObject.sections || !bookClubObject.sections.weeklyAudio) {
+    errors.push('Audio del mes: Falta la sección weeklyAudio');
   } else {
-    if (!bookClubObject.heroSection.title || bookClubObject.heroSection.title.trim() === '') {
-      errors.push('Banner Inicial: El título es obligatorio');
+    if (!bookClubObject.sections.weeklyAudio.title || 
+        bookClubObject.sections.weeklyAudio.title.trim() === '') {
+      errors.push('Audio del mes: El título es obligatorio');
     }
-    if (!bookClubObject.heroSection.subtitle || bookClubObject.heroSection.subtitle.trim() === '') {
-      errors.push('Banner Inicial: El subtítulo es obligatorio');
+    if (!bookClubObject.sections.weeklyAudio.description || 
+        bookClubObject.sections.weeklyAudio.description.trim() === '') {
+      errors.push('Audio del mes: La descripción es obligatoria');
     }
-    if (!bookClubObject.heroSection.fileUrl || bookClubObject.heroSection.fileUrl.trim() === '') {
-      errors.push('Banner Inicial: La imagen del banner es obligatoria');
+    if (!bookClubObject.sections.weeklyAudio.fileUrl || 
+        bookClubObject.sections.weeklyAudio.fileUrl.trim() === '') {
+      errors.push('Audio del mes: El archivo de audio es obligatorio');
     }
   }
 
-  // Validar sections.welcomeAudioSection (Audio de Bienvenida)
-  if (!bookClubObject.sections || !bookClubObject.sections.welcomeAudioSection) {
-    errors.push('Audio de Bienvenida: Falta la sección welcomeAudioSection');
+  if (!bookClubObject.sections || !bookClubObject.sections.practicalSheet) {
+    errors.push('Ficha Práctica: Falta la sección practicalSheet');
   } else {
-    if (!bookClubObject.sections.welcomeAudioSection.subtitle || 
-        bookClubObject.sections.welcomeAudioSection.subtitle.trim() === '') {
-      errors.push('Audio de Bienvenida: El subtítulo es obligatorio');
+    if (!bookClubObject.sections.practicalSheet.title || 
+        bookClubObject.sections.practicalSheet.title.trim() === '') {
+      errors.push('Ficha Práctica: El título es obligatorio');
     }
-    if (!bookClubObject.sections.welcomeAudioSection.fileUrl || 
-        bookClubObject.sections.welcomeAudioSection.fileUrl.trim() === '') {
-      errors.push('Audio de Bienvenida: El archivo de audio es obligatorio');
+    if (!bookClubObject.sections.practicalSheet.description || 
+        bookClubObject.sections.practicalSheet.description.trim() === '') {
+      errors.push('Ficha Práctica: La descripción es obligatoria');
+    }
+    if (!bookClubObject.sections.practicalSheet.fileUrl || 
+        bookClubObject.sections.practicalSheet.fileUrl.trim() === '') {
+      errors.push('Ficha Práctica: El archivo descargable es obligatorio');
     }
   }
 
-  // Validar sections.monthlyActivitySection (Actividad del Mes)
-  if (!bookClubObject.sections || !bookClubObject.sections.monthlyActivitySection) {
-    errors.push('Actividad del Mes: Falta la sección monthlyActivitySection');
+  if (!bookClubObject.sections || !bookClubObject.sections.questionsForAnyBook) {
+    errors.push('Preguntas para cualquier libro: Falta la sección questionsForAnyBook');
   } else {
-    if (!bookClubObject.sections.monthlyActivitySection.title || 
-        bookClubObject.sections.monthlyActivitySection.title.trim() === '') {
-      errors.push('Actividad del Mes: El título es obligatorio');
+    if (!bookClubObject.sections.questionsForAnyBook.title || 
+        bookClubObject.sections.questionsForAnyBook.title.trim() === '') {
+      errors.push('Preguntas para cualquier libro: El título es obligatorio');
     }
-    if (!bookClubObject.sections.monthlyActivitySection.subtitle || 
-        bookClubObject.sections.monthlyActivitySection.subtitle.trim() === '') {
-      errors.push('Actividad del Mes: El subtítulo es obligatorio');
+    if (!bookClubObject.sections.questionsForAnyBook.description || 
+        bookClubObject.sections.questionsForAnyBook.description.trim() === '') {
+      errors.push('Preguntas para cualquier libro: La descripción es obligatoria');
     }
-    if (!bookClubObject.sections.monthlyActivitySection.fileUrl || 
-        bookClubObject.sections.monthlyActivitySection.fileUrl.trim() === '') {
-      errors.push('Actividad del Mes: El archivo de la actividad es obligatorio');
-    }
-    if (!bookClubObject.sections.monthlyActivitySection.activity) {
-      errors.push('Actividad del Mes: Falta la información de la actividad');
-    } else {
-      if (!bookClubObject.sections.monthlyActivitySection.activity.name || 
-          bookClubObject.sections.monthlyActivitySection.activity.name.trim() === '') {
-        errors.push('Actividad del Mes: El nombre de la actividad es obligatorio');
-      }
-      if (!bookClubObject.sections.monthlyActivitySection.activity.description || 
-          bookClubObject.sections.monthlyActivitySection.activity.description.trim() === '') {
-        errors.push('Actividad del Mes: La descripción de la actividad es obligatoria');
-      }
+    if (!bookClubObject.sections.questionsForAnyBook.fileUrl || 
+        bookClubObject.sections.questionsForAnyBook.fileUrl.trim() === '') {
+      errors.push('Preguntas para cualquier libro: La ficha con las preguntas es obligatoria');
     }
   }
 
-  // Validar books (Libros de la Membresía)
   if (!bookClubObject.books || !Array.isArray(bookClubObject.books) || bookClubObject.books.length === 0) {
-    errors.push('Libros de la Membresía: Debe haber al menos un libro configurado');
+    errors.push('Libros sugeridos del mes: Debe haber al menos un libro configurado');
   } else {
     bookClubObject.books.forEach((book, index) => {
       if (!book.bookId) {
-        errors.push(`Libros de la Membresía: El libro ${index + 1} no tiene un bookId asignado`);
+        return;
       }
-      if (!book.ownerDescription || book.ownerDescription.trim() === '') {
-        errors.push(`Libros de la Membresía: El libro ${index + 1} no tiene descripción`);
+      if (!book.guideUrl || book.guideUrl.trim() === '') {
+        errors.push(`Libros sugeridos del mes: El libro ${index + 1} no tiene guía (PDF o imagen)`);
       }
     });
+    const withBookId = bookClubObject.books.filter((b) => b && b.bookId);
+    if (withBookId.length === 0) {
+      errors.push('Libros sugeridos del mes: Debe haber al menos un libro configurado');
+    }
   }
 
   return {
@@ -333,6 +328,99 @@ export const updateBookClub = async (bookClubId, bookClubObject) => {
     const errorMessage =
       error.response?.data?.status_Message || error.message || 'Error al actualizar el Book Club';
     showDataLoadError('Book Club', errorMessage);
+    throw error;
+  }
+};
+
+/**
+ * Obtener las preguntas (y respuestas) que las personas envían desde la ecommerce para un book club.
+ * Requiere token de autenticación.
+ * @param {number} bookClubId - ID del book club
+ * @returns {Promise<{ status: boolean, status_Message: string, body: Array<{ book_club_question_id: number, question: string, created_at: string, name: string, book_club_answer_id: number|null, answer: string }> }>}
+ */
+export const getBookClubQuestions = async (bookClubId) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/book-club/get_book_club_questions`, {
+      book_club_id: bookClubId
+    });
+
+    if (response.status === 200 && response.data.status === true) {
+      return response.data;
+    }
+    const errorMessage = response.data?.status_Message || 'Error al obtener preguntas del Book Club';
+    showDataLoadError('Preguntas Book Club', errorMessage);
+    throw new Error(errorMessage);
+  } catch (error) {
+    console.error('Error getting book club questions:', error);
+    const errorMessage =
+      error.response?.data?.status_Message || error.message || 'Error al obtener preguntas del Book Club';
+    if (!error.response || error.response.status !== 404) {
+      showDataLoadError('Preguntas Book Club', errorMessage);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Añadir respuesta a una pregunta del book club.
+ * Requiere token de autenticación.
+ * @param {number} bookClubQuestionId - ID de la pregunta
+ * @param {string} answer - Texto de la respuesta
+ * @returns {Promise<{ status: boolean, status_Message: string, book_club_answer_id: number }>}
+ */
+export const addBookClubAnswer = async (bookClubQuestionId, answer) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/book-club/add_book_club_answer`, {
+      book_club_question_id: bookClubQuestionId,
+      answer
+    });
+
+    const data = response.data;
+    if (data?.status === true) {
+      return data;
+    }
+    const errorMessage = data?.status_Message || 'Error al guardar la respuesta';
+    showDataLoadError('Preguntas Book Club', errorMessage);
+    throw new Error(errorMessage);
+  } catch (error) {
+    console.error('Error adding book club answer:', error);
+    const data = error.response?.data;
+    if (data?.status === true) {
+      return data;
+    }
+    const errorMessage = data?.status_Message || error.message || 'Error al guardar la respuesta';
+    showDataLoadError('Preguntas Book Club', errorMessage);
+    throw error;
+  }
+};
+
+/**
+ * Actualizar la respuesta de una pregunta del book club.
+ * Requiere token de autenticación.
+ * @param {number} bookClubAnswerId - ID de la respuesta
+ * @param {number} bookClubQuestionId - ID de la pregunta
+ * @param {string} answer - Nuevo texto de la respuesta
+ * @returns {Promise<void>} Respuesta 204 sin cuerpo
+ */
+export const updateBookClubAnswer = async (bookClubAnswerId, bookClubQuestionId, answer) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/book-club/update_book_club_answer`, {
+      book_club_answer_id: bookClubAnswerId,
+      book_club_question_id: bookClubQuestionId,
+      answer
+    });
+
+    if (response.status === 204 || response.status === 200) {
+      return response.data;
+    }
+    const errorMessage = response.data?.status_Message || 'Error al actualizar la respuesta';
+    showDataLoadError('Preguntas Book Club', errorMessage);
+    throw new Error(errorMessage);
+  } catch (error) {
+    console.error('Error updating book club answer:', error);
+    const errorMessage =
+      error.response?.data?.status_Message || error.message || 'Error al actualizar la respuesta';
+    showDataLoadError('Preguntas Book Club', errorMessage);
     throw error;
   }
 };

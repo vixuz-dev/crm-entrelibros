@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiCheck, FiX, FiSettings, FiImage, FiBook, FiVolume2, FiCalendar, FiTrendingUp, FiUsers } from 'react-icons/fi';
+import { FiCheck, FiX, FiSettings, FiBook, FiVolume2, FiFileText, FiTrendingUp } from 'react-icons/fi';
 
 const SECTION_CONFIG = [
   {
@@ -9,40 +9,34 @@ const SECTION_CONFIG = [
     description: 'Mes, tema y descripción'
   },
   {
-    id: 'hero-section',
-    name: 'Banner Inicial',
-    icon: FiImage,
-    description: 'Título, subtítulo e imagen'
-  },
-  {
     id: 'books',
-    name: 'Libros de la Membresía',
+    name: 'Libros sugeridos del mes',
     icon: FiBook,
-    description: 'Libros del mes'
+    description: 'Libro + guía (PDF o imagen)'
   },
   {
-    id: 'welcome-audio',
-    name: 'Audio de Bienvenida',
+    id: 'weekly-audio',
+    name: 'Audio del mes',
     icon: FiVolume2,
-    description: 'Audio introductorio'
+    description: 'Título, descripción y archivo de audio'
   },
   {
-    id: 'course-sections',
-    name: 'Actividad del Mes',
-    icon: FiCalendar,
-    description: 'Actividad mensual'
+    id: 'practical-sheet',
+    name: 'Ficha Práctica',
+    icon: FiFileText,
+    description: 'Título, descripción y archivo'
+  },
+  {
+    id: 'questions-for-any-book',
+    name: 'Preguntas para cualquier libro',
+    icon: FiFileText,
+    description: 'Título, descripción y ficha con preguntas'
   },
   {
     id: 'next-releases',
     name: 'Próximos Lanzamientos',
     icon: FiTrendingUp,
     description: 'Próximos meses'
-  },
-  {
-    id: 'children-section',
-    name: 'Sección para niños',
-    icon: FiUsers,
-    description: 'Video cuentos'
   }
 ];
 
