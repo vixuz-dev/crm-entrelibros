@@ -17,6 +17,8 @@ const getGuideFileType = (extension) => {
 const BooksSection = ({
   books,
   setBooks,
+  booksTheme = '',
+  setBooksTheme,
   isLocked = false,
   onEdit,
   onSave,
@@ -223,6 +225,28 @@ const BooksSection = ({
           </button>
         )}
       </div>
+
+      {/* Tema que liga los libros */}
+      {setBooksTheme && (
+        <div className="mb-6">
+          <label className="block text-sm font-cabin-semibold text-gray-700 mb-2">
+            Tema
+          </label>
+          {isLocked ? (
+            <p className="text-gray-800 font-cabin-regular">
+              {booksTheme || '—'}
+            </p>
+          ) : (
+            <input
+              type="text"
+              value={booksTheme || ''}
+              onChange={(e) => setBooksTheme(e.target.value)}
+              placeholder="Ej: Aventuras, Crecimiento personal..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg font-cabin-regular text-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+            />
+          )}
+        </div>
+      )}
 
       {showAddArea && !localBooks[firstEmpty]?.bookId && (
         <div ref={searchContainerRef} className="mb-6">

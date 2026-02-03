@@ -31,6 +31,8 @@ export const useBookClubStore = create(
       questionsForAnyBookDescription: '',
       questionsForAnyBookFileUrl: '',
 
+      // Tema que liga los libros de la sección
+      booksTheme: '',
       // Estados para libros (siempre 4)
       books: [
         { order: 1, bookId: null, guideUrl: '', guideFileType: '' },
@@ -218,6 +220,8 @@ export const useBookClubStore = create(
       setBooks: (booksArray) => {
         set({ books: booksArray });
       },
+
+      setBooksTheme: (theme) => set({ booksTheme: theme }),
 
       setBook: (index, bookData) => {
         set((state) => {
@@ -451,6 +455,7 @@ export const useBookClubStore = create(
           questionsForAnyBookTitle: '',
           questionsForAnyBookDescription: '',
           questionsForAnyBookFileUrl: '',
+          booksTheme: '',
           childrenSectionStories: [],
           books: [
             { order: 1, bookId: null, guideUrl: '', guideFileType: '' },
@@ -511,7 +516,7 @@ export const useBookClubStore = create(
 
       // Obtener el JSON completo de la configuración
       getFullConfiguration: () => {
-        const { metadata, sections, books, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription } = get();
+        const { metadata, sections, books, booksTheme, nextReleasesMonth, nextReleasesTheme, nextReleasesDescription } = get();
         const validBooks = books.filter(book => book.bookId !== null);
         const nextReleases = (nextReleasesMonth || nextReleasesTheme || nextReleasesDescription) ? {
           month: nextReleasesMonth,
@@ -524,7 +529,8 @@ export const useBookClubStore = create(
         const config = {
           metadata,
           sections: sectionsToInclude,
-          books: validBooks
+          books: validBooks,
+          booksTheme: booksTheme || ''
         };
         if (nextReleases) {
           config.nextReleases = nextReleases;
@@ -551,8 +557,9 @@ export const useBookClubStore = create(
         questionsForAnyBookTitle: state.questionsForAnyBookTitle,
         questionsForAnyBookDescription: state.questionsForAnyBookDescription,
         questionsForAnyBookFileUrl: state.questionsForAnyBookFileUrl,
+        booksTheme: state.booksTheme,
         childrenSectionStories: state.childrenSectionStories,
-          books: state.books,
+        books: state.books,
           metadata: state.metadata,
           heroSection: state.heroSection,
           sections: state.sections,

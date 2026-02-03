@@ -34,6 +34,7 @@ const BookClubLectores = () => {
     questionsForAnyBookTitle,
     questionsForAnyBookDescription,
     questionsForAnyBookFileUrl,
+    booksTheme,
     books,
     metadata,
     sections,
@@ -52,6 +53,7 @@ const BookClubLectores = () => {
     setQuestionsForAnyBookTitle,
     setQuestionsForAnyBookDescription,
     setQuestionsForAnyBookFileUrl,
+    setBooksTheme,
     addBook,
     removeBook,
     setBooks,
@@ -482,6 +484,8 @@ practicalSheetTitle: practicalSheetTitle || '',
             <BooksSection
             books={books}
             setBooks={setBooks}
+            booksTheme={booksTheme}
+            setBooksTheme={setBooksTheme}
             isLocked={sectionLocked['books']}
             onEdit={() => handleEditSection('books')}
             onSave={() => handleSectionSaved('books')}

@@ -55,6 +55,7 @@ const BookClubLectoresList = () => {
     questionsForAnyBookTitle,
     questionsForAnyBookDescription,
     questionsForAnyBookFileUrl,
+    booksTheme,
     books,
     nextReleasesMonth,
     nextReleasesTheme,
@@ -79,6 +80,7 @@ const BookClubLectoresList = () => {
     setQuestionsForAnyBookTitle,
     setQuestionsForAnyBookDescription,
     setQuestionsForAnyBookFileUrl,
+    setBooksTheme,
     setBooks,
     setNextReleasesMonth,
     setNextReleasesTheme,
@@ -334,6 +336,9 @@ const BookClubLectoresList = () => {
           setQuestionsForAnyBookFileUrl(q.fileUrl || '');
         }
         
+        if (bookClub.booksTheme != null) {
+          setBooksTheme(bookClub.booksTheme || '');
+        }
         if (bookClub.books && Array.isArray(bookClub.books)) {
           const normalized = [1, 2, 3, 4].map((i) => {
             const b = bookClub.books.find((x) => x.order === i) || bookClub.books[i - 1];
@@ -551,6 +556,8 @@ const BookClubLectoresList = () => {
                   <BooksSection
                     books={books}
                     setBooks={setBooks}
+                    booksTheme={booksTheme}
+                    setBooksTheme={setBooksTheme}
                     isLocked={!isEditing || sectionLocked['books']}
                     onEdit={() => handleEditSection('books')}
                     onSave={() => handleSectionSaved('books')}
