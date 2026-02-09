@@ -16,6 +16,8 @@ import BookClubLectoresList from './pages/BookClubLectoresList';
 import BookClubPreguntas from './pages/BookClubPreguntas';
 import Pedidos from './pages/Pedidos';
 import InformacionPedido from './pages/InformacionPedido';
+import EnvioCorreoMasivo from './pages/EnvioCorreoMasivo';
+import EnvioCorreoMasivoSuscriptores from './pages/EnvioCorreoMasivoSuscriptores';
 import Login from './pages/Login';
 import PWAManager from './components/PWAManager';
 // import PWACacheReset from './components/PWACacheReset';
@@ -70,6 +72,9 @@ function App() {
                 <Route path={ROUTES.BOOK_CLUB_LECTORES_CREATE} element={<BookClubLectores />} />
                 <Route path={ROUTES.BOOK_CLUB_LECTORES_LIST} element={<BookClubLectoresList />} />
                 <Route path={ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS} element={<BookClubPreguntas />} />
+                <Route path={ROUTES.CORREOS} element={<Navigate to={ROUTES.CORREOS_ENVIO_MASIVO} replace />} />
+                <Route path={ROUTES.CORREOS_ENVIO_MASIVO} element={<EnvioCorreoMasivo />} />
+                <Route path={ROUTES.CORREOS_ENVIO_MASIVO_MEMBRESIA} element={<EnvioCorreoMasivoSuscriptores />} />
                 <Route path={ROUTES.ORDERS} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_CREATE} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_INFORMATION} element={<InformacionPedido />} />

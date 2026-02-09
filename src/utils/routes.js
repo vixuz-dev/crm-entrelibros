@@ -54,6 +54,11 @@ export const ROUTES = {
   BOOK_CLUB_LECTORES_LIST: "/book-club-lectores/listado",
   BOOK_CLUB_LECTORES_PREGUNTAS: "/book-club-lectores/preguntas",
   
+  // Rutas de correos
+  CORREOS: "/correos",
+  CORREOS_ENVIO_MASIVO: "/correos/envio-masivo",
+  CORREOS_ENVIO_MASIVO_MEMBRESIA: "/correos/envio-masivo/membresia/:id",
+
   // Rutas de ventas y pedidos
   ORDERS: "/pedidos",
   ORDERS_CREATE: "/pedidos/crear",
@@ -141,6 +146,8 @@ export const getPageTitle = (pathname) => {
     [ROUTES.BOOK_CLUB_LECTORES_CREATE]: "Crear Book Club",
     [ROUTES.BOOK_CLUB_LECTORES_LIST]: "Listado de Book Clubs",
     [ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS]: "Preguntas",
+    [ROUTES.CORREOS]: "Correos",
+    [ROUTES.CORREOS_ENVIO_MASIVO]: "Envío de correo masivo",
     [ROUTES.ORDERS]: "Pedidos",
     [ROUTES.CUSTOMERS]: "Clientes",
     [ROUTES.INVENTORY]: "Inventario",
@@ -150,5 +157,8 @@ export const getPageTitle = (pathname) => {
     [ROUTES.HELP]: "Ayuda",
   };
   
+  if (pathname.startsWith("/correos/envio-masivo/membresia")) {
+    return "Suscriptores - Envío masivo";
+  }
   return routeTitles[pathname] || "EntreLibros CRM";
 }; 

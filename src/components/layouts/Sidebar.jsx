@@ -22,7 +22,9 @@ import {
   FiChevronRight,
   FiAward,
   FiPlus,
-  FiMessageCircle
+  FiMessageCircle,
+  FiMail,
+  FiSend
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { logout as logoutService } from '../../api/auth';
@@ -120,6 +122,22 @@ const Sidebar = ({ onClose }) => {
           icon: FiMessageCircle,
           route: ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS,
           active: location.pathname === ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS
+        }
+      ]
+    },
+    {
+      id: 'correos',
+      label: 'Correos',
+      icon: FiMail,
+      route: ROUTES.CORREOS,
+      active: location.pathname.startsWith(ROUTES.CORREOS),
+      submenu: [
+        {
+          id: 'envio-masivo',
+          label: 'Envío de correo masivo',
+          icon: FiSend,
+          route: ROUTES.CORREOS_ENVIO_MASIVO,
+          active: location.pathname === ROUTES.CORREOS_ENVIO_MASIVO || location.pathname.startsWith(ROUTES.CORREOS_ENVIO_MASIVO + '/')
         }
       ]
     },
