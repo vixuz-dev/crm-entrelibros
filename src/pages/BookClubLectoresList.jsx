@@ -178,29 +178,26 @@ const BookClubLectoresList = () => {
     return MONTH_OPTIONS.findIndex(m => m.value === 'Septiembre');
   };
 
-  // Generar lista de meses disponibles (desde Septiembre hasta el mes actual, incluyendo el actual)
-  // Temporal: Incluir Enero y Febrero también como ejemplo
+  // Generar lista de meses disponibles (desde Septiembre hasta el mes actual, año lectivo)
   const availableMonths = useMemo(() => {
     const currentMonthIndex = getCurrentMonthIndex();
     const septemberIndex = getSeptemberIndex();
-    
-    // Crear array de meses desde Septiembre hasta el mes actual (incluyendo el actual)
+
     const months = [];
-    for (let i = septemberIndex; i <= currentMonthIndex; i++) {
-      months.push(MONTH_OPTIONS[i]);
+    if (currentMonthIndex >= septemberIndex) {
+      // Estamos entre Septiembre y Diciembre: un solo tramo
+      for (let i = septemberIndex; i <= currentMonthIndex; i++) {
+        months.push(MONTH_OPTIONS[i]);
+      }
+    } else {
+      // Estamos entre Enero y Agosto: Sept–Dic del ciclo anterior + Ene–mes actual
+      for (let i = septemberIndex; i <= 11; i++) {
+        months.push(MONTH_OPTIONS[i]);
+      }
+      for (let i = 0; i <= currentMonthIndex; i++) {
+        months.push(MONTH_OPTIONS[i]);
+      }
     }
-    
-    // Temporal: Agregar Febrero si no está ya incluido
-    const febreroOption = MONTH_OPTIONS.find(m => m.value === 'Febrero');
-    if (febreroOption && !months.find(m => m.value === 'Febrero')) {
-      months.unshift(febreroOption);
-    }
-    // Temporal: Agregar Enero si no está ya incluido
-    const eneroOption = MONTH_OPTIONS.find(m => m.value === 'Enero');
-    if (eneroOption && !months.find(m => m.value === 'Enero')) {
-      months.unshift(eneroOption);
-    }
-    
     return months;
   }, []);
 
@@ -662,4 +659,3 @@ const BookClubLectoresList = () => {
 };
 
 export default BookClubLectoresList;
-
