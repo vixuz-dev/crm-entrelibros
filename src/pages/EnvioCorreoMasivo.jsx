@@ -18,12 +18,14 @@ const EnvioCorreoMasivo = () => {
       try {
         const response = await getMembershipsResume();
         if (response.status === true && response.memberships) {
-          const mapped = response.memberships.map((m, index) => ({
-            membership_id: m.membership_id ?? index + 1,
-            membership_name: m.membership_name,
-            status: m.membership_status === 'active',
-            active_subscribers_count: m.active_subscribers_count ?? 0,
-          }));
+          const mapped = response.memberships
+            .filter((m) => m.membership_status === 'active')
+            .map((m, index) => ({
+              membership_id: m.membership_id ?? index + 1,
+              membership_name: m.membership_name,
+              status: true,
+              active_subscribers_count: m.active_subscribers_count ?? 0,
+            }));
           setMemberships(mapped);
         } else {
           setMemberships([]);

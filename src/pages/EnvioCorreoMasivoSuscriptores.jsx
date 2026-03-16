@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiCode, FiX, FiImage, FiUpload, FiSend, FiUserPlus, FiTrash2 } from 'react-icons/fi';
+import { FiArrowLeft, FiCode, FiX, FiImage, FiUpload, FiSend, FiUserPlus } from 'react-icons/fi';
 import { getMembershipDetail } from '../api/memberships';
 import { saveBookClubFile } from '../api/bookClubApi';
 import { sendBatch } from '../api/smtpApi';
@@ -41,6 +41,14 @@ const getStatusText = (status) => {
   }
 };
 
+/** Formatea timestamp Unix (segundos) como "10 Marzo 2026". */
+const formatFechaSuscripcion = (created) => {
+  if (!created) return '—';
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const d = new Date(created * 1000);
+  return `${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`;
+};
+
 const getStatusColor = (status) => {
   switch (status) {
     case 'active':
@@ -68,6 +76,8 @@ const EnvioCorreoMasivoSuscriptores = () => {
   const [sending, setSending] = useState(false);
   const [extraEmail, setExtraEmail] = useState('');
   const [extraName, setExtraName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const fileInputRef = React.useRef(null);
 
   const {
@@ -79,7 +89,6 @@ const EnvioCorreoMasivoSuscriptores = () => {
     getSelected,
     getExtraRecipients,
     addExtraRecipient,
-    removeExtraRecipient,
     getTotalRecipientsCount,
     resetAll,
     getEmailSubject,
@@ -120,14 +129,37 @@ const EnvioCorreoMasivoSuscriptores = () => {
   };
 
   const subscriptions = membershipDetail?.subscriptions ?? [];
+
+  // Solo suscriptores activos, luego filtrar por rango de fechas
+  const activeSubscriptions = subscriptions.filter((s) => s.status === 'active');
+  const filteredSubscriptions = activeSubscriptions.filter((subscription) => {
+    if (!startDate && !endDate) {
+      return true;
+    }
+    if (!subscription.created) {
+      return false;
+    }
+    const createdDate = new Date(subscription.created * 1000);
+    const createdStr = createdDate.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    if (startDate && createdStr < startDate) {
+      return false;
+    }
+    if (endDate && createdStr > endDate) {
+      return false;
+    }
+    return true;
+  });
+
   const allFromListSelected =
-    subscriptions.length > 0 && subscriptions.every((s) => isSelected(s.subscription_id));
+    filteredSubscriptions.length > 0 &&
+    filteredSubscriptions.every((s) => isSelected(s.subscription_id));
 
   const handleSelectAllClick = () => {
     if (allFromListSelected) {
-      deselectAllFromList(subscriptions);
+      deselectAllFromList(filteredSubscriptions);
     } else {
-      selectAll(subscriptions);
+      selectAll(filteredSubscriptions);
     }
   };
 
@@ -419,6 +451,43 @@ const EnvioCorreoMasivoSuscriptores = () => {
             </div>
           </div>
 
+          {/* Filtro por fechas */}
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
+            <h2 className="font-cabin-semibold text-gray-800 mb-2">Filtrar por fecha de suscripción</h2>
+            <div className="flex flex-wrap items-center gap-4">
+              <div>
+                <label
+                  htmlFor="start-date"
+                  className="block text-xs font-cabin-medium text-gray-500 mb-1"
+                >
+                  Desde
+                </label>
+                <input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-cabin-regular focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="end-date"
+                  className="block text-xs font-cabin-medium text-gray-500 mb-1"
+                >
+                  Hasta
+                </label>
+                <input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-cabin-regular focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Agregar destinatario (temporal) */}
           <div className="rounded-lg border border-gray-200 bg-white p-4">
             <h2 className="font-cabin-semibold text-gray-800 mb-2 flex items-center gap-2">
@@ -466,9 +535,9 @@ const EnvioCorreoMasivoSuscriptores = () => {
             </div>
           </div>
 
-          {subscriptions.length === 0 && extraRecipients.length === 0 ? (
+          {filteredSubscriptions.length === 0 && extraRecipients.length === 0 ? (
             <div className="text-center py-10 text-gray-500 font-cabin-regular rounded-lg border border-gray-200 bg-gray-50">
-              No hay suscriptores en esta membresía. Agrega destinatarios arriba o elige otra membresía.
+              No hay suscriptores en este rango de fechas. Ajusta el filtro o agrega destinatarios arriba.
             </div>
           ) : (
             <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -476,7 +545,7 @@ const EnvioCorreoMasivoSuscriptores = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left">
-                      {subscriptions.length > 0 ? (
+                      {filteredSubscriptions.length > 0 ? (
                         <label className="flex items-center gap-2 cursor-pointer font-cabin-medium text-gray-700 text-sm">
                           <input
                             type="checkbox"
@@ -497,15 +566,15 @@ const EnvioCorreoMasivoSuscriptores = () => {
                       Email
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
-                      Estado
+                      Fecha
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider w-24">
-                      Acción
+                    <th className="px-4 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
+                      Estado
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {subscriptions.map((subscription) => {
+                  {filteredSubscriptions.map((subscription) => {
                     const contactInfo = parseMetadataField(
                       subscription.metadata?.contact_information
                     );
@@ -531,6 +600,9 @@ const EnvioCorreoMasivoSuscriptores = () => {
                         <td className="px-4 py-3 text-sm font-cabin-regular text-gray-600">
                           {contactInfo?.email || '—'}
                         </td>
+                        <td className="px-4 py-3 text-sm font-cabin-regular text-gray-600">
+                          {formatFechaSuscripcion(subscription.created)}
+                        </td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(
@@ -540,7 +612,6 @@ const EnvioCorreoMasivoSuscriptores = () => {
                             {getStatusText(subscription.status)}
                           </span>
                         </td>
-                        <td className="px-4 py-3" />
                       </tr>
                     );
                   })}
@@ -553,20 +624,11 @@ const EnvioCorreoMasivoSuscriptores = () => {
                       <td className="px-4 py-3 text-sm font-cabin-regular text-gray-600">
                         {r.email}
                       </td>
+                      <td className="px-4 py-3 text-sm font-cabin-regular text-gray-500">—</td>
                       <td className="px-4 py-3">
                         <span className="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 border-gray-200">
                           Extra
                         </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => removeExtraRecipient(index)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                          title="Quitar"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
                       </td>
                     </tr>
                   ))}
