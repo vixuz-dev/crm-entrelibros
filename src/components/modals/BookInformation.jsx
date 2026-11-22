@@ -46,8 +46,17 @@ const BookInformation = ({
 
   // Obtener datos del catálogo
   const { authors, isLoading: authorsLoading, error: authorsError, isInitialized: authorsInitialized, refreshAuthors } = useAuthors();
-  const { categories } = useCategories();
-  const { topics } = useTopics();
+  const { categories, refreshCategories } = useCategories();
+  const { topics, refreshTopics } = useTopics();
+
+  // El formulario lee de los catálogos globales, que se cargan al iniciar sesión y se guardan en el navegador.
+  // Se refrescan cada vez que se abre para ver lo creado después en Autores, Categorías o Temas.
+  useEffect(() => {
+    if (!isOpen) return;
+    refreshAuthors();
+    refreshCategories();
+    refreshTopics();
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Convertir datos del catálogo a opciones para dropdowns
   const authorOptions = authors.map((author) => ({
@@ -89,7 +98,7 @@ const BookInformation = ({
           discount: 0,
           stock: 0,
           amount_pages: 0,
-          status: 1,
+          status: 0,
           main_image_url: "",
           category_list: [],
           topic_list: [],
@@ -129,85 +138,11 @@ const BookInformation = ({
     }
   }, [isOpen]);
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-    }).format(price);
-  };
-
-
-
-  const getStockStatus = (stock) => {
-    if (stock === 0)
-      return {
-        text: "Agotado",
-        color: "bg-red-100 text-red-800 border-red-200",
-      };
-    if (stock <= 5)
-      return {
-        text: "Stock Bajo",
-        color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      };
-    return {
-      text: "Disponible",
-      color: "bg-green-100 text-green-800 border-green-200",
-    };
-  };
-
   const handleInputChange = (field, value) => {
     setEditData((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
-
-  // Función para calcular el precio con descuento
-  const calculateDiscountedPrice = (originalPrice, discountPercent) => {
-    if (!originalPrice || !discountPercent || discountPercent <= 0) {
-      return originalPrice;
-    }
-    const discountAmount = originalPrice * (discountPercent / 100);
-    const discountedPrice = originalPrice - discountAmount;
-    return Math.round(discountedPrice); // Redondear al entero más cercano
-  };
-
-  // Función para manejar cambios en precio y descuento con cálculo automático
-  const handlePriceOrDiscountChange = (field, value) => {
-    let newValue;
-    if (value === '') {
-      newValue = 0;
-    } else if (field === 'discount') {
-      // Para descuento, forzar número entero y limitar a 0-100
-      const parsedValue = Math.floor(parseFloat(value) || 0);
-      newValue = Math.max(0, Math.min(100, parsedValue));
-    } else if (field === 'price') {
-      // Para precio, redondear al entero más cercano
-      newValue = Math.round(parseFloat(value) || 0);
-    } else {
-      newValue = parseFloat(value) || 0;
-    }
-    
-    setEditData((prev) => {
-      const updatedData = {
-        ...prev,
-        [field]: newValue,
-      };
-
-      // Calcular automáticamente el precio de oferta
-      if (field === 'price' || field === 'discount') {
-        const price = field === 'price' ? newValue : prev.price;
-        const discount = field === 'discount' ? newValue : prev.discount;
-        
-        if (discount > 0 && price > 0) {
-          updatedData.price_offer = calculateDiscountedPrice(price, discount);
-        } else {
-          updatedData.price_offer = price; // Sin descuento, precio de oferta = precio original
-        }
-      }
-
-      return updatedData;
-    });
   };
 
   // Validación de archivos de imagen
@@ -400,16 +335,6 @@ const BookInformation = ({
         return;
       }
 
-      if (!editData.category_list || editData.category_list.length === 0) {
-        showError('Debe seleccionar al menos una categoría');
-        return;
-      }
-
-      if (!editData.topic_list || editData.topic_list.length === 0) {
-        showError('Debe seleccionar al menos un tema');
-        return;
-      }
-
       // Subir imágenes pendientes primero
       let finalMainImageUrl = editData.main_image_url;
       let finalAdditionalImages = [...(editData.additional_images || [])];
@@ -436,11 +361,13 @@ const BookInformation = ({
         product_id: book ? book.product_id : null,
         product_name: editData.product_name.trim(),
         product_description: editData.product_description?.trim() || "Sin descripcion",
-        price: parseFloat(editData.price) || 0,
-        price_offer: parseFloat(editData.price_offer) || 0,
-        stock: parseInt(editData.stock) || 0,
+        // Los libros viven en la biblioteca y NO se venden por separado (solo se venden los combos):
+        // precio, stock y estado quedan fijos para que nunca aparezcan en la tienda.
+        price: 0,
+        price_offer: 0,
+        stock: 0,
         amount_pages: parseInt(editData.amount_pages) || 0,
-        status: editData.status,
+        status: 0,
         author_id_list: editData.author_list.map(author => author.author_id || author),
         category_id_list: editData.category_list.map(category => category.category_id || category),
         topic_id_list: editData.topic_list.map(topic => topic.topic_id || topic),
@@ -568,7 +495,7 @@ const BookInformation = ({
   };
 
   const getModalSubtitle = () => {
-    if (mode === "create") return "Agregar un nuevo libro al catálogo";
+    if (mode === "create") return "Agregar un nuevo libro a la biblioteca";
     if (isEditMode)
       return `Editando información de ${book?.product_name || "libro"}`;
     return `Detalles completos de ${book?.product_name || "libro"}`;
@@ -627,6 +554,12 @@ const BookInformation = ({
             </div>
           ) : (
             <div className="space-y-6 sm:space-y-8">
+              {isEditMode && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-cabin-regular text-amber-800">
+                  Los libros se guardan en la <strong>biblioteca</strong> y <strong>no se venden por separado</strong>:
+                  solo se venden los combos que los incluyen. Por eso no llevan precio, stock ni estado.
+                </div>
+              )}
               {/* Información básica */}
               <div className="flex flex-col lg:flex-row items-start space-y-6 lg:space-y-0 lg:space-x-6">
                 {/* Sección de imágenes */}
@@ -1009,94 +942,8 @@ const BookInformation = ({
                   {/* Grid de información detallada */}
                   {isEditMode ? (
                     <div className="space-y-4 text-sm">
-                      {/* Fila 1: Precio Original - Descuento - Precio Oferta (calculado) */}
+                      {/* Fila 1: Páginas (los libros no llevan precio, estado ni stock: solo se venden los combos) */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                          <span className="font-cabin-medium text-gray-600 block mb-1">
-                            Precio Original:
-                          </span>
-                          <div className="flex items-center space-x-1">
-                            <span className="text-gray-600">$</span>
-                            <input
-                              type="number"
-                              step="1"
-                              min="0"
-                              value={editData.price === 0 ? '' : editData.price}
-                              onChange={(e) => handlePriceOrDiscountChange("price", e.target.value)}
-                              className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <span className="font-cabin-medium text-gray-600 block mb-1">
-                            Descuento (%):
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="1"
-                            value={editData.discount === 0 ? '' : editData.discount}
-                            onChange={(e) => handlePriceOrDiscountChange("discount", e.target.value)}
-                            className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          />
-                        </div>
-                        <div>
-                          <span className="font-cabin-medium text-gray-600 block mb-1">
-                            Precio Oferta:
-                          </span>
-                          <div className="flex items-center space-x-1">
-                            <span className="text-gray-600">$</span>
-                            <input
-                              type="number"
-                              step="1"
-                              min="0"
-                              value={editData.price_offer === 0 ? '' : editData.price_offer}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                handleInputChange(
-                                  "price_offer",
-                                  value === '' ? 0 : Math.round(parseFloat(value) || 0)
-                                );
-                              }}
-                              className={`w-full text-sm font-cabin-medium text-gray-800 bg-white border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                                editData.discount > 0 ? 'border-green-300 bg-green-50' : 'border-gray-300'
-                              }`}
-                              placeholder={editData.discount > 0 ? "Calculado automáticamente" : "Igual al precio original"}
-                            />
-                          </div>
-                          {editData.discount > 0 && editData.price > 0 && (
-                            <div className="text-xs text-green-600 mt-1 font-cabin-medium">
-                              💰 Ahorro: ${((editData.price - editData.price_offer) || 0).toFixed(2)} ({editData.discount}% de descuento)
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Fila 2: Estado - Páginas - Stock */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                          <span className="font-cabin-medium text-gray-600 block mb-1">
-                            Estado:
-                          </span>
-                          <CustomDropdown
-                            options={[
-                              { value: 1, label: 'Activo' },
-                              { value: 0, label: 'Inactivo' }
-                            ]}
-                            selectedValues={[editData.status]}
-                            onChange={(values) =>
-                              handleInputChange(
-                                "status",
-                                parseInt(values[0])
-                              )
-                            }
-                            placeholder="Seleccionar estado"
-                            multiple={false}
-                            searchable={false}
-                            className="w-full text-sm"
-                          />
-                        </div>
                         <div>
                           <span className="font-cabin-medium text-gray-600 block mb-1">
                             Páginas:
@@ -1115,31 +962,13 @@ const BookInformation = ({
                             className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
                           />
                         </div>
-                        <div>
-                          <span className="font-cabin-medium text-gray-600 block mb-1">
-                            Stock:
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={editData.stock === 0 ? '' : editData.stock}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              handleInputChange(
-                                "stock",
-                                value === '' ? 0 : parseInt(value) || 0
-                              );
-                            }}
-                            className="w-full text-sm font-cabin-medium text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          />
-                        </div>
                       </div>
 
                       {/* Fila 3: Categorías - Temas */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div>
                           <span className="font-cabin-medium text-gray-600 block mb-1">
-                            Categorías:
+                            Categorías (opcional):
                           </span>
                           <CustomDropdown
                             options={categoryOptions}
@@ -1168,7 +997,7 @@ const BookInformation = ({
                         </div>
                         <div>
                           <span className="font-cabin-medium text-gray-600 block mb-1">
-                            Temas:
+                            Temas (opcional):
                           </span>
                           <CustomDropdown
                             options={topicOptions}
@@ -1199,45 +1028,6 @@ const BookInformation = ({
                     </div>
                   ) : book ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-gray-800">
-                      <div>
-                        <span className="font-cabin-medium text-gray-600 block">
-                          Precio:
-                        </span>
-                        {/* {book.discount > 0 ? (
-                        <span className="text-green-600 font-cabin-bold">{formatPrice(discountedPrice)}</span>
-                      ) : (
-                        <span className="font-cabin-medium">{formatPrice(book.price)}</span>
-                      )} */}
-                        <span className="font-cabin-medium">
-                          {formatPrice(book.price_offer || book.price)}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-cabin-medium text-gray-600 block">
-                          Descuento:
-                        </span>
-                        <span className="font-cabin-medium">
-                          {Math.round(book.discount || 0)}%
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-cabin-medium text-gray-600 block">
-                          Estado:
-                        </span>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            book.status === 1
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {book.status === 1 ? "Activo" : "Inactivo"}
-                        </span>
-                      </div>
-                      {/* <div>
-                      <span className="font-cabin-medium text-gray-600 block">Stock:</span>
-                      <span className="font-cabin-medium">{book.stock} unidades</span>
-                    </div> */}
                       <div>
                         <span className="font-cabin-medium text-gray-600 block">
                           Páginas:
@@ -1279,14 +1069,6 @@ const BookInformation = ({
                         </span>
                         <span className="font-cabin-medium">
                           {book.sku || "N/A"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-cabin-medium text-gray-600 block">
-                          Stock:
-                        </span>
-                        <span className="font-cabin-medium">
-                          {book.stock || 0} unidades
                         </span>
                       </div>
                     </div>

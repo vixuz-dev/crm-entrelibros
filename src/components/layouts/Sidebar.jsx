@@ -17,6 +17,7 @@ import {
   FiHelpCircle,
   FiX,
   FiTag,
+  FiCalendar,
   FiList,
   FiChevronDown,
   FiChevronRight,
@@ -27,6 +28,7 @@ import {
   FiSend
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
+import { ENABLE_PANEL } from '../../utils/featureFlags';
 import { logout as logoutService } from '../../api/auth';
 import { ROUTES } from '../../utils/routes';
 
@@ -39,6 +41,7 @@ const Sidebar = ({ onClose }) => {
   const mainMenuItems = [
     {
       id: 'panel',
+      hidden: !ENABLE_PANEL, // oculto por ahora (no borrado)
       label: 'Panel',
       icon: FiGrid,
       route: ROUTES.PANEL,
@@ -89,41 +92,18 @@ const Sidebar = ({ onClose }) => {
       ]
     },
     {
-      id: 'membresias',
-      label: 'Membresías',
-      icon: FiCreditCard,
-      route: ROUTES.MEMBERSHIPS,
-      active: location.pathname.startsWith(ROUTES.MEMBERSHIPS)
+      id: 'combos',
+      label: 'Combos',
+      icon: FiPackage,
+      route: ROUTES.COMBOS,
+      active: location.pathname.startsWith(ROUTES.COMBOS)
     },
     {
-      id: 'book-club-lectores',
-      label: 'Book Club Lectores',
-      icon: FiAward,
-      route: ROUTES.BOOK_CLUB_LECTORES,
-      active: location.pathname.startsWith(ROUTES.BOOK_CLUB_LECTORES),
-      submenu: [
-        {
-          id: 'crear-book-club',
-          label: 'Crear book club',
-          icon: FiPlus,
-          route: ROUTES.BOOK_CLUB_LECTORES_CREATE,
-          active: location.pathname === ROUTES.BOOK_CLUB_LECTORES_CREATE || location.pathname === ROUTES.BOOK_CLUB_LECTORES
-        },
-        {
-          id: 'listado-book-club',
-          label: 'Listado',
-          icon: FiList,
-          route: ROUTES.BOOK_CLUB_LECTORES_LIST,
-          active: location.pathname === ROUTES.BOOK_CLUB_LECTORES_LIST
-        },
-        {
-          id: 'preguntas-book-club',
-          label: 'Preguntas',
-          icon: FiMessageCircle,
-          route: ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS,
-          active: location.pathname === ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS
-        }
-      ]
+      id: 'temporadas',
+      label: 'Temporadas',
+      icon: FiCalendar,
+      route: ROUTES.SEASONS,
+      active: location.pathname.startsWith(ROUTES.SEASONS)
     },
     {
       id: 'correos',
@@ -161,7 +141,8 @@ const Sidebar = ({ onClose }) => {
       icon: FiPackage,
       route: ROUTES.INVENTORY,
       active: location.pathname.startsWith(ROUTES.INVENTORY),
-      disabled: true
+      disabled: true,
+      hidden: true
     },
     {
       id: 'reportes',
@@ -169,7 +150,8 @@ const Sidebar = ({ onClose }) => {
       icon: FiBarChart2,
       route: ROUTES.REPORTS,
       active: location.pathname.startsWith(ROUTES.REPORTS),
-      disabled: true
+      disabled: true,
+      hidden: true
     },
     {
       id: 'configuracion',
@@ -177,7 +159,8 @@ const Sidebar = ({ onClose }) => {
       icon: FiSettings,
       route: ROUTES.SETTINGS,
       active: location.pathname.startsWith(ROUTES.SETTINGS),
-      disabled: true
+      disabled: true,
+      hidden: true
     },
     {
       id: 'ayuda',
@@ -185,7 +168,8 @@ const Sidebar = ({ onClose }) => {
       icon: FiHelpCircle,
       route: ROUTES.HELP,
       active: location.pathname.startsWith(ROUTES.HELP),
-      disabled: true
+      disabled: true,
+      hidden: true
     }
   ];
 
@@ -197,7 +181,8 @@ const Sidebar = ({ onClose }) => {
       route: ROUTES.NOTIFICATIONS,
       badge: 24,
       badgeColor: 'bg-green-500',
-      disabled: true
+      disabled: true,
+      hidden: true
     },
     {
       id: 'logout',
@@ -284,7 +269,7 @@ const Sidebar = ({ onClose }) => {
       {/* Main Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto sidebar-nav">
         <div className="space-y-2">
-          {mainMenuItems.map((item) => {
+          {mainMenuItems.filter((item) => !item.hidden).map((item) => {
             const Icon = item.icon;
             const hasSubmenu = item.submenu && item.submenu.length > 0;
             const isExpanded = isSubmenuExpanded(item.id);
@@ -361,7 +346,7 @@ const Sidebar = ({ onClose }) => {
           </h3>
         </div>
         <div className="space-y-2">
-          {accountMenuItems.map((item) => {
+          {accountMenuItems.filter((item) => !item.hidden).map((item) => {
             const Icon = item.icon;
             return (
               <button

@@ -26,7 +26,7 @@ import axiosConfig from "../utils/axiosConfig";
  * @param {string} searchTerm - Optional search term for product_name
  * @returns {Promise} Promise with products data
  */
-export const getProducts = async (page = 1, limit = 8, searchTerm = '') => {
+export const getProducts = async (page = 1, limit = 8, searchTerm = '', extraParams = {}) => {
   try {
 
     
@@ -41,6 +41,11 @@ export const getProducts = async (page = 1, limit = 8, searchTerm = '') => {
       queryParams.append('product_name', preparedSearchTerm);
     }
     
+    // Filtros adicionales (p. ej. is_bundle: '1' = solo combos, '0' = solo libros)
+    Object.entries(extraParams || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') queryParams.append(key, value);
+    });
+
     // Add query params to URL if any exist
     if (queryParams.toString()) {
       url += `?${queryParams.toString()}`;

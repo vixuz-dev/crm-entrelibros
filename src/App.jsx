@@ -6,22 +6,19 @@ import Panel from './pages/Panel';
 import Usuarios from './pages/Usuarios';
 import Clientes from './pages/Clientes';
 import Libros from './pages/Libros';
+import Combos from './pages/Combos';
+import Temporadas from './pages/Temporadas';
 import Categorias from './pages/Categorias';
 import Temas from './pages/Temas';
 import Autores from './pages/Autores';
-import Membresias from './pages/Membresias';
-import DetalleMembresia from './pages/DetalleMembresia';
-import BookClubLectores from './pages/BookClubLectores';
-import BookClubLectoresList from './pages/BookClubLectoresList';
-import BookClubPreguntas from './pages/BookClubPreguntas';
 import Pedidos from './pages/Pedidos';
 import InformacionPedido from './pages/InformacionPedido';
 import EnvioCorreoMasivo from './pages/EnvioCorreoMasivo';
-import EnvioCorreoMasivoSuscriptores from './pages/EnvioCorreoMasivoSuscriptores';
 import Login from './pages/Login';
 import PWAManager from './components/PWAManager';
 // import PWACacheReset from './components/PWACacheReset';
-import { ROUTES } from './utils/routes';
+import { ROUTES, DEFAULT_ROUTE } from './utils/routes';
+import { ENABLE_PANEL } from './utils/featureFlags';
 import { useAuth } from './hooks/useAuth';
 import "./index.css";
 
@@ -46,7 +43,7 @@ function App() {
       <Routes>
         {/* Ruta pública - Login */}
         <Route path={ROUTES.LOGIN} element={
-          isAuthenticated ? <Navigate to={ROUTES.PANEL} replace /> : <Login />
+          isAuthenticated ? <Navigate to={DEFAULT_ROUTE} replace /> : <Login />
         } />
         
         {/* Rutas protegidas */}
@@ -55,26 +52,24 @@ function App() {
             <Layout>
               <Routes>
                 {/* Rutas principales */}
-                <Route path={ROUTES.PANEL} element={<Panel />} />
+                {/* Panel oculto por ahora (no borrado): con la bandera apagada, /panel lleva al inicio */}
+                <Route path={ROUTES.PANEL} element={ENABLE_PANEL ? <Panel /> : <Navigate to={DEFAULT_ROUTE} replace />} />
                 
                 {/* Rutas de gestión */}
                 <Route path={ROUTES.USERS} element={<Usuarios />} />
                 <Route path={ROUTES.BOOKS} element={<Libros />} />
+                <Route path={ROUTES.COMBOS} element={<Combos />} />
+                <Route path={ROUTES.SEASONS} element={<Temporadas />} />
                 <Route path={ROUTES.BOOKS_CREATE} element={<Libros />} />
                 <Route path={ROUTES.BOOKS_LIST} element={<Libros />} />
                 <Route path={ROUTES.BOOKS_CATEGORIES} element={<Categorias />} />
                 <Route path={ROUTES.BOOKS_AUTHORS} element={<Autores />} />
                 <Route path={ROUTES.CATEGORIES} element={<Categorias />} />
                 <Route path={ROUTES.TOPICS} element={<Temas />} />
-                <Route path={ROUTES.MEMBERSHIPS} element={<Membresias />} />
-                <Route path={ROUTES.MEMBERSHIPS_DETAIL} element={<DetalleMembresia />} />
-                <Route path={ROUTES.BOOK_CLUB_LECTORES} element={<Navigate to={ROUTES.BOOK_CLUB_LECTORES_CREATE} replace />} />
-                <Route path={ROUTES.BOOK_CLUB_LECTORES_CREATE} element={<BookClubLectores />} />
-                <Route path={ROUTES.BOOK_CLUB_LECTORES_LIST} element={<BookClubLectoresList />} />
-                <Route path={ROUTES.BOOK_CLUB_LECTORES_PREGUNTAS} element={<BookClubPreguntas />} />
+
+
                 <Route path={ROUTES.CORREOS} element={<Navigate to={ROUTES.CORREOS_ENVIO_MASIVO} replace />} />
                 <Route path={ROUTES.CORREOS_ENVIO_MASIVO} element={<EnvioCorreoMasivo />} />
-                <Route path={ROUTES.CORREOS_ENVIO_MASIVO_MEMBRESIA} element={<EnvioCorreoMasivoSuscriptores />} />
                 <Route path={ROUTES.ORDERS} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_CREATE} element={<Pedidos />} />
                 <Route path={ROUTES.ORDERS_INFORMATION} element={<InformacionPedido />} />
@@ -87,7 +82,7 @@ function App() {
                 <Route path={ROUTES.HELP} element={<PlaceholderPage />} />
                 
                 {/* Redirección por defecto */}
-                <Route path="*" element={<Navigate to={ROUTES.PANEL} replace />} />
+                <Route path="*" element={<Navigate to={DEFAULT_ROUTE} replace />} />
               </Routes>
             </Layout>
           ) : (

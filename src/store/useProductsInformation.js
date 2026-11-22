@@ -43,11 +43,13 @@ export const useProductsInformation = create(
       
           set({ isLoading: true, error: null, lastLoadTime: now });
           const { getProducts } = await import('../api/products');
-          const response = await getProducts(page, limit, searchTerm);
+          // Esta pantalla es la biblioteca: solo libros (los combos tienen su propia pantalla)
+          const response = await getProducts(page, limit, searchTerm, { is_bundle: '0' });
 
           if (response.status === true) {
             set({
-              products: response.product_list || [],
+              // Respaldo por si el backend aún no filtra: un combo trae bundle_items con libros
+              products: (response.product_list || []).filter((p) => !(Array.isArray(p.bundle_items) && p.bundle_items.length > 0)),
               currentPage: page,
               totalPages: response.total_pages || 0,
               totalProducts: response.product_list ? response.product_list.length * (response.total_pages || 1) : 0,

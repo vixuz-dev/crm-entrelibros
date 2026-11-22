@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
-import { ROUTES } from '../utils/routes';
+import { ROUTES, DEFAULT_ROUTE } from '../utils/routes';
 import { login } from '../api/auth';
 import { useAdminStore } from '../store/adminStore';
 
@@ -84,8 +84,8 @@ const Login = () => {
         // Limpiar formulario solo en caso de éxito
         clearForm();
         
-        // Redirigir al Panel
-        navigate(ROUTES.PANEL);
+        // Redirigir a la pantalla de inicio (Panel si está habilitado; si no, Libros)
+        navigate(DEFAULT_ROUTE);
       } else {
         // Login fallido - el backend devolvió status: false
         throw new Error(response?.status_Message || 'Credenciales incorrectas');

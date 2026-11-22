@@ -1,6 +1,8 @@
 // Rutas del CRM EntreLibros
 // Todas las rutas están en español para mejor UX
 
+import { ENABLE_PANEL } from "./featureFlags";
+
 export const ROUTES = {
   // Rutas de autenticación
   LOGIN: "/iniciar-sesion",
@@ -20,6 +22,8 @@ export const ROUTES = {
   
   // Rutas de gestión de libros
   BOOKS: "/libros",
+  COMBOS: "/combos",
+  SEASONS: "/temporadas",
   BOOKS_CREATE: "/libros/crear",
   BOOKS_EDIT: "/libros/editar/:id",
   BOOKS_VIEW: "/libros/ver/:id",
@@ -113,6 +117,10 @@ export const ROUTES = {
   ERROR_FORBIDDEN: "/acceso-denegado",
 };
 
+// Pantalla de inicio: el Panel está oculto por ahora (ver utils/featureFlags.js), así que se entra por Libros.
+export const DEFAULT_ROUTE = ENABLE_PANEL ? ROUTES.PANEL : ROUTES.BOOKS;
+
+
 // Función helper para generar rutas con parámetros
 export const generateRoute = (route, params = {}) => {
   let generatedRoute = route;
@@ -141,6 +149,8 @@ export const getPageTitle = (pathname) => {
     [ROUTES.BOOKS_AUTHORS]: "Autores",
     [ROUTES.CATEGORIES]: "Categorías",
     [ROUTES.TOPICS]: "Temas",
+    [ROUTES.COMBOS]: "Combos",
+    [ROUTES.SEASONS]: "Temporadas",
     [ROUTES.MEMBERSHIPS]: "Membresías",
     [ROUTES.BOOK_CLUB_LECTORES]: "Book Club Lectores",
     [ROUTES.BOOK_CLUB_LECTORES_CREATE]: "Crear Book Club",

@@ -1,17 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FiBook, FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiRefreshCw, FiPackage, FiX, FiXCircle, FiCheckCircle } from 'react-icons/fi';
+import { FiBook, FiPlus, FiSearch, FiEdit, FiEye, FiRefreshCw, FiX } from 'react-icons/fi';
 import { useDebounce } from '../hooks/useDebounce';
 import BooksCard from '../components/books/BooksCard';
 import BookInformation from '../components/modals/BookInformation';
-import StockUpdateModal from '../components/modals/StockUpdateModal';
-import StockIndicator from '../components/ui/StockIndicator';
 import Pagination from '../components/ui/Pagination';
 import { useProductsInformation } from '../store/useProductsInformation';
-import { getProductDetail, deactivateProduct } from '../api/products';
+import { getProductDetail } from '../api/products';
 import { ROUTES } from '../utils/routes';
 import { showSuccess, showError } from '../utils/notifications';
-import ConfirmationModal from '../components/modals/ConfirmationModal';
 import placeholderImage from '../assets/images/placeholder.jpg';
 
 const Libros = () => {
@@ -24,10 +21,6 @@ const Libros = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalMode, setModalMode] = useState('view');
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
-  const [showStockModal, setShowStockModal] = useState(false);
-  const [selectedProductForStock, setSelectedProductForStock] = useState(null);
-  const [isStatusConfirmModalOpen, setIsStatusConfirmModalOpen] = useState(false);
-  const [productToToggle, setProductToToggle] = useState(null);
 
   // Store de productos
   const {
@@ -35,9 +28,7 @@ const Libros = () => {
     currentPage,
     totalPages,
     totalProducts,
-    totalAvailableBooks,
     totalBooks,
-    totalDisabledBooks,
     limit,
     isLoading,
     error,
@@ -128,90 +119,16 @@ const Libros = () => {
     setModalMode('view');
   };
 
-  const handleUpdateStock = (product) => {
-    setSelectedProductForStock(product);
-    setShowStockModal(true);
-  };
-
-  const handleStockUpdated = (productId, newStock) => {
-    // Actualizar el stock en el store
-    const { updateProduct } = useProductsInformation.getState();
-    updateProduct(productId, { stock: newStock });
-    
-  };
-
-  const handleCloseStockModal = () => {
-    setShowStockModal(false);
-    setSelectedProductForStock(null);
-  };
-
-  const handleToggleStatus = (product) => {
-    setProductToToggle(product);
-    setIsStatusConfirmModalOpen(true);
-  };
-
-  const confirmToggleStatus = async () => {
-    if (!productToToggle) return;
-    
-    setIsStatusConfirmModalOpen(false);
-    
-    try {
-      await deactivateProduct(productToToggle.product_id);
-      const currentStatus = productToToggle.status;
-      showSuccess(`Libro ${currentStatus ? 'desactivado' : 'activado'} correctamente`);
-      await refreshProducts(debouncedSearchTerm);
-    } catch (error) {
-      console.error('Error toggling product status:', error);
-      showError(error.message || 'Error al cambiar el estado del libro');
-    } finally {
-      setProductToToggle(null);
-    }
-  };
-
-  const cancelToggleStatus = () => {
-    setIsStatusConfirmModalOpen(false);
-    setProductToToggle(null);
-  };
-
-  // Función para formatear fecha
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const options = { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    };
-    return date.toLocaleDateString('es-ES', options);
-  };
-
-  // Función para renderizar estado
-  const renderStatus = (status) => {
-    if (status === 1) {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
-          Activo
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-        <div className="w-2 h-2 bg-red-400 rounded-full mr-1"></div>
-        Inactivo
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
         <div className="flex-1">
           <h1 className="text-2xl sm:text-3xl font-cabin-bold text-gray-800 mb-2">
-            Gestión de Libros
+            Biblioteca de libros
           </h1>
           <p className="text-sm sm:text-base text-gray-600 font-cabin-regular">
-            Administra el catálogo completo de libros infantiles
+            Guarda la información de cada libro. Los libros no se venden por separado: se agrupan en combos.
           </p>
         </div>
         
@@ -233,46 +150,15 @@ const Libros = () => {
               <FiBook className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Total Libros</h3>
+              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Libros en la biblioteca</h3>
               <p className="text-xl lg:text-2xl font-cabin-bold text-blue-600">
                 {isLoading ? '...' : totalBooks}
               </p>
-              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">En catálogo</p>
+              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Registrados</p>
             </div>
           </div>
         </div>
         
-        {/* Card - Libros Disponibles */}
-        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-3 lg:space-x-4">
-            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <FiBook className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Libros Disponibles</h3>
-              <p className="text-xl lg:text-2xl font-cabin-bold text-green-600">
-                {isLoading ? '...' : totalAvailableBooks}
-              </p>
-              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">Disponibles</p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Card - Libros Desactivados */}
-        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="flex items-center space-x-3 lg:space-x-4">
-            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <FiBook className="w-5 h-5 lg:w-6 lg:h-6 text-red-600" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-cabin-semibold text-gray-800 text-sm lg:text-base">Libros Desactivados</h3>
-              <p className="text-xl lg:text-2xl font-cabin-bold text-red-600">
-                {isLoading ? '...' : totalDisabledBooks}
-              </p>
-              <p className="text-xs lg:text-sm font-cabin-regular text-gray-500">No disponibles</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Barra de búsqueda y filtros */}
@@ -366,19 +252,7 @@ const Libros = () => {
                       Libro
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
-                      Tipo
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
-                      Precio
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
-                      <div className="flex items-center space-x-1">
-                        <span>Stock</span>
-                        <FiPackage className="w-3 h-3 text-gray-400" />
-                      </div>
+                      Autores
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-cabin-medium text-gray-500 uppercase tracking-wider">
                       Acciones
@@ -404,57 +278,11 @@ const Libros = () => {
                             <div className="text-sm font-cabin-semibold text-gray-900">
                               {product.product_name}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {product.category_list?.map(cat => cat.category_name).join(', ') || 'Sin categoría'}
-                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          product.product_type === 'FISICO' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {product.product_type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          ${product.price_offer?.toFixed(2) || product.price?.toFixed(2)}
-                        </div>
-                        {product.discount > 0 && (
-                          <div className="text-sm text-red-600">
-                            -{Math.round(product.discount)}% descuento
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {renderStatus(product.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => handleUpdateStock(product)}
-                          className="group w-full text-left hover:bg-blue-50 rounded-lg p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                          title={`Actualizar stock de "${product.product_name}" (actual: ${product.stock || 0} unidades)`}
-                          aria-label={`Actualizar stock de ${product.product_name}`}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <div className="flex-1">
-                              <div className="text-sm font-cabin-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                                {product.stock || 0} unidades
-                              </div>
-                              <div className="text-xs text-gray-500 group-hover:text-blue-500 transition-colors">
-                                <StockIndicator 
-                                  stock={product.stock || 0} 
-                                  showLabel={true}
-                                  size="sm"
-                                />
-                              </div>
-                            </div>
-                            <FiPackage className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100" />
-                          </div>
-                        </button>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {product.author_list?.map((author) => author.author_name).join(', ') || 'Sin autor'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
@@ -471,24 +299,6 @@ const Libros = () => {
                             title="Editar"
                           >
                             <FiEdit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleStatus(product)}
-                            className={`p-1 ${product.status ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
-                            title={product.status ? 'Desactivar' : 'Activar'}
-                          >
-                            {product.status ? (
-                              <FiXCircle className="w-4 h-4" />
-                            ) : (
-                              <FiCheckCircle className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(product)}
-                            className="text-red-600 hover:text-red-900 p-1 hidden"
-                            title="Eliminar"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -526,34 +336,6 @@ const Libros = () => {
         />
       )}
 
-      {/* Modal de actualización de stock */}
-      {showStockModal && selectedProductForStock && (
-        <StockUpdateModal
-          product={selectedProductForStock}
-          isOpen={showStockModal}
-          onClose={handleCloseStockModal}
-          onStockUpdated={handleStockUpdated}
-          currentStock={selectedProductForStock.stock || 0}
-        />
-      )}
-
-      {/* Modal de Confirmación para Activar/Desactivar */}
-      {productToToggle && (
-        <ConfirmationModal
-          isOpen={isStatusConfirmModalOpen}
-          title={productToToggle.status ? 'Desactivar Libro' : 'Activar Libro'}
-          description={
-            productToToggle.status
-              ? `¿Estás seguro de que quieres desactivar el libro "${productToToggle.product_name}"?`
-              : `¿Estás seguro de que quieres activar el libro "${productToToggle.product_name}"?`
-          }
-          onCancel={cancelToggleStatus}
-          onAccept={confirmToggleStatus}
-          cancelText="Cancelar"
-          acceptText={productToToggle.status ? 'Desactivar' : 'Activar'}
-          type={productToToggle.status ? 'danger' : 'info'}
-        />
-      )}
     </div>
   );
 };
