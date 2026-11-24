@@ -24,6 +24,7 @@ export const ROUTES = {
   BOOKS: "/libros",
   COMBOS: "/combos",
   SEASONS: "/temporadas",
+  DISCOUNTS: "/codigos-descuento",
   BOOKS_CREATE: "/libros/crear",
   BOOKS_EDIT: "/libros/editar/:id",
   BOOKS_VIEW: "/libros/ver/:id",

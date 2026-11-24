@@ -114,7 +114,7 @@ const ComboInformation = ({ combo, isOpen, onClose, mode = 'view', onSave, isLoa
 
       let response;
       if (combo?.product_id && mode !== 'create') {
-        response = await updateProduct({ ...payload, product_id: combo.product_id });
+        response = await updateProduct({ ...payload, product_type: 'FISICO', product_id: combo.product_id });
       } else {
         response = await addProduct({ ...payload, product_type: 'FISICO' });
       }

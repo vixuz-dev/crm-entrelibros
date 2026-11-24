@@ -8,6 +8,7 @@ import Clientes from './pages/Clientes';
 import Libros from './pages/Libros';
 import Combos from './pages/Combos';
 import Temporadas from './pages/Temporadas';
+import CodigosDescuento from './pages/CodigosDescuento';
 import Categorias from './pages/Categorias';
 import Temas from './pages/Temas';
 import Autores from './pages/Autores';
@@ -60,6 +61,7 @@ function App() {
                 <Route path={ROUTES.BOOKS} element={<Libros />} />
                 <Route path={ROUTES.COMBOS} element={<Combos />} />
                 <Route path={ROUTES.SEASONS} element={<Temporadas />} />
+                <Route path={ROUTES.DISCOUNTS} element={<CodigosDescuento />} />
                 <Route path={ROUTES.BOOKS_CREATE} element={<Libros />} />
                 <Route path={ROUTES.BOOKS_LIST} element={<Libros />} />
                 <Route path={ROUTES.BOOKS_CATEGORIES} element={<Categorias />} />

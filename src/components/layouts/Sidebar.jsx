@@ -18,6 +18,7 @@ import {
   FiX,
   FiTag,
   FiCalendar,
+  FiPercent,
   FiList,
   FiChevronDown,
   FiChevronRight,
@@ -104,6 +105,13 @@ const Sidebar = ({ onClose }) => {
       icon: FiCalendar,
       route: ROUTES.SEASONS,
       active: location.pathname.startsWith(ROUTES.SEASONS)
+    },
+    {
+      id: 'codigos-descuento',
+      label: 'Códigos de descuento',
+      icon: FiPercent,
+      route: ROUTES.DISCOUNTS,
+      active: location.pathname.startsWith(ROUTES.DISCOUNTS)
     },
     {
       id: 'correos',

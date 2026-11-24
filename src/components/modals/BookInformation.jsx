@@ -360,6 +360,8 @@ const BookInformation = ({
       const productUpdateData = {
         product_id: book ? book.product_id : null,
         product_name: editData.product_name.trim(),
+        // La API exige product_type tanto al crear como al editar
+        product_type: editData.product_type || "FISICO",
         product_description: editData.product_description?.trim() || "Sin descripcion",
         // Los libros viven en la biblioteca y NO se venden por separado (solo se venden los combos):
         // precio, stock y estado quedan fijos para que nunca aparezcan en la tienda.
