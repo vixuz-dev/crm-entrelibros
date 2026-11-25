@@ -282,7 +282,7 @@ const InformacionPedido = () => {
               </h2>
               
               <div className="space-y-4">
-                {order.products.map((product, index) => (
+                {(order.products || []).map((product, index) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start space-x-4">
                       <div className="flex-shrink-0">
@@ -304,7 +304,7 @@ const InformacionPedido = () => {
                             <p className="text-sm text-gray-600 mb-2">SKU: {product.sku}</p>
                             
                             <div className="flex flex-wrap gap-2 mb-3">
-                              {product.categories.map((category, catIndex) => (
+                              {(product.categories || []).map((category, catIndex) => (
                                 <span key={catIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-cabin-medium bg-blue-100 text-blue-800">
                                   <FiTag className="w-3 h-3 mr-1" />
                                   {category}
@@ -313,7 +313,7 @@ const InformacionPedido = () => {
                             </div>
                             
                             <div className="flex flex-wrap gap-2 mb-3">
-                              {product.topics.map((topic, topicIndex) => (
+                              {(product.topics || []).map((topic, topicIndex) => (
                                 <span key={topicIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-cabin-medium bg-purple-100 text-purple-800">
                                   <FiBook className="w-3 h-3 mr-1" />
                                   {topic}
@@ -322,7 +322,7 @@ const InformacionPedido = () => {
                             </div>
                             
                             <div className="flex flex-wrap gap-2">
-                              {product.authors.map((author, authorIndex) => (
+                              {(product.authors || []).map((author, authorIndex) => (
                                 <span key={authorIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-cabin-medium bg-green-100 text-green-800">
                                   <FiUser className="w-3 h-3 mr-1" />
                                   {author}
